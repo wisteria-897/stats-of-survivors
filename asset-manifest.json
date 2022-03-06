@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/stats-of-survivors-app/static/css/main.13c15a2b.css",
+    "main.js": "/stats-of-survivors-app/static/js/main.c2116f51.js",
+    "index.html": "/stats-of-survivors-app/index.html",
+    "main.13c15a2b.css.map": "/stats-of-survivors-app/static/css/main.13c15a2b.css.map",
+    "main.c2116f51.js.map": "/stats-of-survivors-app/static/js/main.c2116f51.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.13c15a2b.css",
+    "static/js/main.c2116f51.js"
+  ]
+}

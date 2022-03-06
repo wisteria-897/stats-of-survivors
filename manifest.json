@@ -1,0 +1,8 @@
+{
+  "short_name": "Stats of Survivors",
+  "name": "Stats of Survivors – Handy tools for for State of Survival players",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#ddd",
+  "background_color": "#222"
+}
