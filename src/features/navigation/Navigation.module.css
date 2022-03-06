@@ -1,0 +1,47 @@
+.navBar {
+    width: 100%;
+}
+
+.navBar > ul {
+    width: 100%;
+    display: flex;
+    flex-flow: row wrap;
+    align-items: center;
+    font-size: 150%;
+    color: #aaa;
+}
+
+.navBar > ul > li {
+    display: block;
+    padding: 10px 30px;
+    text-transform: uppercase;
+}
+
+.navItem {
+    cursor: pointer;
+}
+
+.active {
+    font-weight: bold;
+    color: #eee;
+}
+
+.navItem:hover {
+    background-color: #666;
+}
+
+.appName {
+    font-size: 150%;
+}
+
+.byline {
+    display: block;
+    font-size: 50%;
+    text-decoration: italic;
+    text-align: center;
+}
+
+.active:hover {
+    cursor: default;
+    background-color: transparent;
+}

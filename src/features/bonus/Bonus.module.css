@@ -1,0 +1,78 @@
+.sourceDisplay {
+    position: relative;
+    display: inline-block;
+}
+
+.popOver {
+    position: absolute;
+    min-width: 200px;
+    padding: 5px;
+    z-index: 1000;
+    background-color: #000;
+    border: 1px solid #ddd;
+}
+
+.popOver > ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.popOver > h4 {
+    margin: 0 0 5px 0;
+    text-align: center;
+}
+
+.Common {
+    background-color: #dadbdd;
+}
+
+.Uncommon {
+    background-color: #a7ba85;
+}
+
+.Rare {
+    background-color: #6995b7;
+}
+
+.Epic {
+    background-color: #ca5dd2;
+}
+
+.Legendary {
+    background-color: #d1964e;
+}
+
+.popOver > ul > li {
+    display: flex;
+    justify-content: space-between;
+}
+
+.bonusList {
+    width: 300px;
+}
+
+.bonusContainer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.bonusList,
+.bonusList ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0 0 0 10px;
+}
+
+.bonusValue {
+    font-family: monospace;
+    font-weight: bold;
+    color: #0f0;
+}
+
+.penaltyValue {
+    color: #f00;
+}
+
+.statName {
+}

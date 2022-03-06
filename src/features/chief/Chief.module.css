@@ -1,0 +1,33 @@
+.chiefPanel {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.chiefPanel > header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    column-gap: 10px;
+    flex: 0 0 auto;
+}
+
+.chiefPanel > header > h2 {
+    font-size: 150%;
+    font-weight: bold;
+    padding-left: 10px;
+}
+
+.keyStat {
+    display: inline-block;
+}
+
+.chiefPanel > section {
+    flex: 1 1 0;
+    overflow: scroll;
+}
+
+.editor {
+}
+

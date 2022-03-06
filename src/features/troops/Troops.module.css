@@ -1,0 +1,77 @@
+.formationCalculator {
+    border: 0;
+    padding: 10px 30px;
+    display: flex;
+    flex-flow: row wrap;
+    column-gap: 50px;
+}
+
+.formationCalculator > legend {
+    font-size: 125%;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.marchCapacityPanel {
+    flex: 0 0 auto;
+    display: flex;
+    flex-flow: column;
+    align-items: flex-start;
+}
+
+.inputHeader {
+    font-size: 125%;
+    margin: 10px 0 5px;
+}
+
+.troopRatioOption {
+    display: flex;
+    flex-flow: row wrap;
+    column-gap: 5px;
+    align-items: center;
+}
+
+.troopRatioOption > span {
+    min-width: 30px;
+    text-align: right;
+    font-family: monospace;
+}
+
+.troopRatioOption > .troopRatioName {
+    font-family: inherit;
+}
+
+.customTroopRatio {
+    padding-left: 30px;
+}
+
+.customTroopRatio > label {
+    display: flex;
+    flex-flow: row;
+    column-gap: 5px;
+}
+
+.customTroopRatio > label > span {
+    flex: 1 0 0;
+}
+
+.customTroopRatio input[type='number'] {
+    width: 35px;
+}
+
+.troopFormation td:first-child {
+    font-family: inherit;
+    font-weight: bold;
+    font-size: 150%;
+    background-color: #aaa;
+    color: #000;
+    padding: 5px 10px;
+}
+
+.troopPercent,
+.troopCount {
+    text-align: right;
+    font-family: monospace;
+    font-size: 200%;
+    padding: 20px 40px;
+}
