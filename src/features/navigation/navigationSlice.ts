@@ -5,7 +5,7 @@ export enum Page {
     Chief,
     Alliance,
     CustomChestPlanner,
-    Troops
+    Formations
 }
 
 export interface NavigationState {
@@ -13,7 +13,7 @@ export interface NavigationState {
 }
 
 const initialState: NavigationState = {
-    currentPage: Page.Chief
+    currentPage: Page.Formations
 };
 
 export const navigationSlice = createSlice({

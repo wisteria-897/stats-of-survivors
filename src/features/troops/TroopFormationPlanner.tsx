@@ -1,6 +1,33 @@
 import React, { useEffect, useState } from 'react';
 import styles from './Troops.module.css';
 
+class MarchCapacity {
+    readonly capacity: number;
+    readonly name: string | null;
+
+    constructor(capacity: number, name?: string) {
+        this.capacity = capacity;
+        this.name = name || null;
+    }
+
+    get key() {
+        return String(this.capacity);
+    }
+
+    get label() {
+        return this.capacity + (this.name ? ' – ' + this.name : '');
+    }
+
+    toSerializable() {
+        return [this.capacity, this.name];
+    }
+
+    static fromSerializable(data: any) {
+        const values = data as (number | string)[];
+        return new MarchCapacity(values[0] as number, (values[1] || undefined) as string | undefined);
+    }
+}
+
 class TroopRatio {
     readonly infantry: number;
     readonly riders: number;
@@ -49,38 +76,97 @@ class TroopRatio {
 
         return {infantryCount, riderCount, hunterCount};
     }
+
+    toSerializable() {
+        return [this.infantry, this.riders, this.hunters, this.name];
+    }
+
+    static fromSerializable(data: any) {
+        const values = data as (number | string)[];
+        return new TroopRatio(values[0] as number, values[1] as number, values[2] as number, (values[3] || undefined) as string | undefined);
+    }
 }
 
-const ratios: TroopRatio[] = [
+const fixedRatios: TroopRatio[] = [
     new TroopRatio(34, 33, 33, 'Default'),
     new TroopRatio(60, 15, 25, 'Generally Optimal'),
     new TroopRatio(5, 25, 70, 'Influencer Trap')
 ];
 
-const TroopRatioOption = (props: {selected: boolean, ratio: TroopRatio, onChange: (ratio: TroopRatio) => any}) => {
-    const {selected, ratio, onChange} = props;
+const defaultMarchCapacity: MarchCapacity[] = [
+    new MarchCapacity(48000, 'HQ reinforcement during Horde')
+];
+
+type OptionItem<T> = {
+    key: string;
+    item: T;
+    editable: boolean;
+}
+
+function Option<T>(props: {children: React.ReactNode, name: string, checked: boolean, item: T, onChange: (item: T) => any}) {
+    const {children, name, checked, item, onChange} = props;
     return (
-        <label className={styles.troopRatioOption} key={ratio.key}>
-            <input type="radio" name="troopRatio" checked={selected} onChange={(e) => onChange(ratio)}/>
-            <span>{ratio.infantryLabel}</span>
-            <span>{ratio.riderLabel}</span>
-            <span>{ratio.hunterLabel}</span>
-            {ratio.name && <span className={styles.troopRatioName}> – {ratio.name}</span>}
+        <label className={styles.listOption}>
+            <input type="radio" name={name} checked={checked} onChange={(e) => onChange(item)}/>
+            {children}
         </label>
     );
 }
 
+type EditableOptionListProps<T> = {
+    children: React.ReactNode,
+    name: string,
+    value: T,
+    items: OptionItem<T>[],
+    customItem: T,
+    labelBuilder: (item: T) => React.ReactNode,
+    onChange: (item: string) => any,
+    onAddToList: (item: T) => any,
+    onRemoveFromList: (item: T) => any
+};
+function EditableOptionList<T>(props: EditableOptionListProps<T>) {
+    const {children, name, value, items, customItem, labelBuilder, onChange, onAddToList, onRemoveFromList} = props;
+    const options = items.map(item => {
+        return (
+            <Option key={item.key} name={name} checked={value === item.item} item={item.key} onChange={onChange}>
+                {labelBuilder(item.item)}
+                {item.editable &&
+                    <button aria-label="remove" className={styles.optionListDeleteButton}
+                        onClick={(e) => onRemoveFromList(item.item)}
+                    >
+                        ❌
+                    </button>
+                }
+            </Option>
+        );
+    });
+    return (
+        <div className={styles.editableOptionList}>
+            {options}
+            <Option key="custom" name={name} checked={value === customItem} item="custom" onChange={onChange}>
+                Custom
+            </Option>
+            {children}
+            <button onClick={(e) => onAddToList(customItem)}>Add to List</button>
+        </div>
+    );
+}
 
-const storageKeyBase = 'sos:troopFormationCalculator'
-function createPersister<T>(key: string, initialValue: T) {
+const storageKeyBase = 'sos:troopFormationCalculator';
+function createPersister<T>(key: string, initialValue: T, serialize?: (value: T) => string, deserialize?: (data: string) => T) {
     const fullKey = storageKeyBase + ':' + key;
     return {
         load: () => {
             const json = localStorage.getItem(fullKey);
-            return json ? JSON.parse(json) : initialValue;
+            if (json) {
+                return deserialize ? deserialize(json) : JSON.parse(json);
+            } else {
+                return initialValue;
+            }
         },
         save: (value: T) => {
-            localStorage.setItem(fullKey, JSON.stringify(value));
+            const serialized = serialize ? serialize(value) : JSON.stringify(value);
+            localStorage.setItem(fullKey, serialized);
         }
     };
 }
@@ -99,75 +185,186 @@ function TroopRatioInput(props: {value: number, max: number, onChange: (value: n
     );
 }
 
-function CustomTroopRatio(props: {ratio: TroopRatio, onChange: (infantry: number, riders: number, hunters: number) => any}) {
+function CustomTroopRatio(props: {ratio: TroopRatio, onChange: (newRatio: TroopRatio) => any}) {
     const {ratio, onChange} = props;
-    const {infantry, riders, hunters} = ratio;
+    const {infantry, riders, hunters, name} = ratio;
     return (
         <div className={styles.customTroopRatio}>
             <label>
                 <span>Infantry:</span>
                 <TroopRatioInput value={infantry} max={100 - (riders + hunters)}
-                    onChange={(value) => onChange(value, riders, hunters)} />
+                    onChange={(value) => onChange(new TroopRatio(value, riders, hunters, name || undefined))} />
                 %
             </label>
             <label>
                 <span>Riders:</span>
                 <TroopRatioInput value={riders} max={100 - (infantry + hunters)}
-                    onChange={(value) => onChange(infantry, value, hunters)} />
+                    onChange={(value) => onChange(new TroopRatio(infantry, value, hunters, name || undefined))} />
                 %
             </label>
             <label>
                 <span>Hunters:</span>
                 <TroopRatioInput value={hunters} max={100 - (infantry + riders)}
-                    onChange={(value) => onChange(infantry, riders, value)} />
+                    onChange={(value) => onChange(new TroopRatio(infantry, riders, value, name || undefined))} />
                 %
+            </label>
+            <label>
+                <span>Name:</span>
+                <input type="text" placeholder="optional" value={name || ''}
+                    onChange={(e) => {
+                        const value = e.target.value;
+                        if (value != null) {
+                            console.log(value);
+                            onChange(new TroopRatio(infantry, riders, hunters, value));
+                        }
+                    }} />
             </label>
         </div>
     );
 }
 
+function CustomMarchCapacity(props: {capacity: MarchCapacity, onChange: (newCapacity: MarchCapacity) => any}) {
+    const {capacity, onChange} = props;
+    return (
+        <div className={styles.customMarchCapacity}>
+            <label>
+                <span>Capacity:</span>
+                <input type="number" min="0" value={capacity.capacity}
+                    onChange={(e) => onChange(new MarchCapacity(safeParseInt(e.target.value, Infinity), capacity.name || undefined))}/>
+            </label>
+            <label>
+                <span>Name:</span>
+                <input type="text" placeholder="optional" value={capacity.name || ''}
+                    onChange={(e) => {
+                        const value = e.target.value;
+                        if (value != null) {
+                            console.log(value);
+                            onChange(new MarchCapacity(capacity.capacity, value));
+                        }
+                    }} />
+            </label>
+        </div>
+    );
+}
+
+const TroopRatioOptionLabel = (props: {ratio: TroopRatio}) => {
+    const {ratio} = props;
+    return (
+        <span className={styles.troopRatioOptionLabel}>
+            <span>{ratio.infantryLabel}</span>
+            <span>{ratio.riderLabel}</span>
+            <span>{ratio.hunterLabel}</span>
+            {ratio.name && <span className={styles.troopRatioName}> – {ratio.name}</span>}
+        </span>
+    );
+}
+
 export function TroopFormationPlanner() {
-    const marchCapacityPersister = createPersister('marchCapacity', 10000);
-    const troopRatioKeyPersister = createPersister('troopRatioKey', ratios[0].key);
-    const [marchCapacity, setMarchCapacity] = useState(marchCapacityPersister.load);
+    const savedRatiosPersister = createPersister('savedRatios', [] as TroopRatio[],
+        list => JSON.stringify(list.map((v: any) => v.toSerializable())),
+        json => JSON.parse(json).map((v: any) => TroopRatio.fromSerializable(v)));
+    const [savedRatios, setSavedRatios] = useState(savedRatiosPersister.load);
+
+    const troopRatioKeyPersister = createPersister('troopRatioKey', fixedRatios[0].key);
     const [troopRatioKey, setTroopRatioKey] = useState(troopRatioKeyPersister.load);
 
-    useEffect(() => marchCapacityPersister.save(marchCapacity), [marchCapacityPersister, marchCapacity]);
+    const savedCapacitiesPersister = createPersister('savedCapacities', defaultMarchCapacity,
+        list => JSON.stringify(list.map((v: any) => v.toSerializable())),
+        json => JSON.parse(json).map((v: any) => MarchCapacity.fromSerializable(v)));
+    const [savedCapacities, setSavedCapacities] = useState(savedCapacitiesPersister.load);
+
+    const capacityKeyPersister = createPersister('capacityKey', 'custom');
+    const [capacityKey, setCapacityKey] = useState(capacityKeyPersister.load);
+
+
     useEffect(() => troopRatioKeyPersister.save(troopRatioKey), [troopRatioKeyPersister, troopRatioKey]);
+    useEffect(() => savedRatiosPersister.save(savedRatios), [savedRatiosPersister, savedRatios]);
+    useEffect(() => capacityKeyPersister.save(capacityKey), [capacityKeyPersister, capacityKey]);
+    useEffect(() => savedCapacitiesPersister.save(savedCapacities), [savedCapacitiesPersister, savedCapacities]);
 
     const [customRatio, setCustomRatio] = useState(new TroopRatio(34, 33, 33));
+    const [customCapacity, setCustomCapacity] = useState(new MarchCapacity(1000000));
 
-    const ratioOptions = ratios.map(ratio => {
-        return <TroopRatioOption key={ratio.key} selected={ratio.key === troopRatioKey} ratio={ratio}
-            onChange={ratio => setTroopRatioKey(ratio.key)}/>;
-    });
+    const addRatioToList = (ratio: TroopRatio) => {
+        if (ratios.find(r => r.key == ratio.key)) {
+            return;
+        }
+
+        setSavedRatios([...savedRatios, new TroopRatio(ratio.infantry, ratio.riders, ratio.hunters, ratio.name || undefined)]);
+    }
+
+    const removeRatioFromList = (ratio: TroopRatio) => {
+        const index = savedRatios.findIndex((r: TroopRatio) => r === ratio);
+        if (index >= 0) {
+            const updated = [...savedRatios];
+            updated.splice(index, 1);
+            setSavedRatios(updated);
+        }
+    }
 
     let ratio: TroopRatio;
+    const ratios: OptionItem<TroopRatio>[] = [
+        ...fixedRatios.map((r: TroopRatio) => { return {key: r.key, item: r, editable: false}; }),
+        ...savedRatios.map((r: TroopRatio) => { return {key: r.key, item: r, editable: true}; })
+    ];
     if (troopRatioKey === 'custom') {
         ratio = customRatio;
     } else {
-        ratio = ratios.find(r => r.key === troopRatioKey) || ratios[0];
+        const ratioItem = ratios.find(r => r.key === troopRatioKey) || ratios[0];
+        ratio = ratioItem.item;
     }
-    const {infantryCount, riderCount, hunterCount} = ratio.getTroopCounts(marchCapacity);
+
+    const addCapacityToList = (capacity: MarchCapacity) => {
+        if (savedCapacities.find((c: MarchCapacity) => c.key == capacity.key)) {
+            return;
+        }
+
+        setSavedCapacities([...savedCapacities, new MarchCapacity(capacity.capacity, capacity.name || undefined)]);
+    }
+
+    const removeCapacityFromList = (capacity: MarchCapacity) => {
+        const index = savedCapacities.findIndex((c: MarchCapacity) => c === capacity);
+        if (index >= 0) {
+            const updated = [...savedCapacities];
+            updated.splice(index, 1);
+            setSavedCapacities(updated);
+        }
+    }
+
+    let marchCapacity: MarchCapacity;
+    if (capacityKey === 'custom') {
+        marchCapacity = customCapacity;
+    } else {
+        marchCapacity = savedCapacities.find((c: MarchCapacity) => c.key === capacityKey) || savedCapacities[0];
+    }
+    const capacityItems = savedCapacities.map((c: MarchCapacity) => { return {key: c.key, item: c, editable: true}; });
+
+    const {infantryCount, riderCount, hunterCount} = ratio.getTroopCounts(marchCapacity.capacity);
+
     return (
         <fieldset className={styles.formationCalculator}>
             <legend>Troop Formation Calculator</legend>
             <div className={styles.marchCapacityPanel}>
                 <label className={styles.inputHeader} htmlFor="marchCapacity">March Capacity:</label>
-                <input id="marchCapacity" type="number" min="0" value={marchCapacity}
-                    onChange={(e) => setMarchCapacity(parseInt(e.target.value))}
-                />
-                <button onClick={(e) => setMarchCapacity(48000)}>48k - Horde HQ marches</button>
+                <EditableOptionList name="marchCapacity" items={capacityItems} customItem={customCapacity} value={marchCapacity}
+                    onChange={(k) => setCapacityKey(k)}
+                    onAddToList={addCapacityToList}
+                    onRemoveFromList={removeCapacityFromList}
+                    labelBuilder={(c) => <span>{c.label}</span>}
+                >
+                    <CustomMarchCapacity capacity={customCapacity}
+                        onChange={(newCapacity) => setCustomCapacity(newCapacity)}/>
+                </EditableOptionList>
                 <label className={styles.inputHeader}>Target Ratio:</label>
-                {ratioOptions}
-                <label className={styles.troopRatioOption}>
-                    <input type="radio" name="troopRatio" checked={troopRatioKey === 'custom'}
-                        onChange={(e) => setTroopRatioKey('custom')}
-                    />
-                    Custom
-                </label>
-                <CustomTroopRatio ratio={customRatio}
-                    onChange={(...percentages) => setCustomRatio(new TroopRatio(...percentages))}/>
+                <EditableOptionList name="troopRatio" items={ratios} customItem={customRatio} value={ratio}
+                        onChange={(k) => setTroopRatioKey(k)}
+                        onAddToList={addRatioToList}
+                        onRemoveFromList={removeRatioFromList}
+                        labelBuilder={(r) => <TroopRatioOptionLabel ratio={r} />}
+                >
+                    <CustomTroopRatio ratio={customRatio}
+                        onChange={(newRatio) => setCustomRatio(newRatio)}/>
+                </EditableOptionList>
             </div>
             <table className={styles.troopFormation}>
                 <tbody>

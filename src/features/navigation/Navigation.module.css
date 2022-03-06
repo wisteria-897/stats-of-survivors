@@ -17,6 +17,17 @@
     text-transform: uppercase;
 }
 
+.appName {
+    font-size: 150%;
+}
+
+.byline {
+    display: block;
+    font-size: 50%;
+    text-decoration: italic;
+    text-align: center;
+}
+
 .navItem {
     cursor: pointer;
 }
@@ -30,18 +41,6 @@
     background-color: #666;
 }
 
-.appName {
-    font-size: 150%;
-}
-
-.byline {
-    display: block;
-    font-size: 50%;
-    text-decoration: italic;
-    text-align: center;
-}
-
 .active:hover {
-    cursor: default;
     background-color: transparent;
 }

@@ -12,7 +12,7 @@ const ActivePage = (props: any) => {
         return <ChiefPanel />;
     } else if (props.page === Page.CustomChestPlanner) {
         return <CustomChestPlanner />;
-    } else if (props.page === Page.Troops) {
+    } else if (props.page === Page.Formations) {
         return <TroopPanel />;
     }
 

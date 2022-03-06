@@ -17,6 +17,14 @@ html, body, #root {
     flex-direction: column;
 }
 
+a {
+    color: #88f;
+}
+
+a:visited {
+    color: #aaf;
+}
+
 .App-header {
     display: flex;
     flex-direction: column;

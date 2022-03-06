@@ -1,9 +1,15 @@
+.troopPanel {
+    height: 100%;
+    overflow: scroll;
+}
+
 .formationCalculator {
     border: 0;
     padding: 10px 30px;
     display: flex;
     flex-flow: row wrap;
     column-gap: 50px;
+    overflow: scroll;
 }
 
 .formationCalculator > legend {
@@ -24,23 +30,43 @@
     margin: 10px 0 5px;
 }
 
-.troopRatioOption {
+.optionListDeleteButton {
+    border: 0;
+    background-color: transparent;
+    cursor: pointer;
+    opacity: 0.5;
+}
+
+.optionListDeleteButton:hover {
+    opacity: 1;
+}
+
+.troopRatioOptionLabel,
+.marchCapacityPanel .listOption {
     display: flex;
     flex-flow: row wrap;
     column-gap: 5px;
     align-items: center;
 }
 
-.troopRatioOption > span {
+.troopRatioOptionLabel {
+    flex: 1 0 auto;
+}
+
+.troopRatioOptionLabel > span {
+    display: inline-block;
     min-width: 30px;
     text-align: right;
     font-family: monospace;
 }
 
-.troopRatioOption > .troopRatioName {
+.troopRatioOptionLabel > .troopRatioName {
     font-family: inherit;
+    text-align: left;
+    flex: 1 0 auto;
 }
 
+.customMarchCapacity,
 .customTroopRatio {
     padding-left: 30px;
 }
@@ -51,6 +77,21 @@
     column-gap: 5px;
 }
 
+.customMarchCapacity {
+    display: flex;
+    flex-flow: column;
+}
+
+.customMarchCapacity > label {
+    display: flex;
+    flex-flow: row;
+}
+
+.customMarchCapacity > label > span {
+    flex: 1 0 auto;
+}
+
+.customMarchCapacity,
 .customTroopRatio > label > span {
     flex: 1 0 0;
 }
