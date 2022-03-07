@@ -3,7 +3,7 @@ import { useAppSelector } from './app/hooks';
 import { ChiefPanel } from './features/chief/ChiefPanel';
 import { CustomChestPlanner } from './features/customChest/CustomChest';
 import { TroopPanel } from './features/troops/TroopPanel';
-import { SpeedUpCalculator } from './features/speedups/SpeedUpCalculator';
+import SpeedUpPanel from './features/speedups/SpeedUpPanel';
 import { Page, selectCurrentPage } from './features/navigation/navigationSlice';
 import { Navigation } from './features/navigation/Navigation';
 import './App.css';
@@ -16,7 +16,7 @@ const ActivePage = (props: any) => {
     } else if (props.page === Page.Formations) {
         return <TroopPanel />;
     } else if (props.page === Page.SpeedUps) {
-        return <SpeedUpCalculator />;
+        return <SpeedUpPanel />;
     }
 
     return <div />;
