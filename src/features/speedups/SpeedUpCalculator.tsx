@@ -22,7 +22,6 @@ export function SpeedUpCalculator(props: {speedups: SpeedUpSet, onChange: (speed
     const setSpeedupCount = (fn: (set: SpeedUpSet) => void) => {
         const newSet = speedups.copy();
         fn(newSet);
-        console.log('new set', newSet);
         onChange(newSet);
     }
 

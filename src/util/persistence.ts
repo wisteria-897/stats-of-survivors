@@ -35,7 +35,6 @@ export function createPersister<T>(key: string, initialValue: T, serialize?: (va
         },
         save: (value: T) => {
             const serialized = serialize ? serialize(value) : JSON.stringify(value);
-            console.log('Saving', fullKey, serialized);
             localStorage.setItem(fullKey, serialized);
         }
     };

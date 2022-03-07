@@ -11,7 +11,6 @@ migrate('speedUpCalculator:speedUps',
     ['speedUpCalculator:oneMinute','speedUpCalculator:fiveMinute',
         'speedUpCalculator:oneHour','speedUpCalculator:threeHour','speedUpCalculator:eightHour'],
     (maybeJson) => {
-        console.log('migrating', maybeJson);
         const values = maybeJson.map(json => (json ? JSON.parse(json) as number : 0));
         return JSON.stringify([SpeedUpType.Construction, ...values]);
     }

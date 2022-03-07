@@ -39,22 +39,17 @@ export default class TimeSpan {
     }
 
     format(options?: { withDays?: boolean, withMillis?: boolean }) {
-        console.log('toString');
         const pretty = Intl.NumberFormat('en-us', { useGrouping: true });
         const zeroPad = Intl.NumberFormat('en-US', { minimumIntegerDigits: 2, useGrouping: false });
         let parts: string[] = [];
         if (options && options.withDays && this.days > 0) {
             parts = parts.concat([pretty.format(this.days), 'd ', zeroPad.format(this.hours)]);
-            console.log('days hours', parts);
         } else {
             parts.push(zeroPad.format(this.hours + this.days * HOURS_PER_DAY));
-            console.log('hours', parts);
         }
         parts = parts.concat([':', zeroPad.format(this.minutes), ':', zeroPad.format(this.seconds)]);
-        console.log('minutes seconds', parts);
         if (options && options.withMillis && this.milliseconds > 0) {
             parts = parts.concat(['.' + String(this.milliseconds)]);
-            console.log('milliseconds', parts);
         }
         return parts.join('');
     }
