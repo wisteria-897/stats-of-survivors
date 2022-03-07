@@ -19,6 +19,8 @@ export function Navigation() {
                 </li>
                 <li className={styles.navItem + ' ' + (currentPage === Page.Formations ? styles.active : '')}
                     onClick={() => dispatch(setCurrentPage(Page.Formations))}>Formations</li>
+                <li className={styles.navItem + ' ' + (currentPage === Page.SpeedUps ? styles.active : '')}
+                    onClick={() => dispatch(setCurrentPage(Page.SpeedUps))}>SpeedUps</li>
                 <li className={styles.comingSoon}>More coming soon...</li>
                 {/*<li className={styles.navItem + ' ' + (currentPage === Page.Chief ? styles.active : '')}
                     onClick={() => dispatch(setCurrentPage(Page.Chief))}>Chief</li>

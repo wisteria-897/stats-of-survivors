@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPersister } from '../../util/persistence';
 import styles from './Troops.module.css';
 
 class MarchCapacity {
@@ -140,35 +141,17 @@ function EditableOptionList<T>(props: EditableOptionListProps<T>) {
             </Option>
         );
     });
+    const customChecked = (value === customItem);
     return (
         <div className={styles.editableOptionList}>
             {options}
-            <Option key="custom" name={name} checked={value === customItem} item="custom" onChange={onChange}>
+            <Option key="custom" name={name} checked={customChecked} item="custom" onChange={onChange}>
                 Custom
             </Option>
-            {children}
-            <button onClick={(e) => onAddToList(customItem)}>Add to List</button>
+            {customChecked && children}
+            {customChecked && <button onClick={(e) => onAddToList(customItem)}>Add to List</button>}
         </div>
     );
-}
-
-const storageKeyBase = 'sos:troopFormationCalculator';
-function createPersister<T>(key: string, initialValue: T, serialize?: (value: T) => string, deserialize?: (data: string) => T) {
-    const fullKey = storageKeyBase + ':' + key;
-    return {
-        load: () => {
-            const json = localStorage.getItem(fullKey);
-            if (json) {
-                return deserialize ? deserialize(json) : JSON.parse(json);
-            } else {
-                return initialValue;
-            }
-        },
-        save: (value: T) => {
-            const serialized = serialize ? serialize(value) : JSON.stringify(value);
-            localStorage.setItem(fullKey, serialized);
-        }
-    };
 }
 
 function safeParseInt(input: string, max: number) {
@@ -260,20 +243,20 @@ const TroopRatioOptionLabel = (props: {ratio: TroopRatio}) => {
 }
 
 export function TroopFormationPlanner() {
-    const savedRatiosPersister = createPersister('savedRatios', [] as TroopRatio[],
+    const savedRatiosPersister = createPersister('troopFormationCalculator:savedRatios', [] as TroopRatio[],
         list => JSON.stringify(list.map((v: any) => v.toSerializable())),
         json => JSON.parse(json).map((v: any) => TroopRatio.fromSerializable(v)));
     const [savedRatios, setSavedRatios] = useState(savedRatiosPersister.load);
 
-    const troopRatioKeyPersister = createPersister('troopRatioKey', fixedRatios[0].key);
+    const troopRatioKeyPersister = createPersister('troopFormationCalculator:troopRatioKey', fixedRatios[0].key);
     const [troopRatioKey, setTroopRatioKey] = useState(troopRatioKeyPersister.load);
 
-    const savedCapacitiesPersister = createPersister('savedCapacities', defaultMarchCapacity,
+    const savedCapacitiesPersister = createPersister('troopFormationCalculator:savedCapacities', defaultMarchCapacity,
         list => JSON.stringify(list.map((v: any) => v.toSerializable())),
         json => JSON.parse(json).map((v: any) => MarchCapacity.fromSerializable(v)));
     const [savedCapacities, setSavedCapacities] = useState(savedCapacitiesPersister.load);
 
-    const capacityKeyPersister = createPersister('capacityKey', 'custom');
+    const capacityKeyPersister = createPersister('troopFormationCalculator:capacityKey', 'custom');
     const [capacityKey, setCapacityKey] = useState(capacityKeyPersister.load);
 
 

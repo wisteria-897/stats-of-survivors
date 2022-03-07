@@ -68,30 +68,26 @@
 
 .customMarchCapacity,
 .customTroopRatio {
+    width: 250px;
     padding-left: 30px;
 }
 
+.customMarchCapacity > label,
 .customTroopRatio > label {
     display: flex;
     flex-flow: row;
     column-gap: 5px;
+    align-items: center;
 }
 
-.customMarchCapacity {
-    display: flex;
-    flex-flow: column;
-}
-
-.customMarchCapacity > label {
-    display: flex;
-    flex-flow: row;
+.customMarchCapacity input[type=number] {
+    width: 100px;
 }
 
 .customMarchCapacity > label > span {
     flex: 1 0 auto;
 }
 
-.customMarchCapacity,
 .customTroopRatio > label > span {
     flex: 1 0 0;
 }

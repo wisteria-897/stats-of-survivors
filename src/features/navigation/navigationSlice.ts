@@ -5,7 +5,8 @@ export enum Page {
     Chief,
     Alliance,
     CustomChestPlanner,
-    Formations
+    Formations,
+    SpeedUps
 }
 
 export interface NavigationState {

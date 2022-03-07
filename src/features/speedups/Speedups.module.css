@@ -1,0 +1,51 @@
+.speedUpCalculator {
+    height: 100%;
+    overflow: scroll;
+    padding-left: 30px;
+}
+
+.speedUpCalculator > h2 {
+    margin: 0;
+    font-size: 125%;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.speedUpCalculator > div {
+    padding-top: 20px;
+    display: flex;
+    flex-flow: row wrap;
+    column-gap: 20px;
+}
+
+.speedUpCounters {
+    flex: 0 0 auto;
+    display: flex;
+    flex-flow: column;
+    row-gap: 5px;
+    align-items: center;
+}
+
+.speedUpCounters > label > span:first-child {
+    display: inline-block;
+    width: 100px;
+    flex: 1 0 auto;
+}
+
+.speedUpCounters input[type=number] {
+    width: 50px;
+    text-align: right;
+}
+
+.speedUpTotal {
+    max-width: 300px;
+    flex: 1 0 auto;
+    text-align: center;
+    font-size: 175%;
+}
+
+.totalValue {
+    display: block;
+    font-size: 120%;
+    margin: 5px 0;
+}
