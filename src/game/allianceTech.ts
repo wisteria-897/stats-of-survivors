@@ -1,106 +1,192 @@
-import Registry from './registry';
-import { toRoman } from '../util/roman';
-import { Bonus, SourceCategory } from './bonus';
+import { Bonus, SourceCategory, Tiers } from './bonus';
 import { Stat, Stats } from './stat';
 
-const families = new Registry((family: AllianceTechFamily) => family.name);
-
 export enum AllianceTechTree {
-    Development,
-    Territory,
-    Battle
-};
+    Development = 'Development',
+    Territory   = 'Territory',
+    Battle      = 'Battle'
+}
 
-export class AllianceTechFamily {
+export enum AllianceTechName {
+    AllianceConstructionI   = 'Alliance Construction I',
+    AllianceConstructionII  = 'Alliance Construction II',
+    AllianceConstructionIII = 'Alliance Construction III',
+    AllianceMembersI        = 'Alliance Members I',
+    AllianceMembersII       = 'Alliance Members II',
+    AllianceMembersIII      = 'Alliance Members III',
+    AllianceTowerI          = 'Alliance Tower I',
+    AllianceTowerII         = 'Alliance Tower II',
+    AllianceTowerIII        = 'Alliance Tower III',
+    BuildingDurabilityI     = 'Building Durability I',
+    BuildingDurabilityII    = 'Building Durability II',
+    BuildingDurabilityIII   = 'Building Durability III',
+    BurningSpeedI           = 'Burning Speed I',
+    BurningSpeedII          = 'Burning Speed II',
+    BurningSpeedIII         = 'Burning Speed III',
+    ConstructionI           = 'Construction I',
+    ConstructionII          = 'Construction II',
+    FoodGatheringI          = 'Food Gathering I',
+    FoodGatheringII         = 'Food Gathering II',
+    GasGatheringI           = 'Gas Gathering I',
+    GasGatheringII          = 'Gas Gathering II',
+    HealingSpeedupI         = 'Healing Speedup I',
+    HunterDefenseI          = 'Hunter Defense I',
+    HunterLethalityI        = 'Hunter Lethality I',
+    InfantryAttackI         = 'Infantry Attack I',
+    InfantryDefenseI        = 'Infantry Defense I',
+    InfantryHealthI         = 'Infantry Health I',
+    InfantryLethalityI      = 'Infantry Lethality I',
+    MarchSpeed              = 'March Speed ',
+    MetalGatheringI         = 'Metal Gathering I',
+    MetalGatheringII        = 'Metal Gathering II',
+    OasisMarch              = 'Oasis March ',
+    PlainsMarch             = 'Plains March ',
+    RallySlotsI             = 'Rally Slots I',
+    RallySlotsII            = 'Rally Slots II',
+    RallySlotsIII           = 'Rally Slots III',
+    RangedAttackI           = 'Ranged Attack I',
+    RangedHealthI           = 'Ranged Health I',
+    RiderAttackI            = 'Rider Attack I',
+    RiderDefenseI           = 'Rider Defense I',
+    RiderHealthI            = 'Rider Health I',
+    RiderLethalityI         = 'Rider Lethality I',
+    SoloMarchSpeedI         = 'Solo March Speed I',
+    SoloMarchSpeedII        = 'Solo March Speed II',
+    SoloMarchSpeedIII       = 'Solo March Speed III',
+    Sustainability          = 'Sustainability ',
+    TechSpeedupI            = 'Tech Speedup I',
+    TechSpeedupII           = 'Tech Speedup II',
+    TimerHelpDurationI      = 'Timer Help Duration I',
+    TimerHelpsI             = 'Timer Helps I',
+    TimerHelpsII            = 'Timer Helps II',
+    TrainingSpeedupI        = 'Training Speedup I',
+    TrainingSpeedupII       = 'Training Speedup II',
+    TroopAttackI            = 'Troop Attack I',
+    TroopDefenseI           = 'Troop Defense I',
+    TroopHealthI            = 'Troop Health I',
+    TroopLethalityI         = 'Troop Lethality I',
+    WarehouseExpansionI     = 'Warehouse Expansion I',
+    WarehouseExpansionII    = 'Warehouse Expansion II',
+    WarehouseExpansionIII   = 'Warehouse Expansion III',
+    WoodGatheringI          = 'Wood Gathering I',
+    WoodGatheringII         = 'Wood Gathering II'
+}
+
+export class AllianceTech {
     readonly name: string;
     readonly tree: AllianceTechTree;
-    readonly stat: Stat;
-    readonly tiers: AllianceTechTier[];
 
-    constructor(name: string, tree: AllianceTechTree, stat: Stat, ...tierData: number[][]) {
+    constructor(name: string, tree: AllianceTechTree) {
         this.name = name;
         this.tree = tree;
-        this.stat = stat;
-        this.tiers = tierData.map(([maxLevel, bonusValue], i) => new AllianceTechTier(this, maxLevel, bonusValue));
-        families.register(this);
     }
 }
 
-export class AllianceTechTier {
-    readonly family: AllianceTechFamily;
+export class AbilityAllianceTech extends AllianceTech {
+    constructor(name: string, tree: AllianceTechTree) {
+        super(name, tree);
+    }
+}
+
+export class StatAllianceTech extends AllianceTech {
+    readonly stat: Stat;
     readonly levels: AllianceTechLevel[];
 
-    constructor(family: AllianceTechFamily, maxLevel: number, bonusValue: number) {
-        this.family = family;
+    constructor(name: string, tree: AllianceTechTree, stat: Stat, maxLevel: number, bonusValue: number) {
+        super(name, tree);
+        this.stat = stat;
         this.levels = [];
         for (let i = 1; i <= maxLevel; i++) {
             this.levels.push(new AllianceTechLevel(this, i, bonusValue));
         }
     }
-
-    get name() {
-        return this.family.name + ' x' + toRoman(this.levels.length);
-    }
 }
 
 export class AllianceTechLevel {
-    readonly tier: AllianceTechTier;
+    readonly tech: StatAllianceTech;
     readonly level: number;
     readonly bonuses: Bonus[];
 
-    constructor(tier: AllianceTechTier, level: number, bonusValue: number) {
-        this.tier = tier;
+    constructor(tech: StatAllianceTech, level: number, bonusValue: number) {
+        this.tech = tech;
         this.level = level;
-        this.bonuses = [ new Bonus(tier.family.stat, bonusValue, this) ];
+        this.bonuses = [ new Bonus(tech.stat, bonusValue, this) ];
     }
 
     get name() {
-        return this.tier.name + ' ' + String(this.level);
+        return this.tech.name + ' ' + String(this.level);
     }
 
     get category() {
         return SourceCategory.AllianceTech;
     }
+
+    get tier() {
+        return Tiers.Common;
+    }
 }
 
-export const AllianceTechFamilies = {
-    AllianceConstruction: new AllianceTechFamily("Alliance Construction",AllianceTechTree.Territory,Stats.AllianceConstructionSpeed,[5,20],[5,20],[5,20]),
-    AllianceMembers: new AllianceTechFamily("Alliance Members",AllianceTechTree.Development,Stats.AllianceMembershipCapacity,[5,2],[5,4],[5,4]),
-    AllianceTower: new AllianceTechFamily("Alliance Tower",AllianceTechTree.Territory,Stats.AllianceTowerCapacity,[5,18],[5,30],[5,30]),
-    BuildingDurability: new AllianceTechFamily("Building Durability",AllianceTechTree.Territory,Stats.AllianceBuildingDurability,[5,1000],[5,1000],[5,1000]),
-    BurningSpeed: new AllianceTechFamily("Burning Speed",AllianceTechTree.Territory,Stats.EnemyBuildingBurningSpeed,[5,20],[5,20],[5,20]),
-    Construction: new AllianceTechFamily("Construction",AllianceTechTree.Development,Stats.ConstructionSpeed,[5,10],[5,10]),
-    FoodGathering: new AllianceTechFamily("Food Gathering",AllianceTechTree.Development,Stats.FoodGatheringSpeed,[5,10],[5,10]),
-    GasGathering: new AllianceTechFamily("Gas Gathering",AllianceTechTree.Development,Stats.GasGatheringSpeed,[5,10],[5,10]),
-    HealingSpeedup: new AllianceTechFamily("Healing Speedup",AllianceTechTree.Development,Stats.HealingSpeed,[5,40]),
-    HunterDefense: new AllianceTechFamily("Hunter Defense",AllianceTechTree.Battle,Stats.HunterDefense,[5,10]),
-    HunterLethality: new AllianceTechFamily("Hunter Lethality",AllianceTechTree.Battle,Stats.HunterLethality,[5,10]),
-    InfantryAttack: new AllianceTechFamily("Infantry Attack",AllianceTechTree.Battle,Stats.InfantryAttack,[5,10]),
-    InfantryDefense: new AllianceTechFamily("Infantry Defense",AllianceTechTree.Battle,Stats.InfantryDefense,[5,10]),
-    InfantryHealth: new AllianceTechFamily("Infantry Health",AllianceTechTree.Battle,Stats.InfantryHealth,[5,10]),
-    InfrantryLethality: new AllianceTechFamily("Infrantry Lethality",AllianceTechTree.Battle,Stats.InfantryLethality,[5,10]),
-    MarchSpeed: new AllianceTechFamily("March Speed",AllianceTechTree.Territory,Stats.MarchSpeed,[5,10]),
-    MetalGathering: new AllianceTechFamily("Metal Gathering",AllianceTechTree.Development,Stats.MetalGatheringSpeed,[5,10],[5,10]),
-    //OasisMarch: new AllianceTechFamily("Oasis March",AllianceTechTree.Development,[1,0]),
-    //PlainsMarch: new AllianceTechFamily("Plains March",AllianceTechTree.Development,[1,0]),
-    RallySlots: new AllianceTechFamily("Rally Slots",AllianceTechTree.Battle,Stats.RallyChiefCapacity,[3,1],[3,1],[4,1]),
-    RangedAttack: new AllianceTechFamily("Ranged Attack",AllianceTechTree.Battle,Stats.HunterAttack,[5,10]),
-    RangedHealth: new AllianceTechFamily("Ranged Health",AllianceTechTree.Battle,Stats.HunterHealth,[5,10]),
-    RiderAttack: new AllianceTechFamily("Rider Attack",AllianceTechTree.Battle,Stats.RiderAttack,[5,10]),
-    RiderDefense: new AllianceTechFamily("Rider Defense",AllianceTechTree.Battle,Stats.RiderDefense,[5,10]),
-    RiderHealth: new AllianceTechFamily("Rider Health",AllianceTechTree.Battle,Stats.RiderHealth,[5,10]),
-    RiderLethality: new AllianceTechFamily("Rider Lethality",AllianceTechTree.Battle,Stats.RiderLethality,[5,10]),
-    SoloMarchSpeed: new AllianceTechFamily("Solo March Speed",AllianceTechTree.Battle,Stats.MarchSpeed,[1,10],[1,10],[1,10]),
-    //Sustainability: new AllianceTechFamily("Sustainability",AllianceTechTree.Battle,[1,0]),
-    TechSpeedup: new AllianceTechFamily("Tech Speedup",AllianceTechTree.Development,Stats.ResearchSpeed,[5,10],[5,10]),
-    TimerHelpDuration: new AllianceTechFamily("Timer Help Duration",AllianceTechTree.Development,Stats.TimerHelpDuration,[5,30]),
-    TimerHelps: new AllianceTechFamily("Timer Helps",AllianceTechTree.Development,Stats.TimerHelpCapacity,[5,1],[5,2]),
-    TrainingSpeedup: new AllianceTechFamily("Training Speedup",AllianceTechTree.Development,Stats.TrainingSpeed,[5,10],[5,10]),
-    TroopAttack: new AllianceTechFamily("Troop Attack",AllianceTechTree.Battle,Stats.TroopAttack,[5,10]),
-    TroopDefense: new AllianceTechFamily("Troop Defense",AllianceTechTree.Battle,Stats.TroopDefense,[5,10]),
-    TroopHealth: new AllianceTechFamily("Troop Health",AllianceTechTree.Battle,Stats.TroopHealth,[5,10]),
-    TroopLethality: new AllianceTechFamily("Troop Lethality",AllianceTechTree.Battle,Stats.TroopLethality,[5,10]),
-    //WarehouseExpansion: new AllianceTechFamily("Warehouse Expansion",AllianceTechTree.Territory,[Stats.AllianceFoodCapacity,Stats.AllianceWoodCapacity,Stats.AllianceMetalCapacity,Stats.AllianceGasCapacity],[5,500],[5,2],[5,4]),
-    WoodGathering: new AllianceTechFamily("Wood Gathering",AllianceTechTree.Development,Stats.WoodGatheringSpeed,[5,10],[5,10])
-};
-
+export const AllianceTechs = {
+    [AllianceTechName.AllianceConstructionI]: new StatAllianceTech(AllianceTechName.AllianceConstructionI, AllianceTechTree.Territory, Stats.AllianceConstructionSpeed, 5, 200),
+    [AllianceTechName.AllianceConstructionII]: new StatAllianceTech(AllianceTechName.AllianceConstructionII, AllianceTechTree.Territory, Stats.AllianceConstructionSpeed, 5, 200),
+    [AllianceTechName.AllianceConstructionIII]: new StatAllianceTech(AllianceTechName.AllianceConstructionIII, AllianceTechTree.Territory, Stats.AllianceConstructionSpeed, 5, 200),
+    [AllianceTechName.AllianceMembersI]: new StatAllianceTech(AllianceTechName.AllianceMembersI, AllianceTechTree.Development, Stats.AllianceMembershipCapacity, 5, 2),
+    [AllianceTechName.AllianceMembersII]: new StatAllianceTech(AllianceTechName.AllianceMembersII, AllianceTechTree.Development, Stats.AllianceMembershipCapacity, 5, 4),
+    [AllianceTechName.AllianceMembersIII]: new StatAllianceTech(AllianceTechName.AllianceMembersIII, AllianceTechTree.Development, Stats.AllianceMembershipCapacity, 5, 4),
+    [AllianceTechName.AllianceTowerI]: new StatAllianceTech(AllianceTechName.AllianceTowerI, AllianceTechTree.Territory, Stats.AllianceTowerCapacity, 5, 18),
+    [AllianceTechName.AllianceTowerII]: new StatAllianceTech(AllianceTechName.AllianceTowerII, AllianceTechTree.Territory, Stats.AllianceTowerCapacity, 5, 30),
+    [AllianceTechName.AllianceTowerIII]: new StatAllianceTech(AllianceTechName.AllianceTowerIII, AllianceTechTree.Territory, Stats.AllianceTowerCapacity, 5, 30),
+    [AllianceTechName.BuildingDurabilityI]: new StatAllianceTech(AllianceTechName.BuildingDurabilityI, AllianceTechTree.Territory, Stats.AllianceBuildingDurability, 5, 1000),
+    [AllianceTechName.BuildingDurabilityII]: new StatAllianceTech(AllianceTechName.BuildingDurabilityII, AllianceTechTree.Territory, Stats.AllianceBuildingDurability, 5, 1000),
+    [AllianceTechName.BuildingDurabilityIII]: new StatAllianceTech(AllianceTechName.BuildingDurabilityIII, AllianceTechTree.Territory, Stats.AllianceBuildingDurability, 5, 1000),
+    [AllianceTechName.BurningSpeedI]: new StatAllianceTech(AllianceTechName.BurningSpeedI, AllianceTechTree.Territory, Stats.EnemyBuildingBurningSpeed, 5, 200),
+    [AllianceTechName.BurningSpeedII]: new StatAllianceTech(AllianceTechName.BurningSpeedII, AllianceTechTree.Territory, Stats.EnemyBuildingBurningSpeed, 5, 200),
+    [AllianceTechName.BurningSpeedIII]: new StatAllianceTech(AllianceTechName.BurningSpeedIII, AllianceTechTree.Territory, Stats.EnemyBuildingBurningSpeed, 5, 200),
+    [AllianceTechName.ConstructionI]: new StatAllianceTech(AllianceTechName.ConstructionI, AllianceTechTree.Development, Stats.ConstructionSpeed, 5, 100),
+    [AllianceTechName.ConstructionII]: new StatAllianceTech(AllianceTechName.ConstructionII, AllianceTechTree.Development, Stats.ConstructionSpeed, 5, 100),
+    [AllianceTechName.FoodGatheringI]: new StatAllianceTech(AllianceTechName.FoodGatheringI, AllianceTechTree.Development, Stats.FoodGatheringSpeed, 5, 100),
+    [AllianceTechName.FoodGatheringII]: new StatAllianceTech(AllianceTechName.FoodGatheringII, AllianceTechTree.Development, Stats.FoodGatheringSpeed, 5, 100),
+    [AllianceTechName.GasGatheringI]: new StatAllianceTech(AllianceTechName.GasGatheringI, AllianceTechTree.Development, Stats.GasGatheringSpeed, 5, 100),
+    [AllianceTechName.GasGatheringII]: new StatAllianceTech(AllianceTechName.GasGatheringII, AllianceTechTree.Development, Stats.GasGatheringSpeed, 5, 100),
+    [AllianceTechName.HealingSpeedupI]: new StatAllianceTech(AllianceTechName.HealingSpeedupI, AllianceTechTree.Development, Stats.HealingSpeed, 5, 400),
+    [AllianceTechName.HunterDefenseI]: new StatAllianceTech(AllianceTechName.HunterDefenseI, AllianceTechTree.Battle, Stats.HunterDefense, 5, 100),
+    [AllianceTechName.HunterLethalityI]: new StatAllianceTech(AllianceTechName.HunterLethalityI, AllianceTechTree.Battle, Stats.HunterLethality, 5, 100),
+    [AllianceTechName.InfantryAttackI]: new StatAllianceTech(AllianceTechName.InfantryAttackI, AllianceTechTree.Battle, Stats.InfantryAttack, 5, 100),
+    [AllianceTechName.InfantryDefenseI]: new StatAllianceTech(AllianceTechName.InfantryDefenseI, AllianceTechTree.Battle, Stats.InfantryDefense, 5, 100),
+    [AllianceTechName.InfantryHealthI]: new StatAllianceTech(AllianceTechName.InfantryHealthI, AllianceTechTree.Battle, Stats.InfantryHealth, 5, 100),
+    [AllianceTechName.InfantryLethalityI]: new StatAllianceTech(AllianceTechName.InfantryLethalityI, AllianceTechTree.Battle, Stats.InfantryLethality, 5, 100),
+    [AllianceTechName.MarchSpeed]: new StatAllianceTech(AllianceTechName.MarchSpeed, AllianceTechTree.Territory, Stats.MarchSpeed, 5, 100),
+    [AllianceTechName.MetalGatheringI]: new StatAllianceTech(AllianceTechName.MetalGatheringI, AllianceTechTree.Development, Stats.MetalGatheringSpeed, 5, 100),
+    [AllianceTechName.MetalGatheringII]: new StatAllianceTech(AllianceTechName.MetalGatheringII, AllianceTechTree.Development, Stats.MetalGatheringSpeed, 5, 100),
+    [AllianceTechName.OasisMarch]: new AbilityAllianceTech(AllianceTechName.OasisMarch, AllianceTechTree.Development),
+    [AllianceTechName.PlainsMarch]: new AbilityAllianceTech(AllianceTechName.PlainsMarch, AllianceTechTree.Development),
+    [AllianceTechName.RallySlotsI]: new StatAllianceTech(AllianceTechName.RallySlotsI, AllianceTechTree.Battle, Stats.RallyChiefCapacity, 3, 1),
+    [AllianceTechName.RallySlotsII]: new StatAllianceTech(AllianceTechName.RallySlotsII, AllianceTechTree.Battle, Stats.RallyChiefCapacity, 3, 1),
+    [AllianceTechName.RallySlotsIII]: new StatAllianceTech(AllianceTechName.RallySlotsIII, AllianceTechTree.Battle, Stats.RallyChiefCapacity, 4, 1),
+    [AllianceTechName.RangedAttackI]: new StatAllianceTech(AllianceTechName.RangedAttackI, AllianceTechTree.Battle, Stats.HunterAttack, 5, 100),
+    [AllianceTechName.RangedHealthI]: new StatAllianceTech(AllianceTechName.RangedHealthI, AllianceTechTree.Battle, Stats.HunterHealth, 5, 100),
+    [AllianceTechName.RiderAttackI]: new StatAllianceTech(AllianceTechName.RiderAttackI, AllianceTechTree.Battle, Stats.RiderAttack, 5, 100),
+    [AllianceTechName.RiderDefenseI]: new StatAllianceTech(AllianceTechName.RiderDefenseI, AllianceTechTree.Battle, Stats.RiderDefense, 5, 100),
+    [AllianceTechName.RiderHealthI]: new StatAllianceTech(AllianceTechName.RiderHealthI, AllianceTechTree.Battle, Stats.RiderHealth, 5, 100),
+    [AllianceTechName.RiderLethalityI]: new StatAllianceTech(AllianceTechName.RiderLethalityI, AllianceTechTree.Battle, Stats.RiderLethality, 5, 100),
+    [AllianceTechName.SoloMarchSpeedI]: new StatAllianceTech(AllianceTechName.SoloMarchSpeedI, AllianceTechTree.Battle, Stats.MarchSpeed, 1, 100),
+    [AllianceTechName.SoloMarchSpeedII]: new StatAllianceTech(AllianceTechName.SoloMarchSpeedII, AllianceTechTree.Battle, Stats.MarchSpeed, 1, 100),
+    [AllianceTechName.SoloMarchSpeedIII]: new StatAllianceTech(AllianceTechName.SoloMarchSpeedIII, AllianceTechTree.Battle, Stats.MarchSpeed, 1, 100),
+    [AllianceTechName.Sustainability]: new AbilityAllianceTech(AllianceTechName.Sustainability, AllianceTechTree.Battle),
+    [AllianceTechName.TechSpeedupI]: new StatAllianceTech(AllianceTechName.TechSpeedupI, AllianceTechTree.Development, Stats.ResearchSpeed, 5, 100),
+    [AllianceTechName.TechSpeedupII]: new StatAllianceTech(AllianceTechName.TechSpeedupII, AllianceTechTree.Development, Stats.ResearchSpeed, 5, 100),
+    [AllianceTechName.TimerHelpDurationI]: new StatAllianceTech(AllianceTechName.TimerHelpDurationI, AllianceTechTree.Development, Stats.TimerHelpDuration, 5, 30),
+    [AllianceTechName.TimerHelpsI]: new StatAllianceTech(AllianceTechName.TimerHelpsI, AllianceTechTree.Development, Stats.TimerHelpCapacity, 5, 1),
+    [AllianceTechName.TimerHelpsII]: new StatAllianceTech(AllianceTechName.TimerHelpsII, AllianceTechTree.Development, Stats.TimerHelpCapacity, 5, 2),
+    [AllianceTechName.TrainingSpeedupI]: new StatAllianceTech(AllianceTechName.TrainingSpeedupI, AllianceTechTree.Development, Stats.TrainingSpeed, 5, 100),
+    [AllianceTechName.TrainingSpeedupII]: new StatAllianceTech(AllianceTechName.TrainingSpeedupII, AllianceTechTree.Development, Stats.TrainingSpeed, 5, 100),
+    [AllianceTechName.TroopAttackI]: new StatAllianceTech(AllianceTechName.TroopAttackI, AllianceTechTree.Battle, Stats.TroopAttack, 5, 100),
+    [AllianceTechName.TroopDefenseI]: new StatAllianceTech(AllianceTechName.TroopDefenseI, AllianceTechTree.Battle, Stats.TroopDefense, 5, 100),
+    [AllianceTechName.TroopHealthI]: new StatAllianceTech(AllianceTechName.TroopHealthI, AllianceTechTree.Battle, Stats.TroopHealth, 5, 100),
+    [AllianceTechName.TroopLethalityI]: new StatAllianceTech(AllianceTechName.TroopLethalityI, AllianceTechTree.Battle, Stats.TroopLethality, 5, 100),
+    [AllianceTechName.WarehouseExpansionI]: new AbilityAllianceTech(AllianceTechName.WarehouseExpansionI, AllianceTechTree.Territory),// Stats.Alliance warehouse capacity, 5, 5000),
+    [AllianceTechName.WarehouseExpansionII]: new AbilityAllianceTech(AllianceTechName.WarehouseExpansionII, AllianceTechTree.Territory),// Stats.Alliance warehouse capacity, 5, 2),
+    [AllianceTechName.WarehouseExpansionIII]: new AbilityAllianceTech(AllianceTechName.WarehouseExpansionIII, AllianceTechTree.Territory),// Stats.Alliance warehouse capacity, 5, 4),
+    [AllianceTechName.WoodGatheringI]: new StatAllianceTech(AllianceTechName.WoodGatheringI, AllianceTechTree.Development, Stats.WoodGatheringSpeed, 5, 100),
+    [AllianceTechName.WoodGatheringII]: new StatAllianceTech(AllianceTechName.WoodGatheringII, AllianceTechTree.Development, Stats.WoodGatheringSpeed, 5, 100)
+} as const;

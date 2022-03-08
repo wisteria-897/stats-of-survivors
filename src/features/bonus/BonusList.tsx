@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { chainable } from '../../util/itertools';
-import { Stat, StatUnit } from '../../game/stat';
+import { Stat, StatUnit, Stats } from '../../game/stat';
 import { groupBonuses, Bonus, BonusGroupKey, BonusGroupValue, BonusGroup, BonusSource } from '../../game/bonus';
 import styles from './Bonus.module.css';
 
@@ -71,8 +71,15 @@ export function BonusGroupList(props: {stat: Stat, bonusGroup: BonusGroup<any>} 
     );
 }
 
+const supportedStats = [
+    Stats.InfantryAttack, Stats.InfantryDefense, Stats.InfantryHealth, Stats.InfantryLethality,
+    Stats.RiderAttack, Stats.RiderDefense, Stats.RiderHealth, Stats.RiderLethality,
+    Stats.HunterAttack, Stats.HunterDefense, Stats.HunterHealth, Stats.HunterLethality,
+    Stats.TroopAttack, Stats.TroopDefense, Stats.TroopHealth, Stats.TroopLethality
+];
 export function BonusList(props: { bonuses: Bonus[] }) {
-    const bonusGroup: BonusGroup<Stat> = groupBonuses(props.bonuses, b => b.stat,
+    const filteredBonuses = props.bonuses.filter(b => supportedStats.find(s => s == b.stat));
+    const bonusGroup: BonusGroup<Stat> = groupBonuses(filteredBonuses, b => b.stat,
         x => groupBonuses(x, b => b.source ? b.source.category : 'Unknown',
             y => groupBonuses(y, b => b.source || 'Unknown')));
     return <BonusGroupList className={styles.bonusList} bonusGroup={bonusGroup}/>;

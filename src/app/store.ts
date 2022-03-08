@@ -1,6 +1,6 @@
 import { combineReducers, configureStore, ThunkAction, Action } from '@reduxjs/toolkit';
 import { Middleware } from 'redux';
-import allianceReducer from '../features/alliance/allianceSlice';
+import allianceReducer, { allianceStatePersister } from '../features/alliance/allianceSlice';
 import chiefReducer, { chiefStatePersister } from '../features/chief/chiefSlice';
 import navigationReducer, { navigationStatePersister } from '../features/navigation/navigationSlice';
 
@@ -16,6 +16,7 @@ export type RootState = ReturnType<typeof rootReducer>;
 
 const persisterMiddleware: Middleware<{}, RootState> = (store) => (next) => (action) => {
     const result = next(action);
+    allianceStatePersister.save(store.getState().alliance);
     chiefStatePersister.save(store.getState().chief);
     navigationStatePersister.save(store.getState().navigation);
     return result;

@@ -1,0 +1,60 @@
+.alliancePanel {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.alliancePanel > header {
+    max-width: 700px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    column-gap: 10px;
+    flex: 0 0 auto;
+}
+
+.alliancePanel > header > h2 {
+    font-size: 150%;
+    font-weight: bold;
+    padding-left: 10px;
+}
+
+.keyStats {
+    display: flex;
+    flex-flow: row nowrap;
+    column-gap: 10px;
+    flex: 1 0 auto;
+    align-items: center;
+}
+
+.keyStat {
+    display: inline-block;
+}
+
+.alliancePanel > section {
+    flex: 1 1 0;
+    overflow: scroll;
+}
+
+.detailSections {
+    display: flex;
+    flex-flow: row wrap;
+    column-gap: 50px;
+    padding: 0 10px;
+}
+
+.allianceEditor {
+    padding: 0 10px;
+    height: 100%;
+    overflow: scroll;
+}
+
+.allianceEditor label {
+    display: block;
+}
+
+.allianceEditor label > span {
+    display: inline-block;
+    width: 275px;
+}

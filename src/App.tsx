@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAppSelector } from './app/hooks';
 import { ChiefPanel } from './features/chief/ChiefPanel';
+import AlliancePanel from './features/alliance/AlliancePanel';
 import { CustomChestPlanner } from './features/customChest/CustomChest';
 import { TroopPanel } from './features/troops/TroopPanel';
 import SpeedUpPanel from './features/speedups/SpeedUpPanel';
@@ -9,17 +10,20 @@ import { Navigation } from './features/navigation/Navigation';
 import './App.css';
 
 const ActivePage = (props: any) => {
-    if (props.page === Page.Chief) {
-        return <ChiefPanel />;
-    } else if (props.page === Page.CustomChestPlanner) {
-        return <CustomChestPlanner />;
-    } else if (props.page === Page.Formations) {
-        return <TroopPanel />;
-    } else if (props.page === Page.SpeedUps) {
-        return <SpeedUpPanel />;
+    switch (props.page) {
+        case Page.Chief:
+            return <ChiefPanel />;
+        case Page.CustomChestPlanner:
+            return <CustomChestPlanner />;
+        case Page.Formations:
+            return <TroopPanel />;
+        case Page.SpeedUps:
+            return <SpeedUpPanel />;
+        case Page.Alliance:
+            return <AlliancePanel />;
+        default:
+            return <div />;
     }
-
-    return <div />;
 }
 
 function App() {

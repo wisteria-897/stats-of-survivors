@@ -10,6 +10,8 @@ import { HeroGear, HeroGears } from '../../game/heroGear';
 import { ChiefGears, ChiefGearSlot } from '../../game/chiefGear';
 import { ResearchTech, ResearchTechs, ResearchTechName } from '../../game/research';
 import { StatTalent, Talent, Talents, TalentName } from '../../game/talents';
+import { AllianceTech, AllianceTechs, AllianceTechName, StatAllianceTech } from '../../game/allianceTech';
+import { selectAllianceByTag } from '../alliance/allianceSlice';
 import {
     Chief,
     ChiefId,
@@ -154,12 +156,36 @@ const ChiefBonusList = (props: {chief: Chief}) => {
                 return result;
             }, [] as Bonus[]);
 
+    const alliance = useAppSelector(state => selectAllianceByTag(state, chief.allianceTag || ''));
+    console.log('bonuses', chief.allianceTag, alliance);
+    let allianceTechBonuses: Bonus[] = [];
+    if (alliance && alliance.allianceTech) {
+        console.log('bonuses', alliance.allianceTech);
+        allianceTechBonuses = Object.entries(alliance.allianceTech)
+            .filter(entry => {
+                const [k, v] = entry as [AllianceTechName, number];
+                return v > 0;
+            })
+            .reduce((result, entry) => {
+                const [techName, level] = entry as [AllianceTechName, number];
+                const tech = AllianceTechs[techName];
+                if (tech instanceof StatAllianceTech) {
+                    for (let i = 0; i < level; i++) {
+                        result = result.concat(tech.levels[i].bonuses);
+                    }
+                }
+                return result;
+            }, [] as Bonus[]);
+    }
+
+    console.log('bonuses', allianceTechBonuses);
     const bonuses: Bonus[] = ([] as Bonus[]).concat(
         vipLevel.bonuses,
         ...chainable(() => chiefGearLevels).notNull().map(gl => gl.bonuses).asArray(),
         ...chainable(() => heroGearLevels).notNull().map(gl => gl.bonuses).asArray(),
         ...researchLevelBonuses,
-        ...talentLevelBonuses
+        ...talentLevelBonuses,
+        ...allianceTechBonuses
     );
 
     return (
@@ -228,6 +254,7 @@ const ChiefEditor = (props: {chief: Chief, onComplete: (update: Chief | null) =>
 
     const {chief, onComplete} = props;
     const [chiefName, setChiefName] = useState(chief.name);
+    const [allianceTag, setAllianceTag] = useState(chief.allianceTag);
     const [vipLevel, setVipLevel] = useState(chief.vipLevel);
     const [chiefLevel, setChiefLevel] = useState(chief.level);
     const [chiefGear, setChiefGear] = useState(chief.chiefGear);
@@ -238,6 +265,7 @@ const ChiefEditor = (props: {chief: Chief, onComplete: (update: Chief | null) =>
     const onSave = () => {
         const updatedChief = Object.assign({}, chief, {
             name: chiefName,
+            allianceTag: allianceTag,
             level: chiefLevel,
             vipLevel: vipLevel,
             chiefGear: chiefGear,
@@ -280,6 +308,10 @@ const ChiefEditor = (props: {chief: Chief, onComplete: (update: Chief | null) =>
             <label>
                 <span>Name:</span>
                 <input type="text" placeholder="Chief name" value={chiefName} onChange={(e) => setChiefName(e.target.value)} />
+            </label>
+            <label>
+                <span>Alliance:</span>
+                <input type="text" placeholder="Tag" minLength={3} maxLength={3} value={allianceTag || ''} onChange={(e) => setAllianceTag(e.target.value)} />
             </label>
             <LevelPicker label="Chief level:" min={0} max={60} level={chiefLevel} onChange={setChiefLevel} />
             <LevelPicker label="VIP level:" min={0} max={12} level={chiefLevel} onChange={setVipLevel} />
