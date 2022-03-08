@@ -4,6 +4,8 @@ import { RootState } from '../../app/store';
 import { createPersister } from '../../util/persistence';
 import { ChiefGear } from '../../game/chiefGear';
 import { HeroGear } from '../../game/heroGear';
+import { ResearchTechName, ResearchTechs } from '../../game/research';
+const uuid = require('uuid');
 
 export type ChiefId = string;
 export interface Chief {
@@ -14,6 +16,7 @@ export interface Chief {
     vipLevel: number;
     chiefGear: { [key: string]: number };
     heroGear: { [key: string]: number };
+    research: { [key in ResearchTechName]: number };
 }
 
 export interface ChiefState {
@@ -23,10 +26,32 @@ export interface ChiefState {
 
 const initialState: ChiefState = {
     chiefs: [],
-    selectedId: null
+    selectedId: null,
 };
 
 export const chiefStatePersister = createPersister('chief', initialState);
+
+export const createChief = () => {
+    const research: {[key in ResearchTechName]?: number} = {};
+    for (const techName in ResearchTechs) {
+        research[techName as ResearchTechName] = 0;
+    }
+
+    return {
+        id: uuid.v4(),
+        name: 'Survivor',
+        level: 1,
+        vipLevel: 0,
+        allianceTag: null,
+        chiefGear: {'Helmet': 0, 'Armor': 0, 'Kneepads': 0, 'Assault Rifle': 0, 'Boots': 0, 'Communicator': 0},
+        heroGear: {
+            'Brawler/Head': 0, 'Brawler/Body': 0, 'Brawler/Foot': 0,
+            'Marksman/Head': 0, 'Marksman/Body': 0, 'Marksman/Foot': 0,
+            'Scout/Head': 0, 'Scout/Body': 0, 'Scout/Foot': 0
+        },
+        research: research as {[key in ResearchTechName]: number}
+    };
+};
 
 const getById = (state: ChiefState, id: ChiefId): Chief | null => {
     return state.chiefs.find(c => c.id === id) || null;

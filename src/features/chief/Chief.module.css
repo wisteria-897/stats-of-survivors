@@ -46,6 +46,8 @@
 
 .chiefEditor {
     padding: 0 10px;
+    height: 100%;
+    overflow: scroll;
 }
 
 .chiefEditor label {
