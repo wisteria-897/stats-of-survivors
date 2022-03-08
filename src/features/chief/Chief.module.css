@@ -6,6 +6,7 @@
 }
 
 .chiefPanel > header {
+    max-width: 600px;
     display: flex;
     align-items: center;
     justify-content: flex-start;
@@ -19,6 +20,14 @@
     padding-left: 10px;
 }
 
+.keyStats {
+    display: flex;
+    flex-flow: row nowrap;
+    column-gap: 10px;
+    flex: 1 0 auto;
+    align-items: center;
+}
+
 .keyStat {
     display: inline-block;
 }
@@ -28,6 +37,41 @@
     overflow: scroll;
 }
 
-.editor {
+.detailSections {
+    display: flex;
+    flex-flow: row wrap;
+    column-gap: 50px;
+    padding: 0 10px;
+}
+
+.chiefEditor {
+    padding: 0 10px;
+}
+
+.chiefEditor label {
+    display: block;
+}
+
+.chiefEditor label > span {
+    display: inline-block;
+    width: 275px;
+}
+
+.chiefEditorGearList {
+    list-style-type: none;
+    padding: 0;
+}
+
+.chiefEditorGearList select {
+    width: 175px;
+}
+
+.chiefEditorHeroGearList {
+    list-style-type: none;
+    padding: 0;
+}
+
+.chiefEditorHeroGearList select {
+    width: 300px;
 }
 

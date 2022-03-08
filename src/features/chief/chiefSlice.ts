@@ -1,11 +1,13 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { PayloadActionWithId } from '../../util/payload';
 import { RootState } from '../../app/store';
+import { createPersister } from '../../util/persistence';
 import { ChiefGear } from '../../game/chiefGear';
 import { HeroGear } from '../../game/heroGear';
 
+export type ChiefId = string;
 export interface Chief {
-    id: number;
+    id: ChiefId;
     name: string;
     level: number;
     allianceTag: string | null;
@@ -16,34 +18,22 @@ export interface Chief {
 
 export interface ChiefState {
     chiefs: Chief[];
-    selectedId: number;
+    selectedId: ChiefId | null;
 }
 
-const defaultChief: Chief = {
-    id: 1,
-    name: 'Wisteria',
-    level: 1,
-    allianceTag: null,
-    vipLevel: 0,
-    chiefGear: {'Helmet': 12, 'Armor': 1, 'Kneepads': 1, 'Assault Rifle': 1, 'Boots': 1, 'Communicator': 1},
-    heroGear: {
-        'Brawler/Head': 13, 'Brawler/Body': 15, 'Brawler/Foot': 12,
-        'Marksman/Head': 12, 'Marksman/Body': 11, 'Marksman/Foot': 11,
-        'Scout/Head': 11, 'Scout/Body': 10, 'Scout/Foot': 10
-    }
-};
-
 const initialState: ChiefState = {
-    chiefs: [defaultChief],
-    selectedId: defaultChief.id
+    chiefs: [],
+    selectedId: null
 };
 
-const getById = (state: ChiefState, id: number): Chief | null => {
+export const chiefStatePersister = createPersister('chief', initialState);
+
+const getById = (state: ChiefState, id: ChiefId): Chief | null => {
     return state.chiefs.find(c => c.id === id) || null;
 };
 
 type ChiefFunction<T> = (chief: Chief) => T;
-const withChief = <T>(state: ChiefState, id: number, fn: ChiefFunction<T>): T | null => {
+const withChief = <T>(state: ChiefState, id: ChiefId, fn: ChiefFunction<T>): T | null => {
     const chief = getById(state, id);
     if (chief) {
         return fn(chief);
@@ -53,21 +43,38 @@ const withChief = <T>(state: ChiefState, id: number, fn: ChiefFunction<T>): T | 
 
 export const chiefSlice = createSlice({
     name: 'chief',
-    initialState,
+    initialState: chiefStatePersister.load(),
     reducers: {
-        setChiefName: (state, action: PayloadActionWithId<string>) => {
+        setChief: (state, action: PayloadAction<ChiefId | null>) => {
+            state.selectedId = action.payload;
+        },
+
+        setChiefName: (state, action: PayloadActionWithId<ChiefId, string>) => {
             withChief(state, action.payload.id,
                 chief => chief.name = action.payload.value
             );
         },
 
-        setChiefLevel: (state, action: PayloadActionWithId<number>) => {
+        setChiefLevel: (state, action: PayloadActionWithId<ChiefId, number>) => {
             withChief(state, action.payload.id,
                 chief => chief.level = action.payload.value
             );
         },
 
-        incrementVipLevel: (state, action: PayloadAction<number>) => {
+        addChief: (state, action: PayloadAction<Chief>) => {
+            state.chiefs = [...state.chiefs, action.payload];
+        },
+
+        updateChief: (state, action: PayloadAction<Chief>) => {
+            const index = state.chiefs.findIndex((c: Chief) => c.id == action.payload.id);
+            if (index >= 0) {
+                const updated = [...state.chiefs];
+                updated[index] = action.payload;
+                state.chiefs = updated;
+            }
+        },
+
+        incrementVipLevel: (state, action: PayloadAction<ChiefId>) => {
             withChief(state, action.payload, chief => {
                 chief.vipLevel = (chief.vipLevel + 1) % 13;
             });
@@ -75,33 +82,43 @@ export const chiefSlice = createSlice({
     }
 });
 
-export const { setChiefName, setChiefLevel, incrementVipLevel } = chiefSlice.actions;
+export const { setChief, setChiefName, setChiefLevel, incrementVipLevel, addChief, updateChief } = chiefSlice.actions;
 
-export const selectChief = (state: RootState, id: number): Chief | null => {
-    return getById(state.chief, id);
+export const selectChief = (state: RootState, id?: ChiefId): Chief | null => {
+    let chiefId;
+    if (id === undefined) {
+        if (state.chief.selectedId == null) {
+            return null;
+        }
+        chiefId = state.chief.selectedId;
+    } else {
+        chiefId = id;
+    }
+
+    return getById(state.chief, chiefId);
 };
 
 export const selectChiefs = (state: RootState): Chief[] => state.chief.chiefs;
 
-export const selectChiefGear = (state: RootState, id: number, chiefGear: ChiefGear) => {
+export const selectChiefGear = (state: RootState, id: ChiefId, chiefGear: ChiefGear) => {
     return withChief(state.chief, id, chief => {
         const level = chief.chiefGear[chiefGear.name];
         return chiefGear.levels[level - 1] || null;
     });
 }
 
-export const selectChiefGearList = (state: RootState, id: number, ...chiefGear: ChiefGear[]) => {
+export const selectChiefGearList = (state: RootState, id: ChiefId, ...chiefGear: ChiefGear[]) => {
     return chiefGear.map(cg => selectChiefGear(state, id, cg));
 }
 
-export const selectChiefHeroGear = (state: RootState, id: number, heroGear: HeroGear) => {
+export const selectChiefHeroGear = (state: RootState, id: ChiefId, heroGear: HeroGear) => {
     return withChief(state.chief, id, chief => {
         const level = chief.heroGear[heroGear.heroType + '/' + heroGear.slot.slot];
         return heroGear.levels[level - 1] || null;
     });
 }
 
-export const selectChiefHeroGearList = (state: RootState, id: number, ...heroGear: HeroGear[]) => {
+export const selectChiefHeroGearList = (state: RootState, id: ChiefId, ...heroGear: HeroGear[]) => {
     return heroGear.map(hg => selectChiefHeroGear(state, id, hg));
 }
 

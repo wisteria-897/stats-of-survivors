@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../../app/store';
+import { createPersister } from '../../util/persistence';
 
 export enum Page {
     Chief,
@@ -17,9 +18,11 @@ const initialState: NavigationState = {
     currentPage: Page.Formations
 };
 
+export const navigationStatePersister = createPersister('navigation', initialState);
+
 export const navigationSlice = createSlice({
     name: 'navigation',
-    initialState,
+    initialState: navigationStatePersister.load(),
     reducers: {
         setCurrentPage: (state, action: PayloadAction<Page>) => {
             state.currentPage = action.payload;

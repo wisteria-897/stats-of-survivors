@@ -1,10 +1,6 @@
 import { SpeedUpSet } from '../../game/speedUps';
+import { safeParseInt } from '../../util/parse';
 import styles from './Speedups.module.css';
-
-const safeParseInt = (value: string) => {
-    const number = parseInt(value);
-    return isNaN(number) ? 0 : number;
-}
 
 const Counter = (props: {label: string, value: number, onChange: (value: number) => any}) => {
     const {label, value, onChange} = props;

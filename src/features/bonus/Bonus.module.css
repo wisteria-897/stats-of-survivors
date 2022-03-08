@@ -24,22 +24,25 @@
 
 .Common {
     background-color: #dadbdd;
+    color: #000;
 }
 
 .Uncommon {
-    background-color: #a7ba85;
+    background-color: #4f4;
+    color: #000;
 }
 
 .Rare {
-    background-color: #6995b7;
+    background-color: #00f;
 }
 
 .Epic {
-    background-color: #ca5dd2;
+    background-color: #62f;
 }
 
 .Legendary {
-    background-color: #d1964e;
+    background-color: #f80;
+    color: #000;
 }
 
 .popOver > ul > li {

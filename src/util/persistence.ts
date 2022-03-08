@@ -1,4 +1,9 @@
 const storageKeyBase = 'sos';
+
+export type Serializable = {
+    toSerializable: () => object | string | number;
+}
+
 type MaybeString = string | undefined;
 export function migrate(newKey: string, oldKeys: string[], transform: (jsonValues: MaybeString[]) => string) {
     const fullNewKey = storageKeyBase + ':' + newKey;
@@ -28,6 +33,7 @@ export function createPersister<T>(key: string, initialValue: T, serialize?: (va
         load: () => {
             const json = localStorage.getItem(fullKey);
             if (json) {
+                console.log('load', json, deserialize);
                 return deserialize ? deserialize(json) : JSON.parse(json);
             } else {
                 return initialValue;

@@ -86,6 +86,10 @@ export class HeroGear {
         gearRegistry.register(this);
     }
 
+    get key() {
+        return this.heroType + '/' + this.slot.slot;
+    }
+
     get name() {
         return this.slot.getName(this.heroType);
     }

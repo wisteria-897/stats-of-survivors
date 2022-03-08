@@ -1,8 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-interface PayloadIdTuple<T> {
-    id: number;
-    value: T;
+interface PayloadIdTuple<T, U> {
+    id: T;
+    value: U;
 }
 
-export interface PayloadActionWithId<T> extends PayloadAction<PayloadIdTuple<T>> { }
+export interface PayloadActionWithId<T, U> extends PayloadAction<PayloadIdTuple<T, U>> { }
