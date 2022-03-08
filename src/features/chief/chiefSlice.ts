@@ -1,10 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { EnumMap } from '../../util/types';
 import { PayloadActionWithId } from '../../util/payload';
 import { RootState } from '../../app/store';
 import { createPersister } from '../../util/persistence';
 import { ChiefGear } from '../../game/chiefGear';
 import { HeroGear } from '../../game/heroGear';
 import { ResearchTechName, ResearchTechs } from '../../game/research';
+import { Talent, TalentName, Talents } from '../../game/talents';
 const uuid = require('uuid');
 
 export type ChiefId = string;
@@ -17,6 +19,7 @@ export interface Chief {
     chiefGear: { [key: string]: number };
     heroGear: { [key: string]: number };
     research: { [key in ResearchTechName]: number };
+    talents: { [key in TalentName]: number };
 }
 
 export interface ChiefState {
@@ -37,6 +40,11 @@ export const createChief = () => {
         research[techName as ResearchTechName] = 0;
     }
 
+    const talents = Object.entries(Talents).map(([k, v]) => v as Talent).reduce((result, talent) => {
+        result[talent.name] = 0;
+        return result;
+    }, EnumMap.empty<number>(TalentName)) as {[key in TalentName]: number}
+
     return {
         id: uuid.v4(),
         name: 'Survivor',
@@ -49,7 +57,8 @@ export const createChief = () => {
             'Marksman/Head': 0, 'Marksman/Body': 0, 'Marksman/Foot': 0,
             'Scout/Head': 0, 'Scout/Body': 0, 'Scout/Foot': 0
         },
-        research: research as {[key in ResearchTechName]: number}
+        research: research as {[key in ResearchTechName]: number},
+        talents: talents
     };
 };
 
