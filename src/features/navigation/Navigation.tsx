@@ -28,7 +28,6 @@ export function Navigation() {
                 {/*<li className={styles.navItem + ' ' + (currentPage === Page.CustomChestPlanner ? styles.active : '')}
                     onClick={() => dispatch(setCurrentPage(Page.CustomChestPlanner))}>Custom Chests</li>
                 */}
-                <li className={styles.comingSoon}>More coming soon...</li>
             </ul>
         </nav>
     );

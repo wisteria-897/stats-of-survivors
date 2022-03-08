@@ -314,7 +314,7 @@ const ChiefEditor = (props: {chief: Chief, onComplete: (update: Chief | null) =>
                 <input type="text" placeholder="Tag" minLength={3} maxLength={3} value={allianceTag || ''} onChange={(e) => setAllianceTag(e.target.value)} />
             </label>
             <LevelPicker label="Chief level:" min={0} max={60} level={chiefLevel} onChange={setChiefLevel} />
-            <LevelPicker label="VIP level:" min={0} max={12} level={chiefLevel} onChange={setVipLevel} />
+            <LevelPicker label="VIP level:" min={0} max={12} level={vipLevel} onChange={setVipLevel} />
             <h3>Chief Gear</h3>
             <ul className={styles.chiefEditorGearList}>
                 <li>
