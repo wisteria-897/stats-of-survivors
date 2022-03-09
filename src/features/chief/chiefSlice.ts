@@ -8,6 +8,7 @@ import { HeroGear } from '../../game/heroGear';
 import { ResearchTech, ResearchTechName, ResearchTechs } from '../../game/research';
 import { Talent, TalentName, Talents } from '../../game/talents';
 import { Building, BuildingName, Buildings } from '../../game/buildings';
+import { ChiefBadge, ChiefBadgeSlot, ChiefBadges } from '../../game/badges';
 const uuid = require('uuid');
 
 export type ChiefId = string;
@@ -22,6 +23,7 @@ export interface Chief {
     research: { [key in ResearchTechName]: number };
     talents: { [key in TalentName]: number };
     buildings: { [key in BuildingName]: number };
+    badges: { [key in ChiefBadgeSlot]: number };
 }
 
 export interface ChiefState {
@@ -52,6 +54,11 @@ export const createChief = () => {
         return result;
     }, EnumMap.empty<number>(BuildingName)) as {[key in BuildingName]: number}
 
+    const badges = Object.entries(ChiefBadges).map(([k, v]) => v as ChiefBadge).reduce((result, badge) => {
+        result[badge.slot] = 0;
+        return result;
+    }, EnumMap.empty<number>(ChiefBadgeSlot)) as {[key in ChiefBadgeSlot]: number}
+
     return {
         id: uuid.v4(),
         name: 'Survivor',
@@ -66,7 +73,8 @@ export const createChief = () => {
         },
         research,
         talents,
-        buildings
+        buildings,
+        badges
     };
 };
 
