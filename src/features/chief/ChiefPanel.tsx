@@ -19,6 +19,7 @@ import {
     createChief,
     setChief,
     addChief,
+    copyChief,
     updateChief,
     selectChief,
     selectChiefs,
@@ -477,6 +478,7 @@ const ChiefDisplayPanel = (props: {chief: Chief}) => {
                     <span className={styles.keyStat}>Level {chief.level}</span>
                 </span>
                 <button className={styles.chiefAction} onClick={(e) => setIsEditing(true)}>✏️  Edit Chief</button>
+                <button className={styles.chiefAction} onClick={(e) => dispatch(copyChief(chief.id))}>📋 Copy Chief</button>
                 <button className={styles.chiefAction} onClick={(e) => dispatch(setChief(null))}>👥 Select Chief</button>
             </header>
             <section className={styles.detailSections}>

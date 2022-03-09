@@ -95,6 +95,17 @@ export const chiefSlice = createSlice({
             state.chiefs = [...state.chiefs, action.payload];
         },
 
+        copyChief: (state, action: PayloadAction<ChiefId>) => {
+            withChief(state, action.payload, chief => {
+                const newChief = Object.assign({}, chief, {
+                    id: uuid.v4(),
+                    name: 'Copy of ' + chief.name
+                });
+                state.chiefs = [...state.chiefs, newChief];
+                state.selectedId = newChief.id;
+            });
+        },
+
         updateChief: (state, action: PayloadAction<Chief>) => {
             const index = state.chiefs.findIndex((c: Chief) => c.id == action.payload.id);
             if (index >= 0) {
@@ -106,7 +117,7 @@ export const chiefSlice = createSlice({
     }
 });
 
-export const { setChief, addChief, updateChief } = chiefSlice.actions;
+export const { setChief, addChief, copyChief, updateChief } = chiefSlice.actions;
 
 export const selectChief = (state: RootState, id?: ChiefId): Chief | null => {
     let chiefId;
