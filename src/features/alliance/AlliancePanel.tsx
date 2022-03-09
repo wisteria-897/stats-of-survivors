@@ -203,7 +203,7 @@ const AllianceList = () => {
     });
 
     return (
-        <section>
+        <section className={styles.allianceList}>
             <button onClick={(e) => setNewAlliance(createAlliance())}>➕ Add Alliance</button>
             <ul>
                 {allianceItems}
@@ -217,10 +217,6 @@ export default function AlliancePanel() {
     if (alliance) {
         return <AllianceDisplayPanel alliance={alliance} />;
     } else {
-        return (
-            <section>
-                <AllianceList />
-            </section>
-        );
+        return <AllianceList />;
     }
 }

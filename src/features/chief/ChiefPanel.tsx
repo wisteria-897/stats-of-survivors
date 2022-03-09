@@ -473,7 +473,7 @@ const ChiefList = () => {
     });
 
     return (
-        <section>
+        <section className={styles.chiefList}>
             <button onClick={(e) => setNewChief(createChief())}>➕ Add Chief</button>
             <ul>
                 {chiefItems}
@@ -488,9 +488,5 @@ export function ChiefPanel() {
     if (chief) {
         return <ChiefDisplayPanel chief={chief} />
     }
-    return (
-        <section>
-            <ChiefList />
-        </section>
-    );
+    return <ChiefList />;
 }
