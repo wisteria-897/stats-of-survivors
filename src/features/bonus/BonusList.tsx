@@ -4,24 +4,38 @@ import { Stat, StatUnit, Stats } from '../../game/stat';
 import { groupBonuses, Bonus, BonusGroupKey, BonusGroupValue, BonusGroup, BonusSource } from '../../game/bonus';
 import styles from './Bonus.module.css';
 
+const percentFormatter = new Intl.NumberFormat('en-US', {
+    style: 'percent',
+    useGrouping: true,
+    signDisplay: 'always',
+    minimumFractionDigits: 2
+});
+
+const secondsFormatter = new Intl.NumberFormat('en-US', {
+    style: 'unit',
+    unit: 'second',
+    unitDisplay: 'narrow',
+    useGrouping: true,
+    signDisplay: 'always'
+});
+
+const defaultFormatter = new Intl.NumberFormat('en-US', {
+    style: 'decimal',
+    useGrouping: true,
+    signDisplay: 'always',
+    notation: 'compact',
+    compactDisplay: 'short'
+});
+
 const getDisplayValue = (stat: Stat, value: number) => {
-    const sign = (value > 0 ? '+' : '');
-    let valueStr: string;
-    let unit: string;
     switch (stat.type) {
         case StatUnit.Percent:
-            valueStr = (value / 1000).toLocaleString(undefined, {minimumFractionDigits: 2});
-            unit = '%';
-            break;
+            return percentFormatter.format(value / 100000);
         case StatUnit.Seconds:
-            valueStr = String(value);
-            unit = 's';
-            break;
+            return secondsFormatter.format(value);
         default:
-            valueStr = String(value);
-            unit = '';
+            return defaultFormatter.format(value);
     }
-    return sign + valueStr + unit;
 }
 
 function BonusGroupListItem(props: {groupKey: BonusGroupKey, stat: Stat, item: BonusGroupValue}) {
