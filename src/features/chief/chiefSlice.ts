@@ -5,8 +5,9 @@ import { RootState } from '../../app/store';
 import { createPersister } from '../../util/persistence';
 import { ChiefGear } from '../../game/chiefGear';
 import { HeroGear } from '../../game/heroGear';
-import { ResearchTechName, ResearchTechs } from '../../game/research';
+import { ResearchTech, ResearchTechName, ResearchTechs } from '../../game/research';
 import { Talent, TalentName, Talents } from '../../game/talents';
+import { Building, BuildingName, Buildings } from '../../game/buildings';
 const uuid = require('uuid');
 
 export type ChiefId = string;
@@ -20,6 +21,7 @@ export interface Chief {
     heroGear: { [key: string]: number };
     research: { [key in ResearchTechName]: number };
     talents: { [key in TalentName]: number };
+    buildings: { [key in BuildingName]: number };
 }
 
 export interface ChiefState {
@@ -35,15 +37,20 @@ const initialState: ChiefState = {
 export const chiefStatePersister = createPersister('chief', initialState);
 
 export const createChief = () => {
-    const research: {[key in ResearchTechName]?: number} = {};
-    for (const techName in ResearchTechs) {
-        research[techName as ResearchTechName] = 0;
-    }
+    const research = Object.entries(ResearchTechs).map(([k, v]) => v as ResearchTech).reduce((result, tech) => {
+        result[tech.name] = 0;
+        return result;
+    }, EnumMap.empty<number>(ResearchTechName)) as {[key in ResearchTechName]: number}
 
     const talents = Object.entries(Talents).map(([k, v]) => v as Talent).reduce((result, talent) => {
         result[talent.name] = 0;
         return result;
     }, EnumMap.empty<number>(TalentName)) as {[key in TalentName]: number}
+
+    const buildings = Object.entries(Buildings).map(([k, v]) => v as Building).reduce((result, building) => {
+        result[building.name] = 0;
+        return result;
+    }, EnumMap.empty<number>(BuildingName)) as {[key in BuildingName]: number}
 
     return {
         id: uuid.v4(),
@@ -57,8 +64,9 @@ export const createChief = () => {
             'Marksman/Head': 0, 'Marksman/Body': 0, 'Marksman/Foot': 0,
             'Scout/Head': 0, 'Scout/Body': 0, 'Scout/Foot': 0
         },
-        research: research as {[key in ResearchTechName]: number},
-        talents: talents
+        research,
+        talents,
+        buildings
     };
 };
 
@@ -83,18 +91,6 @@ export const chiefSlice = createSlice({
             state.selectedId = action.payload;
         },
 
-        setChiefName: (state, action: PayloadActionWithId<ChiefId, string>) => {
-            withChief(state, action.payload.id,
-                chief => chief.name = action.payload.value
-            );
-        },
-
-        setChiefLevel: (state, action: PayloadActionWithId<ChiefId, number>) => {
-            withChief(state, action.payload.id,
-                chief => chief.level = action.payload.value
-            );
-        },
-
         addChief: (state, action: PayloadAction<Chief>) => {
             state.chiefs = [...state.chiefs, action.payload];
         },
@@ -106,17 +102,11 @@ export const chiefSlice = createSlice({
                 updated[index] = action.payload;
                 state.chiefs = updated;
             }
-        },
-
-        incrementVipLevel: (state, action: PayloadAction<ChiefId>) => {
-            withChief(state, action.payload, chief => {
-                chief.vipLevel = (chief.vipLevel + 1) % 13;
-            });
         }
     }
 });
 
-export const { setChief, setChiefName, setChiefLevel, incrementVipLevel, addChief, updateChief } = chiefSlice.actions;
+export const { setChief, addChief, updateChief } = chiefSlice.actions;
 
 export const selectChief = (state: RootState, id?: ChiefId): Chief | null => {
     let chiefId;

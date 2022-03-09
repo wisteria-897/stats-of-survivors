@@ -89,7 +89,9 @@ const supportedStats = [
     Stats.InfantryAttack, Stats.InfantryDefense, Stats.InfantryHealth, Stats.InfantryLethality,
     Stats.RiderAttack, Stats.RiderDefense, Stats.RiderHealth, Stats.RiderLethality,
     Stats.HunterAttack, Stats.HunterDefense, Stats.HunterHealth, Stats.HunterLethality,
-    Stats.TroopAttack, Stats.TroopDefense, Stats.TroopHealth, Stats.TroopLethality
+    Stats.TroopAttack, Stats.TroopDefense, Stats.TroopHealth, Stats.TroopLethality,
+    Stats.TrainingSpeed, Stats.TrainingCapacity, Stats.HealingSpeed, Stats.HealingCapacity,
+    Stats.MarchCapacity
 ];
 export function BonusList(props: { bonuses: Bonus[] }) {
     const filteredBonuses = props.bonuses.filter(b => supportedStats.find(s => s == b.stat));

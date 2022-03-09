@@ -85,5 +85,6 @@ export const Stats = {
     ExplorerAttack: new Stat('Explorer Attack', StatUnit.Units),
     ExplorerDefense: new Stat('Explorer Defense', StatUnit.Units),
     ExplorerHealth: new Stat('Explorer Health', StatUnit.Units),
-    ExplorerLethality: new Stat('Explorer Lethality', StatUnit.Units)
+    ExplorerLethality: new Stat('Explorer Lethality', StatUnit.Units),
+    ReinforcementCapacity: new Stat('Reinforcement Capacity', StatUnit.Units)
 };

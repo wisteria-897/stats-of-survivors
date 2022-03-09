@@ -11,6 +11,7 @@ import { ChiefGears, ChiefGearSlot } from '../../game/chiefGear';
 import { ResearchTech, ResearchTechs, ResearchTechName } from '../../game/research';
 import { StatTalent, Talent, Talents, TalentName } from '../../game/talents';
 import { AllianceTech, AllianceTechs, AllianceTechName, StatAllianceTech } from '../../game/allianceTech';
+import { Building, Buildings, BuildingName } from '../../game/buildings';
 import { selectAllianceByTag } from '../alliance/allianceSlice';
 import {
     Chief,
@@ -104,6 +105,25 @@ const TalentLevelList = ({chief}: SubComponentProps) => {
     );
 }
 
+const BuildingLevelList = ({chief}: SubComponentProps) => {
+    const listItems = (!chief || !chief.buildings) ? <li key="none">&lt;None&gt;</li>
+        : Object.entries(chief.buildings)
+            .filter(([k, v]) => v != 0)
+            .map(entry => {
+                const [k, v] = entry as [BuildingName, number];
+                return <li key={k}><span>{Buildings[k].levels[v - 1].name}</span></li>;
+            });
+
+    return (
+        <section>
+            <h3>Buildings</h3>
+            <ul>
+                {listItems}
+            </ul>
+        </section>
+    );
+}
+
 const HeroGearDisplayPanel = (props: { chief: Chief }) => {
     const { chief } = props;
     return (
@@ -156,6 +176,18 @@ const ChiefBonusList = (props: {chief: Chief}) => {
                 return result;
             }, [] as Bonus[]);
 
+    const buildingLevelBonuses = (!chief || !chief.buildings) ? []
+        : Object.entries(chief.buildings)
+            .filter(([k, v]) => v > 0)
+            .reduce((result, entry) => {
+                const [buildingName, level] = entry as [BuildingName, number];
+                const building = Buildings[buildingName];
+                for (let i = 0; i < level; i++) {
+                    result = result.concat(building.levels[i].bonuses);
+                }
+                return result;
+            }, [] as Bonus[]);
+
     const alliance = useAppSelector(state => selectAllianceByTag(state, chief.allianceTag || ''));
     console.log('bonuses', chief.allianceTag, alliance);
     let allianceTechBonuses: Bonus[] = [];
@@ -185,6 +217,7 @@ const ChiefBonusList = (props: {chief: Chief}) => {
         ...chainable(() => heroGearLevels).notNull().map(gl => gl.bonuses).asArray(),
         ...researchLevelBonuses,
         ...talentLevelBonuses,
+        ...buildingLevelBonuses,
         ...allianceTechBonuses
     );
 
@@ -241,6 +274,14 @@ const TalentLevelEditor = (props: {talent: Talent, level: number, onChange: (tal
     );
 }
 
+const BuildingLevelEditor = (props: {building: Building, level: number, onChange: (building: Building, level: number) => any}) => {
+    const {building, level, onChange} = props;
+    return (
+        <LevelPicker key={building.name} label={building.name} level={level} min={0} max={building.levels.length}
+            onChange={(value: number) => onChange(building, value)} />
+    );
+}
+
 const ChiefEditor = (props: {chief: Chief, onComplete: (update: Chief | null) => any}) => {
     const emptyResearch: {[key in ResearchTechName]?: number} = {};
     for (const techName in ResearchTechs) {
@@ -252,6 +293,11 @@ const ChiefEditor = (props: {chief: Chief, onComplete: (update: Chief | null) =>
         return result;
     }, EnumMap.empty<number>(TalentName)) as {[key in TalentName]: number}
 
+    const emptyBuildings = Object.entries(Buildings).map(([k, v]) => v as Building).reduce((result, building) => {
+        result[building.name] = 0;
+        return result;
+    }, EnumMap.empty<number>(BuildingName)) as {[key in BuildingName]: number}
+
     const {chief, onComplete} = props;
     const [chiefName, setChiefName] = useState(chief.name);
     const [allianceTag, setAllianceTag] = useState(chief.allianceTag);
@@ -261,17 +307,13 @@ const ChiefEditor = (props: {chief: Chief, onComplete: (update: Chief | null) =>
     const [heroGear, setHeroGear] = useState(chief.heroGear);
     const [research, setResearch] = useState(chief.research || emptyResearch);
     const [talents, setTalents] = useState(chief.talents || emptyTalents);
+    const [buildings, setBuildings] = useState(chief.buildings || emptyBuildings);
 
     const onSave = () => {
         const updatedChief = Object.assign({}, chief, {
             name: chiefName,
-            allianceTag: allianceTag,
             level: chiefLevel,
-            vipLevel: vipLevel,
-            chiefGear: chiefGear,
-            heroGear: heroGear,
-            research: research,
-            talents: talents
+            allianceTag, vipLevel, chiefGear, heroGear, research, talents, buildings
         });
         onComplete(updatedChief);
     }
@@ -300,6 +342,15 @@ const ChiefEditor = (props: {chief: Chief, onComplete: (update: Chief | null) =>
             setTalents(Object.assign({}, talents, update));
         }
         return <TalentLevelEditor key={talentName} talent={Talents[talentName]} level={level} onChange={onChange} />;
+    });
+
+    const buildingEditors = Object.entries(buildings).map(entry => {
+        const [buildingName, level] = entry as [buildingName: BuildingName, level: number];
+        const onChange = (building: Building, value: number) => {
+            const update = {[building.name]: value} as {[key in BuildingName]: number};
+            setBuildings(Object.assign({}, buildings, update));
+        }
+        return <BuildingLevelEditor key={buildingName} building={Buildings[buildingName]} level={level} onChange={onChange} />;
     });
 
     return (
@@ -389,6 +440,10 @@ const ChiefEditor = (props: {chief: Chief, onComplete: (update: Chief | null) =>
             <ul>
                 {talentEditors}
             </ul>
+            <h3>Buildings</h3>
+            <ul>
+                {buildingEditors}
+            </ul>
             <button onClick={(e) => onSave()}>💾 Save</button>
             <button onClick={(e) => onComplete(null)}>❌ Cancel</button>
         </div>
@@ -432,8 +487,7 @@ const ChiefDisplayPanel = (props: {chief: Chief}) => {
                 <div>
                     <ResearchLevelList chief={chief}/>
                     <TalentLevelList chief={chief}/>
-                </div>
-                <div>
+                    <BuildingLevelList chief={chief}/>
                 </div>
                 <div>
                     <ChiefBonusList chief={chief}/>
