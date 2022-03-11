@@ -54,6 +54,10 @@
     width: 300px;
 }
 
+.bonusList .bonusList {
+    width: auto;
+}
+
 .bonusContainer {
     display: flex;
     align-items: center;

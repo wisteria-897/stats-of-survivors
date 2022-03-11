@@ -1,4 +1,4 @@
-import { Bonus, SourceCategory, Tiers } from './bonus';
+import { Bonus, BonusProviderLevel, SourceCategory, Tiers } from './bonus';
 import { Stat, Stats } from './stat';
 
 export enum AllianceTechTree {
@@ -80,11 +80,23 @@ export class AllianceTech {
         this.name = name;
         this.tree = tree;
     }
+
+    get category() {
+        return SourceCategory.AllianceTech;
+    }
 }
 
 export class AbilityAllianceTech extends AllianceTech {
     constructor(name: string, tree: AllianceTechTree) {
         super(name, tree);
+    }
+
+    get stats(): Stat[] {
+        return [];
+    }
+
+    get levels(): BonusProviderLevel[] {
+        return [];
     }
 }
 
@@ -99,6 +111,14 @@ export class StatAllianceTech extends AllianceTech {
         for (let i = 1; i <= maxLevel; i++) {
             this.levels.push(new AllianceTechLevel(this, i, bonusValue));
         }
+    }
+
+    get stats() {
+        return [this.stat];
+    }
+
+    get category() {
+        return SourceCategory.AllianceTech;
     }
 }
 
@@ -123,6 +143,18 @@ export class AllianceTechLevel {
 
     get tier() {
         return Tiers.Common;
+    }
+
+    get tierLevel() {
+        return null;
+    }
+
+    get bonusValues() {
+        return this.bonuses.map(b => b.value);
+    }
+
+    get provider() {
+        return this.tech;
     }
 }
 

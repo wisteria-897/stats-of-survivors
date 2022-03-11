@@ -1,23 +1,28 @@
 import { Stat, Stats } from './stat';
 import { Bonus, SourceCategory, Tier, Tiers } from './bonus';
-import Registry from './registry';
 
 type TierData = { tier: Tier, levels: number[] }
 
-export const chiefGears: Registry<string, ChiefGear> = new Registry(item => item.name);
 export class ChiefGear {
-    readonly name: string;
+    readonly slot: ChiefGearSlot;
     readonly stats: Stat[];
     readonly levels: ChiefGearLevel[];
 
-    constructor(name: string, stats: Stat[], ...tierData: TierData[]) {
-        this.name = name;
+    constructor(slot: ChiefGearSlot, stats: Stat[], ...tierData: TierData[]) {
+        this.slot = slot;
         this.stats = stats;
         this.levels = tierData.reduce((levels: ChiefGearLevel[], { tier, levels: levelData }) => {
             const tierLevels = levelData.map((value, j) => new ChiefGearLevel(this, tier, levels.length + j + 1, j + 1, value));
             return levels.concat(tierLevels);
         }, []);
-        chiefGears.register(this);
+    }
+
+    get name() {
+        return this.slot;
+    }
+
+    get category() {
+        return SourceCategory.ChiefGear;
     }
 }
 
@@ -31,14 +36,14 @@ export class ChiefGearLevel {
     readonly gear: ChiefGear;
     readonly tier: Tier;
     readonly level: number;
-    readonly tierLevel: number;
+    readonly tierLevel: {tier: Tier, level: number};
     readonly bonuses: Bonus[];
 
     constructor(gear: ChiefGear, tier: Tier, level: number, tierLevel: number, bonusValue: number) {
         this.gear = gear;
         this.level = level;
         this.tier = tier;
-        this.tierLevel = tierLevel;
+        this.tierLevel = {tier, level: tierLevel};
         this.bonuses = gear.stats.map((stat, i) => new Bonus(stat, bonusValue, this));
     }
 
@@ -48,6 +53,14 @@ export class ChiefGearLevel {
 
     get category() {
         return SourceCategory.ChiefGear;
+    }
+
+    get bonusValues() {
+        return this.bonuses.map(b => b.value);
+    }
+
+    get provider() {
+        return this.gear;
     }
 }
 
@@ -61,38 +74,34 @@ export enum ChiefGearSlot {
 }
 
 export const ChiefGears = {
-    [ChiefGearSlot.Helmet as ChiefGearSlot]: new ChiefGear(ChiefGearSlot.Helmet, [Stats.InfantryAttack, Stats.InfantryDefense],
-                              {tier: Tiers.Uncommon, levels: [9320,12930]},
-                              {tier: Tiers.Rare, levels: [17740,22550,27550,32550]},
-                              {tier: Tiers.Epic, levels: [38000,44000,50000,56000]},
-                              {tier: Tiers.Legendary, levels: [62500,69000,76000,85850]}),
-    [ChiefGearSlot.Armor as ChiefGearSlot]: new ChiefGear(ChiefGearSlot.Armor, [Stats.RiderAttack, Stats.RiderDefense],
-                              {tier: Tiers.Uncommon, levels: [9320,12930]},
-                              {tier: Tiers.Rare, levels: [17740,22550,27550,32550]},
-                              {tier: Tiers.Epic, levels: [38000,44000,50000,56000]},
-                              {tier: Tiers.Legendary, levels: [62500,69000,76000,85850]}),
-    [ChiefGearSlot.AssaultRifle as ChiefGearSlot]: new ChiefGear(ChiefGearSlot.AssaultRifle, [Stats.RiderAttack, Stats.RiderDefense],
-                              {tier: Tiers.Uncommon, levels: [9320,12930]},
-                              {tier: Tiers.Rare, levels: [17740,22550,27550,32550]},
-                              {tier: Tiers.Epic, levels: [38000,44000,50000,56000]},
-                              {tier: Tiers.Legendary, levels: [62500,69000,76000,85850]}),
-    [ChiefGearSlot.Kneepads as ChiefGearSlot]: new ChiefGear(ChiefGearSlot.Kneepads, [Stats.HunterAttack, Stats.HunterDefense],
-                              {tier: Tiers.Uncommon, levels: [9320,12930]},
-                              {tier: Tiers.Rare, levels: [17740,22550,27550,32550]},
-                              {tier: Tiers.Epic, levels: [38000,44000,50000,56000]},
-                              {tier: Tiers.Legendary, levels: [62500,69000,76000,85850]}),
-    [ChiefGearSlot.Boots as ChiefGearSlot]: new ChiefGear(ChiefGearSlot.Boots, [Stats.InfantryAttack, Stats.InfantryDefense],
-                              {tier: Tiers.Uncommon, levels: [9320,12930]},
-                              {tier: Tiers.Rare, levels: [17740,22550,27550,32550]},
-                              {tier: Tiers.Epic, levels: [38000,44000,50000,56000]},
-                              {tier: Tiers.Legendary, levels: [62500,69000,76000,85850]}),
-    [ChiefGearSlot.Communicator as ChiefGearSlot]: new ChiefGear(ChiefGearSlot.Communicator, [Stats.HunterAttack, Stats.HunterDefense],
-                              {tier: Tiers.Uncommon, levels: [9320,12930]},
-                              {tier: Tiers.Rare, levels: [17740,22550,27550,32550]},
-                              {tier: Tiers.Epic, levels: [38000,44000,50000,56000]},
-                              {tier: Tiers.Legendary, levels: [62500,69000,76000,85850]})
+    [ChiefGearSlot.Helmet]: new ChiefGear(ChiefGearSlot.Helmet, [Stats.InfantryAttack, Stats.InfantryDefense],
+                              {tier: Tiers.Uncommon, levels: [9320,3610]},
+                              {tier: Tiers.Rare, levels: [4810,4810,5000,5000]},
+                              {tier: Tiers.Epic, levels: [5450,6000,6000,6000]},
+                              {tier: Tiers.Legendary, levels: [6500,6500,7000,9850]}),
+    [ChiefGearSlot.Armor]: new ChiefGear(ChiefGearSlot.Armor, [Stats.RiderAttack, Stats.RiderDefense],
+                              {tier: Tiers.Uncommon, levels: [9320,3610]},
+                              {tier: Tiers.Rare, levels: [4810,4810,5000,5000]},
+                              {tier: Tiers.Epic, levels: [5450,6000,6000,6000]},
+                              {tier: Tiers.Legendary, levels: [6500,6500,7000,9850]}),
+    [ChiefGearSlot.AssaultRifle]: new ChiefGear(ChiefGearSlot.AssaultRifle, [Stats.RiderAttack, Stats.RiderDefense],
+                              {tier: Tiers.Uncommon, levels: [9320,3610]},
+                              {tier: Tiers.Rare, levels: [4810,4810,5000,5000]},
+                              {tier: Tiers.Epic, levels: [5450,6000,6000,6000]},
+                              {tier: Tiers.Legendary, levels: [6500,6500,7000,9850]}),
+    [ChiefGearSlot.Kneepads]: new ChiefGear(ChiefGearSlot.Kneepads, [Stats.HunterAttack, Stats.HunterDefense],
+                              {tier: Tiers.Uncommon, levels: [9320,3610]},
+                              {tier: Tiers.Rare, levels: [4810,4810,5000,5000]},
+                              {tier: Tiers.Epic, levels: [5450,6000,6000,6000]},
+                              {tier: Tiers.Legendary, levels: [6500,6500,7000,9850]}),
+    [ChiefGearSlot.Boots]: new ChiefGear(ChiefGearSlot.Boots, [Stats.InfantryAttack, Stats.InfantryDefense],
+                              {tier: Tiers.Uncommon, levels: [9320,3610]},
+                              {tier: Tiers.Rare, levels: [4810,4810,5000,5000]},
+                              {tier: Tiers.Epic, levels: [5450,6000,6000,6000]},
+                              {tier: Tiers.Legendary, levels: [6500,6500,7000,9850]}),
+    [ChiefGearSlot.Communicator]: new ChiefGear(ChiefGearSlot.Communicator, [Stats.HunterAttack, Stats.HunterDefense],
+                              {tier: Tiers.Uncommon, levels: [9320,3610]},
+                              {tier: Tiers.Rare, levels: [4810,4810,5000,5000]},
+                              {tier: Tiers.Epic, levels: [5450,6000,6000,6000]},
+                              {tier: Tiers.Legendary, levels: [6500,6500,7000,9850]})
 } as const;
-
-export const getChiefGear = (name: string): ChiefGear | null => {
-    return chiefGears.getById(name);
-};

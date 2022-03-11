@@ -3,8 +3,8 @@ import { EnumMap } from '../../util/types';
 import { PayloadActionWithId } from '../../util/payload';
 import { RootState } from '../../app/store';
 import { createPersister } from '../../util/persistence';
-import { ChiefGear } from '../../game/chiefGear';
-import { HeroGear } from '../../game/heroGear';
+import { ChiefGear, ChiefGearSlot } from '../../game/chiefGear';
+import { HeroGear, HeroGearSlot } from '../../game/heroGear';
 import { ResearchTech, ResearchTechName, ResearchTechs } from '../../game/research';
 import { Talent, TalentName, Talents } from '../../game/talents';
 import { Building, BuildingName, Buildings } from '../../game/buildings';
@@ -18,8 +18,8 @@ export interface Chief {
     level: number;
     allianceTag: string | null;
     vipLevel: number;
-    chiefGear: { [key: string]: number };
-    heroGear: { [key: string]: number };
+    chiefGear: { [key in ChiefGearSlot]: number };
+    heroGear: { [key in HeroGearSlot]: number };
     research: { [key in ResearchTechName]: number };
     talents: { [key in TalentName]: number };
     buildings: { [key in BuildingName]: number };
@@ -36,7 +36,34 @@ const initialState: ChiefState = {
     selectedId: null,
 };
 
-export const chiefStatePersister = createPersister('chief', initialState);
+const maybeUpgradeEntry = <T>(o: {[key: string]: T}, defaultValue: T, ...keys: string[]) => {
+    for (const key of keys) {
+        if (key in o) {
+            return o[key];
+        }
+    }
+    return defaultValue;
+}
+
+export const chiefStatePersister = createPersister('chief', initialState, undefined, data => {
+    const state = JSON.parse(data);
+    console.log('Persister load', state);
+    state.chiefs = state.chiefs.map((chief: Chief) => {
+        chief.heroGear = {
+            [HeroGearSlot.BrawlerHead]: maybeUpgradeEntry(chief.heroGear, 0, HeroGearSlot.BrawlerHead, 'Brawler/Head'),
+            [HeroGearSlot.BrawlerBody]: maybeUpgradeEntry(chief.heroGear, 0, HeroGearSlot.BrawlerBody, 'Brawler/Body'),
+            [HeroGearSlot.BrawlerFoot]: maybeUpgradeEntry(chief.heroGear, 0, HeroGearSlot.BrawlerFoot, 'Brawler/Foot'),
+            [HeroGearSlot.MarksmanHead]: maybeUpgradeEntry(chief.heroGear, 0, HeroGearSlot.MarksmanHead, 'Marksman/Head'),
+            [HeroGearSlot.MarksmanBody]: maybeUpgradeEntry(chief.heroGear, 0, HeroGearSlot.MarksmanBody, 'Marksman/Body'),
+            [HeroGearSlot.MarksmanFoot]: maybeUpgradeEntry(chief.heroGear, 0, HeroGearSlot.MarksmanFoot, 'Marksman/Foot'),
+            [HeroGearSlot.ScoutHead]: maybeUpgradeEntry(chief.heroGear, 0, HeroGearSlot.ScoutHead, 'Scout/Head'),
+            [HeroGearSlot.ScoutBody]: maybeUpgradeEntry(chief.heroGear, 0, HeroGearSlot.ScoutBody, 'Scout/Body'),
+            [HeroGearSlot.ScoutFoot]: maybeUpgradeEntry(chief.heroGear, 0, HeroGearSlot.ScoutFoot, 'Scout/Foot')
+        };
+        return chief;
+    });
+    return state;
+});
 
 export const createChief = () => {
     const research = Object.entries(ResearchTechs).map(([k, v]) => v as ResearchTech).reduce((result, tech) => {
@@ -65,11 +92,14 @@ export const createChief = () => {
         level: 1,
         vipLevel: 0,
         allianceTag: null,
-        chiefGear: {'Helmet': 0, 'Armor': 0, 'Kneepads': 0, 'Assault Rifle': 0, 'Boots': 0, 'Communicator': 0},
+        chiefGear: {
+            [ChiefGearSlot.Helmet]:       0, [ChiefGearSlot.Armor]: 0, [ChiefGearSlot.Kneepads]:     0,
+            [ChiefGearSlot.AssaultRifle]: 0, [ChiefGearSlot.Boots]: 0, [ChiefGearSlot.Communicator]: 0
+        },
         heroGear: {
-            'Brawler/Head': 0, 'Brawler/Body': 0, 'Brawler/Foot': 0,
-            'Marksman/Head': 0, 'Marksman/Body': 0, 'Marksman/Foot': 0,
-            'Scout/Head': 0, 'Scout/Body': 0, 'Scout/Foot': 0
+            [HeroGearSlot.BrawlerHead]:  0, [HeroGearSlot.BrawlerBody]:  0, [HeroGearSlot.BrawlerFoot]:  0,
+            [HeroGearSlot.MarksmanHead]: 0, [HeroGearSlot.MarksmanBody]: 0, [HeroGearSlot.MarksmanFoot]: 0,
+            [HeroGearSlot.ScoutHead]:    0, [HeroGearSlot.ScoutBody]:    0, [HeroGearSlot.ScoutFoot]:    0
         },
         research,
         talents,
@@ -142,27 +172,5 @@ export const selectChief = (state: RootState, id?: ChiefId): Chief | null => {
 };
 
 export const selectChiefs = (state: RootState): Chief[] => state.chief.chiefs;
-
-export const selectChiefGear = (state: RootState, id: ChiefId, chiefGear: ChiefGear) => {
-    return withChief(state.chief, id, chief => {
-        const level = chief.chiefGear[chiefGear.name];
-        return chiefGear.levels[level - 1] || null;
-    });
-}
-
-export const selectChiefGearList = (state: RootState, id: ChiefId, ...chiefGear: ChiefGear[]) => {
-    return chiefGear.map(cg => selectChiefGear(state, id, cg));
-}
-
-export const selectChiefHeroGear = (state: RootState, id: ChiefId, heroGear: HeroGear) => {
-    return withChief(state.chief, id, chief => {
-        const level = chief.heroGear[heroGear.heroType + '/' + heroGear.slot.slot];
-        return heroGear.levels[level - 1] || null;
-    });
-}
-
-export const selectChiefHeroGearList = (state: RootState, id: ChiefId, ...heroGear: HeroGear[]) => {
-    return heroGear.map(hg => selectChiefHeroGear(state, id, hg));
-}
 
 export default chiefSlice.reducer;

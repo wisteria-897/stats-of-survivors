@@ -17,6 +17,10 @@ export class Stat {
         this.type = type;
         registry.register(this);
     }
+
+    toString() {
+        return this.name;
+    }
 }
 
 export const getStatByName = registry.getById.bind(registry);

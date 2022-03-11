@@ -211,6 +211,14 @@ export class ResearchTech {
         this.stat = stat;
         this.levels = levelData.map((bonusValue, i) => new ResearchTechLevel(this, i + 1, bonusValue));
     }
+
+    get category() {
+        return SourceCategory.Research;
+    }
+
+    get stats() {
+        return [this.stat];
+    }
 }
 
 export class ResearchTechLevel {
@@ -234,6 +242,18 @@ export class ResearchTechLevel {
 
     get tier() {
         return Tiers.Common;
+    }
+
+    get provider() {
+        return this.tech;
+    }
+
+    get tierLevel() {
+        return null;
+    }
+
+    get bonusValues() {
+        return this.bonuses.map(b => b.value);
     }
 }
 

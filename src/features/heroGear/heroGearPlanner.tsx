@@ -1,5 +1,5 @@
 import React, { Dispatch, SetStateAction, useState } from 'react';
-import { HeroGear, HeroGears } from '../../game/heroGear';
+import { HeroGear, HeroGearSlot, HeroGears } from '../../game/heroGear';
 
 type GearState = { current: string, reducer: Dispatch<SetStateAction<string>>};
 const makeGearState = (current: string, reducer: Dispatch<SetStateAction<string>>): GearState  => {
@@ -22,38 +22,38 @@ const HeroGearSelector = (props: {heroGear: HeroGear, gearState: GearState}) => 
 }
 
 export function HeroGearPlanner() {
-    const brawlerHead = makeGearState(...useState(HeroGears.BrawlerHead.levels[0].name));
-    const brawlerBody = makeGearState(...useState(HeroGears.BrawlerBody.levels[0].name));
-    const brawlerFoot = makeGearState(...useState(HeroGears.BrawlerFoot.levels[0].name));
-    const marksmanHead = makeGearState(...useState(HeroGears.MarksmanHead.levels[0].name));
-    const marksmanBody = makeGearState(...useState(HeroGears.MarksmanBody.levels[0].name));
-    const marksmanFoot = makeGearState(...useState(HeroGears.MarksmanFoot.levels[0].name));
-    const scoutHead = makeGearState(...useState(HeroGears.ScoutHead.levels[0].name));
-    const scoutBody = makeGearState(...useState(HeroGears.ScoutBody.levels[0].name));
-    const scoutFoot = makeGearState(...useState(HeroGears.ScoutFoot.levels[0].name));
+    const brawlerHead = makeGearState(...useState(HeroGears[HeroGearSlot.BrawlerHead].levels[0].name));
+    const brawlerBody = makeGearState(...useState(HeroGears[HeroGearSlot.BrawlerBody].levels[0].name));
+    const brawlerFoot = makeGearState(...useState(HeroGears[HeroGearSlot.BrawlerFoot].levels[0].name));
+    const marksmanHead = makeGearState(...useState(HeroGears[HeroGearSlot.MarksmanHead].levels[0].name));
+    const marksmanBody = makeGearState(...useState(HeroGears[HeroGearSlot.MarksmanBody].levels[0].name));
+    const marksmanFoot = makeGearState(...useState(HeroGears[HeroGearSlot.MarksmanFoot].levels[0].name));
+    const scoutHead = makeGearState(...useState(HeroGears[HeroGearSlot.ScoutHead].levels[0].name));
+    const scoutBody = makeGearState(...useState(HeroGears[HeroGearSlot.ScoutBody].levels[0].name));
+    const scoutFoot = makeGearState(...useState(HeroGears[HeroGearSlot.ScoutFoot].levels[0].name));
     return (
         <div>
             <section>
                 <h3>Current Gear</h3>
                 <div>
-                    <HeroGearSelector heroGear={HeroGears.BrawlerHead} gearState={brawlerHead} />
-                    <HeroGearSelector heroGear={HeroGears.BrawlerBody} gearState={brawlerBody} />
-                    <HeroGearSelector heroGear={HeroGears.BrawlerFoot} gearState={brawlerFoot} />
+                    <HeroGearSelector heroGear={HeroGears[HeroGearSlot.BrawlerHead]} gearState={brawlerHead} />
+                    <HeroGearSelector heroGear={HeroGears[HeroGearSlot.BrawlerBody]} gearState={brawlerBody} />
+                    <HeroGearSelector heroGear={HeroGears[HeroGearSlot.BrawlerFoot]} gearState={brawlerFoot} />
                 </div>
                 <div>
-                    <HeroGearSelector heroGear={HeroGears.MarksmanHead} gearState={marksmanHead} />
-                    <HeroGearSelector heroGear={HeroGears.MarksmanBody} gearState={marksmanBody} />
-                    <HeroGearSelector heroGear={HeroGears.MarksmanFoot} gearState={marksmanFoot} />
+                    <HeroGearSelector heroGear={HeroGears[HeroGearSlot.MarksmanHead]} gearState={marksmanHead} />
+                    <HeroGearSelector heroGear={HeroGears[HeroGearSlot.MarksmanBody]} gearState={marksmanBody} />
+                    <HeroGearSelector heroGear={HeroGears[HeroGearSlot.MarksmanFoot]} gearState={marksmanFoot} />
                 </div>
                 <div>
-                    <HeroGearSelector heroGear={HeroGears.ScoutHead} gearState={scoutHead} />
-                    <HeroGearSelector heroGear={HeroGears.ScoutBody} gearState={scoutBody} />
-                    <HeroGearSelector heroGear={HeroGears.ScoutFoot} gearState={scoutFoot} />
+                    <HeroGearSelector heroGear={HeroGears[HeroGearSlot.ScoutHead]} gearState={scoutHead} />
+                    <HeroGearSelector heroGear={HeroGears[HeroGearSlot.ScoutBody]} gearState={scoutBody} />
+                    <HeroGearSelector heroGear={HeroGears[HeroGearSlot.ScoutFoot]} gearState={scoutFoot} />
                 </div>
             </section>
             <section>
                 <h3>Upgrades</h3>
-                <span>{HeroGears.BrawlerHead.name} - {HeroGears.BrawlerHead.levels.length}</span>
+                <span>{HeroGears[HeroGearSlot.BrawlerHead].name} - {HeroGears[HeroGearSlot.BrawlerHead].levels.length}</span>
             </section>
         </div>
     );

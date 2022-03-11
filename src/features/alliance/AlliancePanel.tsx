@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import { EnumMap } from '../../util/types';
-import { Bonus } from '../../game/bonus';
+import { aggregateBonuses, Bonus } from '../../game/bonus';
 import LevelPicker from '../../ui/level/LevelPicker';
 import { BonusList } from '../bonus/BonusList';
 import { AllianceTech, AllianceTechName, AllianceTechs, StatAllianceTech } from '../../game/allianceTech';
@@ -21,27 +21,17 @@ type SubComponentProps = {alliance: Alliance}
 
 const AllianceBonusList = ({alliance}: SubComponentProps) => {
     const allianceTechLevelBonuses = (!alliance || !alliance.allianceTech) ? []
-        : Object.entries(alliance.allianceTech)
-            .filter(([k, v]) => v > 0)
-            .reduce((result, entry) => {
-                const [techName, level] = entry as [AllianceTechName, number];
-                const tech = AllianceTechs[techName];
-                if (tech instanceof StatAllianceTech) {
-                    for (let i = 0; i < level; i++) {
-                        result = result.concat(tech.levels[i].bonuses);
-                    }
-                }
-                return result;
-            }, [] as Bonus[]);
-
-    const bonuses: Bonus[] = ([] as Bonus[]).concat(
+        : aggregateBonuses(alliance.allianceTech, AllianceTechs);
+    const bonuses: Bonus[] = [
         ...allianceTechLevelBonuses
-    );
+    ];
 
     return (
         <div>
             <h3>Bonuses</h3>
-            <BonusList bonuses={bonuses} />
+            <BonusList bonuses={bonuses} groupBy={(b) => b.stat}>
+                <BonusList/>
+            </BonusList>
         </div>
     );
 }

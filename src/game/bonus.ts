@@ -27,7 +27,7 @@ export enum SourceCategory {
     StateBuffs = 'State Buffs'
 }
 
-export interface BonusSource {
+export interface SimpleBonusSource {
     name: string;
     tier: Tier;
     category: SourceCategory;
@@ -46,7 +46,7 @@ export class Bonus {
     }
 }
 
-const groupBy = <T, U>(items: T[], getGroupFn: (item: T) => U): Map<U, T[]> => {
+export const groupBonuses = <T, U>(items: T[], getGroupFn: (item: T) => U): Map<U, T[]> => {
     return items.reduce((map, item) => {
         const group = getGroupFn(item);
         if (group) {
@@ -59,30 +59,55 @@ const groupBy = <T, U>(items: T[], getGroupFn: (item: T) => U): Map<U, T[]> => {
     }, new Map());
 }
 
+export type BonusSourceLevelRange = {
+    source: LeveledBonusProvider;
+    startLevel: number;
+    endLevel: number;
+}
 
-export type BonusGroupKey = BonusSource | {name: string} | string;
-export type BonusGroupValue = {key: BonusGroupKey, total: number, items: BonusGroup<any> | null};
-export type BonusGroup<TKey extends BonusGroupKey> = Map<TKey, BonusGroupValue>;
-type GetSubGroupFunction = (bonuses: Bonus[]) => BonusGroup<any>;
-export const groupBonuses = <TKey extends BonusGroupKey>(bonuses: Bonus[], getKey: (bonus: Bonus) => TKey,
-                             getSubGroups: GetSubGroupFunction | null=null): BonusGroup<TKey> => {
-    const bonusMap: Map<TKey, {key: BonusGroupKey, total: number, bonuses: Bonus[]}> = new Map();
-    bonuses.forEach(b => {
-        const key = getKey(b);
-        const item = bonusMap.get(key) || {key: key, total: 0, bonuses: []};
-        item.total += b.value;
-        item.bonuses.push(b);
-        bonusMap.set(key, item);
-    });
+export type BonusSource = SimpleBonusSource | BonusSourceLevelRange;
 
-    const bonusGroup: BonusGroup<TKey> = new Map();
-    for (const [key, item] of bonusMap) {
-        const value: BonusGroupValue = {key, total: item.total, items: null};
-        if (getSubGroups) {
-            value.items = getSubGroups(item.bonuses);
-        }
-        bonusGroup.set(key, value);
+export type LeveledBonusProvider = {
+    name: string;
+    category: SourceCategory;
+    stats: Stat[];
+    levels: BonusProviderLevel[];
+}
+
+export type BonusProviderLevel = {
+    provider: LeveledBonusProvider;
+    name: string;
+    level: number;
+    tierLevel: TierLevel | null;
+    bonusValues: number[];
+    bonuses: Bonus[];
+}
+
+export type TierLevel = {tier: Tier, level: number};
+
+export function getBonusesFrom(source: LeveledBonusProvider, startLevel: number, endLevel?: number): Bonus[] {
+    if (!(source && ('levels' in source) && source.levels)) {
+        return [];
     }
+    const bonuses = [];
+    const resolvedEndLevel = (endLevel === undefined ? startLevel : endLevel);
+    const levels = source.levels.slice(startLevel - 1, resolvedEndLevel);
+    return source.stats.map((stat, index) => {
+        const value = levels.reduce((total, level) => {
+            return total + level.bonusValues[index];
+        }, 0);
+        return {stat, value, source: {source, startLevel, endLevel: resolvedEndLevel}};
+    });
+}
 
-    return bonusGroup;
+export function aggregateBonuses<T extends string>(levels: {[key in T]: number}, sources: {[key in T]: LeveledBonusProvider}): Bonus[] {
+    return Object.entries(levels)
+            .filter(entry => {
+                const [k, v] = entry as [T, number];
+                return v > 0;
+            })
+            .reduce((result, entry) => {
+                const [name, level] = entry as [T, number];
+                return [...result, ...getBonusesFrom(sources[name], 1, level)];
+            }, [] as Bonus[]);
 }

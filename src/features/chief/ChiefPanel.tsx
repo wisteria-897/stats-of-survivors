@@ -4,10 +4,10 @@ import { EnumMap } from '../../util/types';
 import { chainable } from '../../util/itertools';
 import { safeParseInt } from '../../util/parse';
 import LevelPicker from '../../ui/level/LevelPicker';
-import { Bonus } from '../../game/bonus';
+import { aggregateBonuses, Bonus, LeveledBonusProvider, getBonusesFrom } from '../../game/bonus';
 import { getVipLevel } from '../../game/vip';
-import { HeroGear, HeroGears } from '../../game/heroGear';
-import { ChiefGears, ChiefGearSlot } from '../../game/chiefGear';
+import { HeroGear, HeroGearSlot, HeroGears } from '../../game/heroGear';
+import { ChiefGear, ChiefGearSlot, ChiefGears } from '../../game/chiefGear';
 import { ResearchTech, ResearchTechs, ResearchTechName } from '../../game/research';
 import { StatTalent, Talent, Talents, TalentName } from '../../game/talents';
 import { AllianceTech, AllianceTechs, AllianceTechName, StatAllianceTech } from '../../game/allianceTech';
@@ -23,13 +23,9 @@ import {
     copyChief,
     updateChief,
     selectChief,
-    selectChiefs,
-    selectChiefGear,
-    selectChiefGearList,
-    selectChiefHeroGear,
-    selectChiefHeroGearList
+    selectChiefs
 } from './chiefSlice';
-import { BonusSourceDisplay, BonusList } from '../bonus/BonusList';
+import { BonusList, BonusSourceDisplay } from '../bonus/BonusList';
 import styles from './Chief.module.css';
 
 const getChiefDisplayName = (chief: Chief): string => {
@@ -38,13 +34,11 @@ const getChiefDisplayName = (chief: Chief): string => {
 
 
 const getChiefGearListItems = (chief: Chief): JSX.Element[] => {
-    return [
-        ChiefGears.Helmet, ChiefGears.Armor, ChiefGears.Kneepads,
-        ChiefGears['Assault Rifle'], ChiefGears.Boots, ChiefGears.Communicator
-    ].map(cg => {
-        const gl = useAppSelector(state => selectChiefGear(state, chief.id, cg));
-        const glContent = gl ? <BonusSourceDisplay source={gl}/> : '<None>';
-        return <li key={cg.name}>{glContent}</li>;
+    return Object.entries(ChiefGears).map(entry => {
+        const [slot, gear] = entry as [ChiefGearSlot, ChiefGear];
+        const gearLevel = chief.chiefGear[slot];
+        const glContent = gearLevel ? <BonusSourceDisplay source={gear.levels[gearLevel - 1]}/> : <span>&lt;None&gt;</span>;
+        return <li key={slot}>{glContent}</li>;
     });
 };
 
@@ -64,14 +58,11 @@ const ChiefGearDisplayPanel = (props: { chief: Chief }) => {
 };
 
 const getHeroGearListItems = (chief: Chief): JSX.Element[] => {
-    return [
-        HeroGears.BrawlerHead, HeroGears.BrawlerBody, HeroGears.BrawlerFoot,
-        HeroGears.MarksmanHead, HeroGears.MarksmanBody, HeroGears.MarksmanFoot,
-        HeroGears.ScoutHead, HeroGears.ScoutBody, HeroGears.ScoutFoot,
-    ].map(hg => {
-        const gearLevel = useAppSelector(state => selectChiefHeroGear(state, chief.id, hg));
-        const glContent = gearLevel ? <BonusSourceDisplay source={gearLevel}/> : '<None>';
-        return <li key={hg.heroType+'/'+hg.name}>{glContent}</li>;
+    return Object.entries(HeroGears).map(entry => {
+        const [slot, hg] = entry as [HeroGearSlot, HeroGear];
+        const gearLevel = chief.heroGear[slot];
+        const glContent = gearLevel ? <BonusSourceDisplay source={hg.levels[gearLevel - 1]}/> : <span>&lt;None&gt;</span>;
+        return <li key={slot}>{glContent}</li>;
     });
 };
 
@@ -160,105 +151,45 @@ const HeroGearDisplayPanel = (props: { chief: Chief }) => {
 const ChiefBonusList = (props: {chief: Chief}) => {
     const {chief} = props;
     const vipLevel = getVipLevel(chief.vipLevel);
-    const chiefGearList = [
-        ChiefGears.Helmet, ChiefGears.Armor, ChiefGears.Kneepads,
-        ChiefGears['Assault Rifle'], ChiefGears.Boots, ChiefGears.Communicator
-    ];
-    const chiefGearLevels = useAppSelector(state => selectChiefGearList(state, chief.id, ...chiefGearList));
-    const heroGearList = [
-        HeroGears.BrawlerHead, HeroGears.BrawlerBody, HeroGears.BrawlerFoot,
-        HeroGears.MarksmanHead, HeroGears.MarksmanBody, HeroGears.MarksmanFoot,
-        HeroGears.ScoutHead, HeroGears.ScoutBody, HeroGears.ScoutFoot
-    ];
-    const heroGearLevels = useAppSelector(state => selectChiefHeroGearList(state, chief.id, ...heroGearList));
-
-    const researchLevelBonuses = (!chief || !chief.research) ? []
-        : Object.entries(chief.research)
-            .filter(([k, v]) => v > 0)
-            .reduce((result, entry) => {
-                const [techName, level] = entry as [ResearchTechName, number];
-                for (let i = 0; i < level; i++) {
-                    result = result.concat(ResearchTechs[techName].levels[i].bonuses);
-                }
-                return result;
-            }, [] as Bonus[]);
-
-    const talentLevelBonuses = (!chief || !chief.talents) ? []
-        : Object.entries(chief.talents)
-            .filter(([k, v]) => v > 0)
-            .reduce((result, entry) => {
-                const [talentName, level] = entry as [TalentName, number];
-                const talent = Talents[talentName];
-                if (talent instanceof StatTalent) {
-                    for (let i = 0; i < level; i++) {
-                        result = result.concat(talent.levels[i].bonuses);
-                    }
-                }
-                return result;
-            }, [] as Bonus[]);
-
-    const buildingLevelBonuses = (!chief || !chief.buildings) ? []
-        : Object.entries(chief.buildings)
-            .filter(([k, v]) => v > 0)
-            .reduce((result, entry) => {
-                const [buildingName, level] = entry as [BuildingName, number];
-                const building = Buildings[buildingName];
-                for (let i = 0; i < level; i++) {
-                    result = result.concat(building.levels[i].bonuses);
-                }
-                return result;
-            }, [] as Bonus[]);
-
-    const badgeLevelBonuses = (!chief || !chief.badges) ? []
-        : Object.entries(chief.badges)
-            .filter(([k, v]) => v > 0)
-            .reduce((result, entry) => {
-                const [badgeSlot, level] = entry as [ChiefBadgeSlot, number];
-                const badge = ChiefBadges[badgeSlot];
-                for (let i = 0; i < level; i++) {
-                    result = result.concat(badge.levels[i].bonuses);
-                }
-                return result;
-            }, [] as Bonus[]);
+    const researchBonuses = (!chief || !chief.research) ? [] : aggregateBonuses(chief.research, ResearchTechs);
+    const buildingBonuses = (!chief || !chief.buildings) ? [] : aggregateBonuses(chief.buildings, Buildings);
+    const talentBonuses = (!chief || !chief.talents) ? [] : aggregateBonuses(chief.talents, Talents);
+    const badgeBonuses = (!chief || !chief.badges) ? [] : aggregateBonuses(chief.badges, ChiefBadges);
+    const chiefGearBonuses = (!chief || !chief.chiefGear) ? [] : aggregateBonuses(chief.chiefGear, ChiefGears);
+    const heroGearBonuses = (!chief || !chief.heroGear) ? [] : aggregateBonuses(chief.heroGear, HeroGears);
+    console.log('BonusList', chief.heroGear, heroGearBonuses);
 
     const alliance = useAppSelector(state => selectAllianceByTag(state, chief.allianceTag || ''));
-    console.log('bonuses', chief.allianceTag, alliance);
-    let allianceTechBonuses: Bonus[] = [];
-    if (alliance && alliance.allianceTech) {
-        console.log('bonuses', alliance.allianceTech);
-        allianceTechBonuses = Object.entries(alliance.allianceTech)
-            .filter(entry => {
-                const [k, v] = entry as [AllianceTechName, number];
-                return v > 0;
-            })
-            .reduce((result, entry) => {
-                const [techName, level] = entry as [AllianceTechName, number];
-                const tech = AllianceTechs[techName];
-                if (tech instanceof StatAllianceTech) {
-                    for (let i = 0; i < level; i++) {
-                        result = result.concat(tech.levels[i].bonuses);
-                    }
-                }
-                return result;
-            }, [] as Bonus[]);
-    }
+    const allianceTechBonuses = (!alliance || !alliance.allianceTech) ? [] : aggregateBonuses(alliance.allianceTech, AllianceTechs);
 
-    console.log('bonuses', allianceTechBonuses);
-    const bonuses: Bonus[] = ([] as Bonus[]).concat(
-        vipLevel.bonuses,
-        ...chainable(() => chiefGearLevels).notNull().map(gl => gl.bonuses).asArray(),
-        ...chainable(() => heroGearLevels).notNull().map(gl => gl.bonuses).asArray(),
-        ...researchLevelBonuses,
-        ...talentLevelBonuses,
-        ...buildingLevelBonuses,
-        ...badgeLevelBonuses,
+    console.log(buildingBonuses);
+    const bonuses: Bonus[] = [
+        ...chiefGearBonuses,
+        ...heroGearBonuses,
+        ...researchBonuses,
+        ...talentBonuses,
+        ...buildingBonuses,
+        ...badgeBonuses,
         ...allianceTechBonuses
-    );
+    ];
+
+    const getCategory = (b: Bonus) => {
+        if (b.source) {
+            return ('category' in b.source) ? b.source.category : b.source.source.category;
+        }
+        return 'Unknown';
+    }
 
     return (
         <div>
-            <h3>Bonuses</h3>
-            <BonusList bonuses={bonuses} />
+            <div>
+                <h3>Bonuses</h3>
+                <BonusList bonuses={bonuses} groupBy={(b) => b.stat}>
+                    <BonusList groupBy={getCategory}>
+                        <BonusList/>
+                    </BonusList>
+                </BonusList>
+            </div>
         </div>
     );
 }
@@ -416,6 +347,15 @@ const ChiefEditor = (props: {chief: Chief, onComplete: (update: Chief | null) =>
         return <ChiefBadgeLevelEditor key={badgeSlot} badge={ChiefBadges[badgeSlot]} level={level} onChange={onChange} />;
     });
 
+    const heroGearEditors = Object.entries(heroGear).map(entry => {
+        const [gearSlot, level] = entry as [gearSlot: HeroGearSlot, level: number];
+        const onChange = (value: number) => {
+            const update = {[gearSlot]: value} as {[key in HeroGearSlot]: number};
+            setHeroGear(Object.assign({}, heroGear, update));
+        }
+        return <HeroGearSelector key={gearSlot} gear={HeroGears[gearSlot]} level={level} onChange={onChange} />;
+    });
+
     return (
         <div className={styles.chiefEditor}>
             <h2>Edit Chief</h2>
@@ -462,42 +402,7 @@ const ChiefEditor = (props: {chief: Chief, onComplete: (update: Chief | null) =>
             </ul>
             <h3>Hero Gear</h3>
             <ul className={styles.chiefEditorHeroGearList}>
-                <li>
-                    <HeroGearSelector gear={HeroGears.BrawlerHead} level={heroGear[HeroGears.BrawlerHead.key]}
-                        onChange={(level: number) => setHeroGearSlot(HeroGears.BrawlerHead, level)} />
-                </li>
-                <li>
-                    <HeroGearSelector gear={HeroGears.BrawlerBody} level={heroGear[HeroGears.BrawlerBody.key]}
-                        onChange={(level: number) => setHeroGearSlot(HeroGears.BrawlerBody, level)} />
-                </li>
-                <li>
-                    <HeroGearSelector gear={HeroGears.BrawlerFoot} level={heroGear[HeroGears.BrawlerFoot.key]}
-                        onChange={(level: number) => setHeroGearSlot(HeroGears.BrawlerFoot, level)} />
-                </li>
-                <li>
-                    <HeroGearSelector gear={HeroGears.MarksmanHead} level={heroGear[HeroGears.MarksmanHead.key]}
-                        onChange={(level: number) => setHeroGearSlot(HeroGears.MarksmanHead, level)} />
-                </li>
-                <li>
-                    <HeroGearSelector gear={HeroGears.MarksmanBody} level={heroGear[HeroGears.MarksmanBody.key]}
-                        onChange={(level: number) => setHeroGearSlot(HeroGears.MarksmanBody, level)} />
-                </li>
-                <li>
-                    <HeroGearSelector gear={HeroGears.MarksmanFoot} level={heroGear[HeroGears.MarksmanFoot.key]}
-                        onChange={(level: number) => setHeroGearSlot(HeroGears.MarksmanFoot, level)} />
-                </li>
-                <li>
-                    <HeroGearSelector gear={HeroGears.ScoutHead} level={heroGear[HeroGears.ScoutHead.key]}
-                        onChange={(level: number) => setHeroGearSlot(HeroGears.ScoutHead, level)} />
-                </li>
-                <li>
-                    <HeroGearSelector gear={HeroGears.ScoutBody} level={heroGear[HeroGears.ScoutBody.key]}
-                        onChange={(level: number) => setHeroGearSlot(HeroGears.ScoutBody, level)} />
-                </li>
-                <li>
-                    <HeroGearSelector gear={HeroGears.ScoutFoot} level={heroGear[HeroGears.ScoutFoot.key]}
-                        onChange={(level: number) => setHeroGearSlot(HeroGears.ScoutFoot, level)} />
-                </li>
+                {heroGearEditors}
             </ul>
             <h3>Chief Tech</h3>
             <ul>

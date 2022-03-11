@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { chainable } from '../../util/itertools';
 import { Stat, StatUnit, Stats } from '../../game/stat';
-import { groupBonuses, Bonus, BonusGroupKey, BonusGroupValue, BonusGroup, BonusSource } from '../../game/bonus';
+import { SourceCategory, Tier, groupBonuses, getBonusesFrom, Bonus, BonusSource } from '../../game/bonus';
 import styles from './Bonus.module.css';
 
 const percentFormatter = new Intl.NumberFormat('en-US', {
@@ -38,77 +38,94 @@ const getDisplayValue = (stat: Stat, value: number) => {
     }
 }
 
-function BonusGroupListItem(props: {groupKey: BonusGroupKey, stat: Stat, item: BonusGroupValue}) {
-    const {groupKey, item, stat} = props;
-    const [showSubGroups, setShowSubGroups] = useState(false);
-    let keyName: string;
-    let keyElement;
-    if (groupKey instanceof Stat) {
-        keyName = groupKey.name;
-        keyElement = <span>{groupKey.name}</span>;
-    } else if (typeof groupKey == 'string') {
-        keyName = groupKey;
-        keyElement = <span>{groupKey}</span>;
-    } else {
-        keyName = groupKey.name;
-        keyElement = <BonusSourceDisplay source={groupKey as BonusSource}/>;
+const getCategory = (bonus: Bonus): string => {
+    let category = null;
+    if (bonus.source) {
+        if ('category' in bonus.source) {
+            category = bonus.source.category;
+        } else {
+            category = bonus.source.source.category;
+        }
     }
+    return category || 'Unknown';
+}
 
-    let subgroupList = null;
-    if (showSubGroups && item.items != null) {
-        subgroupList = <BonusGroupList stat={stat} bonusGroup={item.items}/>;
+const getSource = (bonus: Bonus) => {
+    if (bonus.source) {
+        return ('source' in bonus.source) ? {mapKey: bonus.source.source, groupKey: bonus.source} : bonus.source;
     }
+    return 'Unknown';
+}
+
+function BonusListItem(props: {bonus: Bonus}) {
+    const {bonus} = props;
     return (
-        <li key={keyName}>
-            <div className={styles.bonusContainer} onClick={(e) => setShowSubGroups(!showSubGroups)}>
-                {keyElement}
-                <BonusValue stat={stat} value={item.total}/>
+        <li>
+            <div className={styles.bonusContainer}>
+                {bonus.source ? <BonusSourceDisplay source={bonus.source}/> : <span>Unknown</span>}
+                <BonusValue value={bonus.value} stat={bonus.stat}/>
             </div>
-            {subgroupList}
         </li>
     );
 }
 
-export function BonusGroupList(props: {stat: Stat, bonusGroup: BonusGroup<any>} | {className: string, bonusGroup: BonusGroup<Stat>}) {
-    const {bonusGroup} = props;
+function BonusGroupListItem(props: {label: string, bonuses: Bonus[], children?: React.ReactNode}) {
+    const {label, bonuses, children} = props;
+    const [showChildren, setShowChildren] = useState(false);
 
-    const listItems = chainable(() => bonusGroup.entries()).map(([key, group]) => {
-        const stat = 'stat' in props ? props.stat : key;
-        const keyName = (typeof(key) == 'object' && 'name' in key) ? key.name : String(key);
-        return <BonusGroupListItem key={keyName} groupKey={key} stat={stat} item={group}/>;
-    });
+    const total = bonuses.reduce((total, bonus) => total + bonus.value, 0);
+
+    let extendedChildren = null;
+    if (children && showChildren) {
+        extendedChildren = React.Children.map(children, child => {
+            return React.isValidElement(child) ? React.cloneElement(child, {bonuses: bonuses}) : child;
+        });
+    }
 
     return (
-        <ul className={'className' in props ? props.className : ''}>
-            {listItems}
-        </ul>
+        <li>
+            <div className={styles.bonusContainer} onClick={(e) => setShowChildren(!showChildren)}>
+                <span>{String(label)}</span>
+                <BonusValue stat={bonuses[0].stat} value={total}/>
+            </div>
+            {extendedChildren}
+        </li>
     );
 }
 
-const supportedStats = [
-    Stats.InfantryAttack, Stats.InfantryDefense, Stats.InfantryHealth, Stats.InfantryLethality,
-    Stats.RiderAttack, Stats.RiderDefense, Stats.RiderHealth, Stats.RiderLethality,
-    Stats.HunterAttack, Stats.HunterDefense, Stats.HunterHealth, Stats.HunterLethality,
-    Stats.TroopAttack, Stats.TroopDefense, Stats.TroopHealth, Stats.TroopLethality,
-    Stats.TrainingSpeed, Stats.TrainingCapacity, Stats.HealingSpeed, Stats.HealingCapacity,
-    Stats.MarchCapacity
-];
-export function BonusList(props: { bonuses: Bonus[] }) {
-    const filteredBonuses = props.bonuses.filter(b => supportedStats.find(s => s == b.stat));
-    const bonusGroup: BonusGroup<Stat> = groupBonuses(filteredBonuses, b => b.stat,
-        x => groupBonuses(x, b => b.source ? b.source.category : 'Unknown',
-            y => groupBonuses(y, b => b.source || 'Unknown')));
-    return <BonusGroupList className={styles.bonusList} bonusGroup={bonusGroup}/>;
+export function BonusList(props: {bonuses?: Bonus[], children?: React.ReactNode, groupBy?: (bonus: Bonus) => any}) {
+    const {children, groupBy} = props;
+    let bonuses = props.bonuses || [];
+
+    let items = null;
+    if (groupBy) {
+        const groups = groupBonuses(bonuses, groupBy);
+        items = chainable(() => groups.entries())
+            .map(([groupKey, groupBonuses]) => (
+                <BonusGroupListItem key={groupKey} label={groupKey} bonuses={groupBonuses}>
+                    {children}
+                </BonusGroupListItem>
+            ))
+            .asArray();
+    } else {
+        items = bonuses.map(b => {
+            let name = 'Unknown';
+            let category = 'Unknown';
+            if (b.source) {
+                name = ('name' in b.source) ? b.source.name : b.source.source.name;
+                category = ('category' in b.source) ? b.source.category : b.source.source.category;
+            }
+            const key = category + ':' + name + ':' + b.stat.name;
+            return <BonusListItem key={key} bonus={b} />;
+        });
+    }
+
+    return <ul className={styles.bonusList}>{items}</ul>;
 }
 
 const BonusValue = (props: { stat: Stat, value: number }) => {
     const {stat, value} = props;
     return <span className={styles.bonusValue + (value < 0 ? styles.penaltyValue : '')}>{getDisplayValue(stat, value)}</span>;
-}
-
-export const BonusDisplay = (props: { bonus: Bonus }) => {
-    const { bonus } = props;
-    return <div><span>{bonus.stat.name}</span>: <span>{bonus.value}</span></div>;
 }
 
 type PopoverData = { x: number, y: number, show: boolean, timeoutId: number | null };
@@ -133,9 +150,10 @@ export const BonusSourceDisplay = (props: { source: BonusSource }) => {
         setPopoverData({x: 0, y: 0, show: false, timeoutId: null});
     }
 
+    const name = 'name' in source ? source.name : source.source.levels[source.endLevel - 1].name;
     return (
         <span className={styles.sourceDisplay} onMouseOver={showBonuses} onMouseOut={hideBonuses}>
-            {source.name}
+            {name}
             <BonusPopOver source={source} x={popoverData.x} y={popoverData.y} show={popoverData.show}/>
         </span>
     );
@@ -147,7 +165,8 @@ export const BonusPopOver = (props: { x: number, y: number, source: BonusSource,
         return null;
     }
 
-    const bonusItems = source.bonuses.map(b => {
+    const bonuses = 'bonuses' in source ? source.bonuses : getBonusesFrom(source.source, source.startLevel, source.endLevel);
+    const bonusItems = bonuses.map(b => {
         return (
             <li key={b.stat.name}>
                 <span className={styles.statName}>{b.stat.name}:</span>
@@ -156,9 +175,17 @@ export const BonusPopOver = (props: { x: number, y: number, source: BonusSource,
         );
     });
 
+    let tier: Tier | null;
+    if ('tier' in source) {
+        tier = source.tier;
+    } else {
+        const tierLevel = source.source.levels[source.endLevel - 1].tierLevel;
+        tier = tierLevel && tierLevel.tier;
+    }
+    const name = 'name' in source ? source.name : source.source.levels[source.endLevel - 1].name;
     return (
         <aside className={styles.popOver} style={{top: y, left: x}}>
-            <h4 className={styles[source.tier.name]}>{source.name}</h4>
+            <h4 className={tier ? styles[tier.name] : ''}>{name}</h4>
             <ul>
                 {bonusItems}
             </ul>

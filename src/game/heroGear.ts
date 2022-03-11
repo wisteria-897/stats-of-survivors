@@ -9,38 +9,28 @@ export enum HeroType {
     Marksman = 'Marksman'
 }
 
-const slotRegistry: Registry<string, HeroGearSlot> = new Registry(item => item.slot);
-type SlotName = 'Head' | 'Body' | 'Foot';
-class HeroGearSlot {
-    readonly slot: SlotName;
-    readonly brawlerName: string;
-    readonly scoutName: string;
-    readonly marksmanName: string;
-
-    constructor(slot: SlotName, brawlerName: string, scoutName: string, marksmanName: string) {
-        this.slot = slot;
-        this.brawlerName = brawlerName;
-        this.scoutName = scoutName;
-        this.marksmanName = marksmanName;
-        slotRegistry.register(this);
-    }
-
-    getName(heroType: HeroType): string {
-        switch (heroType) {
-            case HeroType.Brawler:
-                return this.brawlerName;
-            case HeroType.Scout:
-                return this.scoutName;
-        }
-
-        return this.marksmanName;
-    }
+export enum HeroGearSlot {
+    BrawlerHead = 'Brawler Goggles',
+    BrawlerBody = 'Brawler Protective Clothing',
+    BrawlerFoot = 'Brawler Boots',
+    MarksmanHead = 'Marksman Scope',
+    MarksmanBody = 'Marksman Camouflage',
+    MarksmanFoot = 'marksman Boots',
+    ScoutHead = 'Scout Night-vision Goggles',
+    ScoutBody = 'Scout Top',
+    ScoutFoot = 'Scout Slippers'
 }
 
-const slots = {
-    Head: new HeroGearSlot("Head", "Goggles", "Scope", "Night-vision Goggles"),
-    Body: new HeroGearSlot("Body", "Protective Clothing", "Camouflage", "Top"),
-    Foot: new HeroGearSlot("Foot", "Boots", "Boots", "Slippers"),
+const slotHeroTypes = {
+    [HeroGearSlot.BrawlerHead]: HeroType.Brawler,
+    [HeroGearSlot.BrawlerBody]: HeroType.Brawler,
+    [HeroGearSlot.BrawlerFoot]: HeroType.Brawler,
+    [HeroGearSlot.MarksmanHead]: HeroType.Marksman,
+    [HeroGearSlot.MarksmanBody]: HeroType.Marksman,
+    [HeroGearSlot.MarksmanFoot]: HeroType.Marksman,
+    [HeroGearSlot.ScoutHead]: HeroType.Scout,
+    [HeroGearSlot.ScoutBody]: HeroType.Scout,
+    [HeroGearSlot.ScoutFoot]: HeroType.Scout
 } as const;
 
 const tierNames = {
@@ -69,49 +59,29 @@ const tierNames = {
 
 type LevelData = { tier: Tier, tierLevel: number, bonusValues: number[] };
 
-const gearRegistry: Registry<string, HeroGear> = new Registry(item => item.heroType + '/' + item.slot.slot);
 export class HeroGear {
-    readonly heroType: HeroType;
     readonly slot: HeroGearSlot;
     readonly stats: Stat[];
     readonly levels: HeroGearLevel[];
 
-    constructor(heroType: HeroType, slot: HeroGearSlot, stats: Stat[], ...levelData: LevelData[]) {
-        this.heroType = heroType;
+    constructor(slot: HeroGearSlot, stats: Stat[], ...levelData: LevelData[]) {
         this.slot = slot;
         this.stats = stats;
         this.levels = levelData.map(({tier, tierLevel, bonusValues}, i) => {
             return new HeroGearLevel(this, i + 1, tier, tierLevel, ...bonusValues);
         });
-        gearRegistry.register(this);
+    }
+
+    get heroType() {
+        return slotHeroTypes[this.slot];
     }
 
     get key() {
-        return this.heroType + '/' + this.slot.slot;
+        return this.slot;
     }
 
     get name() {
-        return this.slot.getName(this.heroType);
-    }
-}
-
-export class HeroGearLevel {
-    readonly gear: HeroGear;
-    readonly tier: Tier;
-    readonly level: number;
-    readonly tierLevel: number;
-    readonly bonuses: Bonus[];
-
-    constructor(gear: HeroGear, level: number, tier: Tier, tierLevel: number, ...bonusValues: number[]) {
-        this.gear = gear;
-        this.level = level;
-        this.tier = tier;
-        this.tierLevel = tierLevel;
-        this.bonuses = gear.stats.map((stat, i) => new Bonus(stat, bonusValues[i], this));
-    }
-
-    get name() {
-        return tierNames[this.gear.heroType][this.tier.name] + ' ' + this.gear.name + ' ' + "⭐️".repeat(this.tierLevel);
+        return this.slot;
     }
 
     get category() {
@@ -119,203 +89,235 @@ export class HeroGearLevel {
     }
 }
 
+export class HeroGearLevel {
+    readonly gear: HeroGear;
+    readonly tier: Tier;
+    readonly level: number;
+    readonly tierLevel: {tier: Tier, level: number};
+    readonly bonuses: Bonus[];
+
+    constructor(gear: HeroGear, level: number, tier: Tier, tierLevel: number, ...bonusValues: number[]) {
+        this.gear = gear;
+        this.level = level;
+        this.tier = tier;
+        this.tierLevel = {tier, level: tierLevel};
+        this.bonuses = gear.stats.map((stat, i) => new Bonus(stat, bonusValues[i], this));
+    }
+
+    get name() {
+        return tierNames[this.gear.heroType][this.tierLevel.tier.name] + ' ' + this.gear.name + ' ' + "⭐️".repeat(this.tierLevel.level);
+    }
+
+    get category() {
+        return SourceCategory.HeroGear;
+    }
+
+    get bonusValues() {
+        return this.bonuses.map(b => b.value);
+    }
+
+    get provider() {
+        return this.gear;
+    }
+}
+
 export const HeroGears = {
-    BrawlerHead: new HeroGear(HeroType.Brawler, slots.Head,
+    [HeroGearSlot.BrawlerHead]: new HeroGear(HeroGearSlot.BrawlerHead,
         [Stats.ExplorerAttack, Stats.ExplorerDefense, Stats.InfantryHealth, Stats.InfantryLethality],
-        {tier: Tiers.Common, tierLevel: 1, bonusValues: [23,35,1350,3050]},
-        {tier: Tiers.Common, tierLevel: 2, bonusValues: [35,52,1950,5040]},
-        {tier: Tiers.Common, tierLevel: 3, bonusValues: [49,71,2850,7550]},
-        {tier: Tiers.Uncommon, tierLevel: 1, bonusValues: [69,98,4100,1046]},
-        {tier: Tiers.Uncommon, tierLevel: 2, bonusValues: [90,125,5300,13370]},
-        {tier: Tiers.Uncommon, tierLevel: 3, bonusValues: [105,143,6500,16340]},
-        {tier: Tiers.Rare, tierLevel: 1, bonusValues: [120,160,7700,19360]},
-        {tier: Tiers.Rare, tierLevel: 2, bonusValues: [179,205,9170,22750]},
-        {tier: Tiers.Rare, tierLevel: 3, bonusValues: [237,249,11300,26920]},
-        {tier: Tiers.Rare, tierLevel: 4, bonusValues: [263,277,14050,30620]},
-        {tier: Tiers.Epic, tierLevel: 1, bonusValues: [290,304,16800,34320]},
-        {tier: Tiers.Epic, tierLevel: 2, bonusValues: [307,323,19550,38020]},
-        {tier: Tiers.Epic, tierLevel: 3, bonusValues: [325,341,22350,41720]},
-        {tier: Tiers.Epic, tierLevel: 4, bonusValues: [343,360,25180,45500]},
-        {tier: Tiers.Epic, tierLevel: 5, bonusValues: [358,375,28020,49280]},
-        {tier: Tiers.Legendary, tierLevel: 1, bonusValues: [372,390,30850,53060]},
-        {tier: Tiers.Legendary, tierLevel: 2, bonusValues: [387,405,33690,56840]},
-        {tier: Tiers.Legendary, tierLevel: 3, bonusValues: [401,421,36520,60620]},
-        {tier: Tiers.Legendary, tierLevel: 4, bonusValues: [415,436,39360,64400]},
-        {tier: Tiers.Legendary, tierLevel: 5, bonusValues: [434,455,43000,69220]}),
-    BrawlerBody: new HeroGear(HeroType.Brawler, slots.Body,
+        { tier: Tiers.Common, tierLevel: 1, bonusValues: [ 23, 35, 1350, 3050 ] },
+        { tier: Tiers.Common, tierLevel: 2, bonusValues: [ 12, 17, 600, 1990 ] },
+        { tier: Tiers.Common, tierLevel: 3, bonusValues: [ 14, 19, 900, 2510 ] },
+        { tier: Tiers.Uncommon, tierLevel: 1, bonusValues: [ 20, 27, 1250, 2910 ] },
+        { tier: Tiers.Uncommon, tierLevel: 2, bonusValues: [ 21, 27, 1200, 2910 ] },
+        { tier: Tiers.Uncommon, tierLevel: 3, bonusValues: [ 15, 18, 1200, 2970 ] },
+        { tier: Tiers.Rare, tierLevel: 1, bonusValues: [ 15, 17, 1200, 3020 ] },
+        { tier: Tiers.Rare, tierLevel: 2, bonusValues: [ 59, 45, 1470, 3390 ] },
+        { tier: Tiers.Rare, tierLevel: 3, bonusValues: [ 58, 44, 2130, 4170 ] },
+        { tier: Tiers.Rare, tierLevel: 4, bonusValues: [ 26, 28, 2750, 3700 ] },
+        { tier: Tiers.Epic, tierLevel: 1, bonusValues: [ 27, 27, 2750, 3700 ] },
+        { tier: Tiers.Epic, tierLevel: 2, bonusValues: [ 17, 19, 2750, 3700 ] },
+        { tier: Tiers.Epic, tierLevel: 3, bonusValues: [ 18, 18, 2800, 3700 ] },
+        { tier: Tiers.Epic, tierLevel: 4, bonusValues: [ 18, 19, 2830, 3780 ] },
+        { tier: Tiers.Epic, tierLevel: 5, bonusValues: [ 15, 15, 2840, 3780 ] },
+        { tier: Tiers.Legendary, tierLevel: 1, bonusValues: [ 14, 15, 2830, 3780 ] },
+        { tier: Tiers.Legendary, tierLevel: 2, bonusValues: [ 15, 15, 2840, 3780 ] },
+        { tier: Tiers.Legendary, tierLevel: 3, bonusValues: [ 14, 16, 2830, 3780 ] },
+        { tier: Tiers.Legendary, tierLevel: 4, bonusValues: [ 14, 15, 2840, 3780 ] },
+        { tier: Tiers.Legendary, tierLevel: 5, bonusValues: [ 19, 19, 3640, 4820 ] }),
+    [HeroGearSlot.BrawlerBody]: new HeroGear(HeroGearSlot.BrawlerBody,
         [Stats.ExplorerAttack, Stats.ExplorerHealth, Stats.InfantryHealth],
-        {tier: Tiers.Common, tierLevel: 1, bonusValues: [23,944,3610]},
-        {tier: Tiers.Common, tierLevel: 2, bonusValues: [35,1380,6000]},
-        {tier: Tiers.Common, tierLevel: 3, bonusValues: [49,1900,8920]},
-        {tier: Tiers.Uncommon, tierLevel: 1, bonusValues: [69,2640,12360]},
-        {tier: Tiers.Uncommon, tierLevel: 2, bonusValues: [90,3350,15850]},
-        {tier: Tiers.Uncommon, tierLevel: 3, bonusValues: [105,3820,19360]},
-        {tier: Tiers.Rare, tierLevel: 1, bonusValues: [120,4300,22870]},
-        {tier: Tiers.Rare, tierLevel: 2, bonusValues: [179,5500,26870]},
-        {tier: Tiers.Rare, tierLevel: 3, bonusValues: [237,6700,31650]},
-        {tier: Tiers.Rare, tierLevel: 4, bonusValues: [263,7450,35830]},
-        {tier: Tiers.Epic, tierLevel: 1, bonusValues: [290,8200,40020]},
-        {tier: Tiers.Epic, tierLevel: 2, bonusValues: [307,8700,44200]},
-        {tier: Tiers.Epic, tierLevel: 3, bonusValues: [325,9200,48450]},
-        {tier: Tiers.Epic, tierLevel: 4, bonusValues: [352,9950,52710]},
-        {tier: Tiers.Epic, tierLevel: 5, bonusValues: [365,10320,56960]},
-        {tier: Tiers.Legendary, tierLevel: 1, bonusValues: [378,10690,61220]},
-        {tier: Tiers.Legendary, tierLevel: 2, bonusValues: [391,11060,65470]},
-        {tier: Tiers.Legendary, tierLevel: 3, bonusValues: [404,11430,69730]},
-        {tier: Tiers.Legendary, tierLevel: 4, bonusValues: [417,11810,73980]},
-        {tier: Tiers.Legendary, tierLevel: 5, bonusValues: [434,12280,79410]}),
-    BrawlerFoot: new HeroGear(HeroType.Brawler, slots.Foot,
+        { tier: Tiers.Common, tierLevel: 1, bonusValues: [ 23, 944, 3610 ] },
+        { tier: Tiers.Common, tierLevel: 2, bonusValues: [ 12, 436, 2390 ] },
+        { tier: Tiers.Common, tierLevel: 3, bonusValues: [ 14, 520, 2920 ] },
+        { tier: Tiers.Uncommon, tierLevel: 1, bonusValues: [ 20, 740, 3440 ] },
+        { tier: Tiers.Uncommon, tierLevel: 2, bonusValues: [ 21, 710, 3490 ] },
+        { tier: Tiers.Uncommon, tierLevel: 3, bonusValues: [ 15, 470, 3510 ] },
+        { tier: Tiers.Rare, tierLevel: 1, bonusValues: [ 15, 480, 3510 ] },
+        { tier: Tiers.Rare, tierLevel: 2, bonusValues: [ 59, 1200, 4000 ] },
+        { tier: Tiers.Rare, tierLevel: 3, bonusValues: [ 58, 1200, 4780 ] },
+        { tier: Tiers.Rare, tierLevel: 4, bonusValues: [ 26, 750, 4180 ] },
+        { tier: Tiers.Epic, tierLevel: 1, bonusValues: [ 27, 750, 4190 ] },
+        { tier: Tiers.Epic, tierLevel: 2, bonusValues: [ 17, 500, 4180 ] },
+        { tier: Tiers.Epic, tierLevel: 3, bonusValues: [ 18, 500, 4250 ] },
+        { tier: Tiers.Epic, tierLevel: 4, bonusValues: [ 27, 750, 4260 ] },
+        { tier: Tiers.Epic, tierLevel: 5, bonusValues: [ 13, 370, 4250 ] },
+        { tier: Tiers.Legendary, tierLevel: 1, bonusValues: [ 13, 370, 4260 ] },
+        { tier: Tiers.Legendary, tierLevel: 2, bonusValues: [ 13, 370, 4250 ] },
+        { tier: Tiers.Legendary, tierLevel: 3, bonusValues: [ 13, 370, 4260 ] },
+        { tier: Tiers.Legendary, tierLevel: 4, bonusValues: [ 13, 380, 4250 ] },
+        { tier: Tiers.Legendary, tierLevel: 5, bonusValues: [ 17, 470, 5430 ] }),
+    [HeroGearSlot.BrawlerFoot]: new HeroGear(HeroGearSlot.BrawlerFoot,
         [Stats.ExplorerDefense, Stats.ExplorerHealth, Stats.InfantryHealth, Stats.InfantryLethality],
-        {tier: Tiers.Common, tierLevel: 1, bonusValues: [24,2200,1150,3010]},
-        {tier: Tiers.Common, tierLevel: 2, bonusValues: [35,3220,1650,4560]},
-        {tier: Tiers.Common, tierLevel: 3, bonusValues: [48,4440,2400,6670]},
-        {tier: Tiers.Uncommon, tierLevel: 1, bonusValues: [66,6160,3400,9400]},
-        {tier: Tiers.Uncommon, tierLevel: 2, bonusValues: [83,7810,4400,12180]},
-        {tier: Tiers.Uncommon, tierLevel: 3, bonusValues: [95,8930,5400,14930]},
-        {tier: Tiers.Rare, tierLevel: 1, bonusValues: [107,10050,6450,17860]},
-        {tier: Tiers.Rare, tierLevel: 2, bonusValues: [137,12850,7680,21200]},
-        {tier: Tiers.Rare, tierLevel: 3, bonusValues: [166,15650,9300,25980]},
-        {tier: Tiers.Rare, tierLevel: 4, bonusValues: [185,17400,11620,31380]},
-        {tier: Tiers.Epic, tierLevel: 1, bonusValues: [203,19150,13950,36780]},
-        {tier: Tiers.Epic, tierLevel: 2, bonusValues: [216,20310,16270,42180]},
-        {tier: Tiers.Epic, tierLevel: 3, bonusValues: [228,21480,18650,47730]},
-        {tier: Tiers.Epic, tierLevel: 4, bonusValues: [235,22140,21020,53410]},
-        {tier: Tiers.Epic, tierLevel: 5, bonusValues: [246,23180,23380,59080]},
-        {tier: Tiers.Legendary, tierLevel: 1, bonusValues: [257,24220,25750,64760]},
-        {tier: Tiers.Legendary, tierLevel: 2, bonusValues: [268,25260,28110,70430]},
-        {tier: Tiers.Legendary, tierLevel: 3, bonusValues: [279,26300,30480,76110]},
-        {tier: Tiers.Legendary, tierLevel: 4, bonusValues: [290,27340,32840,81780]},
-        {tier: Tiers.Legendary, tierLevel: 5, bonusValues: [304,28650,35840,88930]}),
-    MarksmanHead: new HeroGear(HeroType.Marksman, slots.Head,
+        { tier: Tiers.Common, tierLevel: 1, bonusValues: [ 24, 2200, 1150, 3010 ] },
+        { tier: Tiers.Common, tierLevel: 2, bonusValues: [ 11, 1020, 500, 1550 ] },
+        { tier: Tiers.Common, tierLevel: 3, bonusValues: [ 13, 1220, 750, 2110 ] },
+        { tier: Tiers.Uncommon, tierLevel: 1, bonusValues: [ 18, 1720, 1000, 2730 ] },
+        { tier: Tiers.Uncommon, tierLevel: 2, bonusValues: [ 17, 1650, 1000, 2780 ] },
+        { tier: Tiers.Uncommon, tierLevel: 3, bonusValues: [ 12, 1120, 1000, 2750 ] },
+        { tier: Tiers.Rare, tierLevel: 1, bonusValues: [ 12, 1120, 1050, 2930 ] },
+        { tier: Tiers.Rare, tierLevel: 2, bonusValues: [ 30, 2800, 1230, 3340 ] },
+        { tier: Tiers.Rare, tierLevel: 3, bonusValues: [ 29, 2800, 1620, 4780 ] },
+        { tier: Tiers.Rare, tierLevel: 4, bonusValues: [ 19, 1750, 2320, 5400 ] },
+        { tier: Tiers.Epic, tierLevel: 1, bonusValues: [ 18, 1750, 2330, 5400 ] },
+        { tier: Tiers.Epic, tierLevel: 2, bonusValues: [ 13, 1160, 2320, 5400 ] },
+        { tier: Tiers.Epic, tierLevel: 3, bonusValues: [ 12, 1170, 2380, 5550 ] },
+        { tier: Tiers.Epic, tierLevel: 4, bonusValues: [ 7, 660, 2370, 5680 ] },
+        { tier: Tiers.Epic, tierLevel: 5, bonusValues: [ 11, 1040, 2360, 5670 ] },
+        { tier: Tiers.Legendary, tierLevel: 1, bonusValues: [ 11, 1040, 2370, 5680 ] },
+        { tier: Tiers.Legendary, tierLevel: 2, bonusValues: [ 11, 1040, 2360, 5670 ] },
+        { tier: Tiers.Legendary, tierLevel: 3, bonusValues: [ 11, 1040, 2370, 5680 ] },
+        { tier: Tiers.Legendary, tierLevel: 4, bonusValues: [ 11, 1040, 2360, 5670 ] },
+        { tier: Tiers.Legendary, tierLevel: 5, bonusValues: [ 14, 1310, 3000, 7150 ] }),
+    [HeroGearSlot.MarksmanHead]: new HeroGear(HeroGearSlot.MarksmanHead,
         [Stats.ExplorerAttack, Stats.ExplorerDefense, Stats.HunterHealth, Stats.HunterLethality],
-        {tier: Tiers.Common, tierLevel: 1, bonusValues: [46,15,3130,850]},
-        {tier: Tiers.Common, tierLevel: 2, bonusValues: [69,22,4820,1250]},
-        {tier: Tiers.Common, tierLevel: 3, bonusValues: [97,30,7100,1800]},
-        {tier: Tiers.Uncommon, tierLevel: 1, bonusValues: [138,41,1000,2600]},
-        {tier: Tiers.Uncommon, tierLevel: 2, bonusValues: [180,52,12860,3400]},
-        {tier: Tiers.Uncommon, tierLevel: 3, bonusValues: [210,60,15740,4170]},
-        {tier: Tiers.Rare, tierLevel: 1, bonusValues: [239,67,18680,4960]},
-        {tier: Tiers.Rare, tierLevel: 2, bonusValues: [357,86,22090,5910]},
-        {tier: Tiers.Rare, tierLevel: 3, bonusValues: [474,104,26460,7190]},
-        {tier: Tiers.Rare, tierLevel: 4, bonusValues: [527,116,31580,8920]},
-        {tier: Tiers.Epic, tierLevel: 1, bonusValues: [580,127,36700,10650]},
-        {tier: Tiers.Epic, tierLevel: 2, bonusValues: [615,135,41820,12380]},
-        {tier: Tiers.Epic, tierLevel: 3, bonusValues: [650,143,46960,14150]},
-        {tier: Tiers.Epic, tierLevel: 4, bonusValues: [676,149,52160,15940]},
-        {tier: Tiers.Epic, tierLevel: 5, bonusValues: [706,155,57360,17740]},
-        {tier: Tiers.Legendary, tierLevel: 1, bonusValues: [737,162,62560,19530]},
-        {tier: Tiers.Legendary, tierLevel: 2, bonusValues: [767,168,67760,21330]},
-        {tier: Tiers.Legendary, tierLevel: 3, bonusValues: [798,175,72960,23120]},
-        {tier: Tiers.Legendary, tierLevel: 4, bonusValues: [828,182,78160,24920]},
-        {tier: Tiers.Legendary, tierLevel: 5, bonusValues: [867,190,84800,27200]}),
-    MarksmanBody: new HeroGear(HeroType.Marksman, slots.Body,
+        { tier: Tiers.Common, tierLevel: 1, bonusValues: [ 46, 15, 3130, 850 ] },
+        { tier: Tiers.Common, tierLevel: 2, bonusValues: [ 23, 7, 1690, 400 ] },
+        { tier: Tiers.Common, tierLevel: 3, bonusValues: [ 28, 8, 2280, 550 ] },
+        { tier: Tiers.Uncommon, tierLevel: 1, bonusValues: [ 41, 11, 2900, 800 ] },
+        { tier: Tiers.Uncommon, tierLevel: 2, bonusValues: [ 42, 11, 2860, 800 ] },
+        { tier: Tiers.Uncommon, tierLevel: 3, bonusValues: [ 30, 8, 2880, 770 ] },
+        { tier: Tiers.Rare, tierLevel: 1, bonusValues: [ 29, 7, 2940, 790 ] },
+        { tier: Tiers.Rare, tierLevel: 2, bonusValues: [ 118, 19, 3410, 950 ] },
+        { tier: Tiers.Rare, tierLevel: 3, bonusValues: [ 117, 18, 4370, 1280 ] },
+        { tier: Tiers.Rare, tierLevel: 4, bonusValues: [ 53, 12, 5120, 1730 ] },
+        { tier: Tiers.Epic, tierLevel: 1, bonusValues: [ 53, 11, 5120, 1730 ] },
+        { tier: Tiers.Epic, tierLevel: 2, bonusValues: [ 35, 8, 5120, 1730 ] },
+        { tier: Tiers.Epic, tierLevel: 3, bonusValues: [ 35, 8, 5140, 1770 ] },
+        { tier: Tiers.Epic, tierLevel: 4, bonusValues: [ 26, 6, 5200, 1790 ] },
+        { tier: Tiers.Epic, tierLevel: 5, bonusValues: [ 30, 6, 5200, 1800 ] },
+        { tier: Tiers.Legendary, tierLevel: 1, bonusValues: [ 31, 7, 5200, 1790 ] },
+        { tier: Tiers.Legendary, tierLevel: 2, bonusValues: [ 30, 6, 5200, 1800 ] },
+        { tier: Tiers.Legendary, tierLevel: 3, bonusValues: [ 31, 7, 5200, 1790 ] },
+        { tier: Tiers.Legendary, tierLevel: 4, bonusValues: [ 30, 7, 5200, 1800 ] },
+        { tier: Tiers.Legendary, tierLevel: 5, bonusValues: [ 39, 8, 6640, 2280 ] }),
+    [HeroGearSlot.MarksmanBody]: new HeroGear(HeroGearSlot.MarksmanBody,
         [Stats.ExplorerAttack, Stats.ExplorerHealth, Stats.HunterLethality],
-        {tier: Tiers.Common, tierLevel: 1, bonusValues: [46,350,4110]},
-        {tier: Tiers.Common, tierLevel: 2, bonusValues: [69,513,6700]},
-        {tier: Tiers.Common, tierLevel: 3, bonusValues: [97,707,9970]},
-        {tier: Tiers.Uncommon, tierLevel: 1, bonusValues: [138,980,13860]},
-        {tier: Tiers.Uncommon, tierLevel: 2, bonusValues: [180,1240,17800]},
-        {tier: Tiers.Uncommon, tierLevel: 3, bonusValues: [210,1410,21760]},
-        {tier: Tiers.Rare, tierLevel: 1, bonusValues: [239,1590,26070]},
-        {tier: Tiers.Rare, tierLevel: 2, bonusValues: [357,2040,30680]},
-        {tier: Tiers.Rare, tierLevel: 3, bonusValues: [474,2480,35750]},
-        {tier: Tiers.Rare, tierLevel: 4, bonusValues: [527,2760,41000]},
-        {tier: Tiers.Epic, tierLevel: 1, bonusValues: [580,3040,46250]},
-        {tier: Tiers.Epic, tierLevel: 2, bonusValues: [615,3220,51500]},
-        {tier: Tiers.Epic, tierLevel: 3, bonusValues: [650,3410,56650]},
-        {tier: Tiers.Epic, tierLevel: 4, bonusValues: [697,3650,61950]},
-        {tier: Tiers.Epic, tierLevel: 5, bonusValues: [724,3790,67240]},
-        {tier: Tiers.Legendary, tierLevel: 1, bonusValues: [751,3940,72540]},
-        {tier: Tiers.Legendary, tierLevel: 2, bonusValues: [778,4080,77830]},
-        {tier: Tiers.Legendary, tierLevel: 3, bonusValues: [806,4220,83130]},
-        {tier: Tiers.Legendary, tierLevel: 4, bonusValues: [833,4370,88420]},
-        {tier: Tiers.Legendary, tierLevel: 5, bonusValues: [867,4540,95070]}),
-    MarksmanFoot: new HeroGear(HeroType.Marksman, slots.Foot,
+        { tier: Tiers.Common, tierLevel: 1, bonusValues: [ 46, 350, 4110 ] },
+        { tier: Tiers.Common, tierLevel: 2, bonusValues: [ 23, 163, 2590 ] },
+        { tier: Tiers.Common, tierLevel: 3, bonusValues: [ 28, 194, 3270 ] },
+        { tier: Tiers.Uncommon, tierLevel: 1, bonusValues: [ 41, 273, 3890 ] },
+        { tier: Tiers.Uncommon, tierLevel: 2, bonusValues: [ 42, 260, 3940 ] },
+        { tier: Tiers.Uncommon, tierLevel: 3, bonusValues: [ 30, 170, 3960 ] },
+        { tier: Tiers.Rare, tierLevel: 1, bonusValues: [ 29, 180, 4310 ] },
+        { tier: Tiers.Rare, tierLevel: 2, bonusValues: [ 118, 450, 4610 ] },
+        { tier: Tiers.Rare, tierLevel: 3, bonusValues: [ 117, 440, 5070 ] },
+        { tier: Tiers.Rare, tierLevel: 4, bonusValues: [ 53, 280, 5250 ] },
+        { tier: Tiers.Epic, tierLevel: 1, bonusValues: [ 53, 280, 5250 ] },
+        { tier: Tiers.Epic, tierLevel: 2, bonusValues: [ 35, 180, 5250 ] },
+        { tier: Tiers.Epic, tierLevel: 3, bonusValues: [ 35, 190, 5150 ] },
+        { tier: Tiers.Epic, tierLevel: 4, bonusValues: [ 47, 240, 5300 ] },
+        { tier: Tiers.Epic, tierLevel: 5, bonusValues: [ 27, 140, 5290 ] },
+        { tier: Tiers.Legendary, tierLevel: 1, bonusValues: [ 27, 150, 5300 ] },
+        { tier: Tiers.Legendary, tierLevel: 2, bonusValues: [ 27, 140, 5290 ] },
+        { tier: Tiers.Legendary, tierLevel: 3, bonusValues: [ 28, 140, 5300 ] },
+        { tier: Tiers.Legendary, tierLevel: 4, bonusValues: [ 27, 150, 5290 ] },
+        { tier: Tiers.Legendary, tierLevel: 5, bonusValues: [ 34, 170, 6650 ] }),
+    [HeroGearSlot.MarksmanFoot]: new HeroGear(HeroGearSlot.MarksmanFoot,
         [Stats.ExplorerDefense, Stats.ExplorerHealth, Stats.HunterHealth, Stats.HunterLethality],
-        {tier: Tiers.Common, tierLevel: 1, bonusValues: [44,1390,2990,1150]},
-        {tier: Tiers.Common, tierLevel: 2, bonusValues: [65,2050,4780,1650]},
-        {tier: Tiers.Common, tierLevel: 3, bonusValues: [89,2820,7070,2400]},
-        {tier: Tiers.Uncommon, tierLevel: 1, bonusValues: [123,3910,9850,3400]},
-        {tier: Tiers.Uncommon, tierLevel: 2, bonusValues: [156,4960,12640,4400]},
-        {tier: Tiers.Uncommon, tierLevel: 3, bonusValues: [178,5670,15470,5400]},
-        {tier: Tiers.Rare, tierLevel: 1, bonusValues: [200,6380,18340,6450]},
-        {tier: Tiers.Rare, tierLevel: 2, bonusValues: [256,8160,21620,7680]},
-        {tier: Tiers.Rare, tierLevel: 3, bonusValues: [311,9940,25690,9400]},
-        {tier: Tiers.Rare, tierLevel: 4, bonusValues: [346,11050,29870,11700]},
-        {tier: Tiers.Epic, tierLevel: 1, bonusValues: [381,12150,34060,14000]},
-        {tier: Tiers.Epic, tierLevel: 2, bonusValues: [404,12890,38240,16300]},
-        {tier: Tiers.Epic, tierLevel: 3, bonusValues: [427,13630,42490,18650]},
-        {tier: Tiers.Epic, tierLevel: 4, bonusValues: [448,14300,46750,21020]},
-        {tier: Tiers.Epic, tierLevel: 5, bonusValues: [467,14920,51000,23380]},
-        {tier: Tiers.Legendary, tierLevel: 1, bonusValues: [486,15540,55260,25750]},
-        {tier: Tiers.Legendary, tierLevel: 2, bonusValues: [506,16160,59510,28110]},
-        {tier: Tiers.Legendary, tierLevel: 3, bonusValues: [525,16780,63770,30480]},
-        {tier: Tiers.Legendary, tierLevel: 4, bonusValues: [544,17410,68020,32840]},
-        {tier: Tiers.Legendary, tierLevel: 5, bonusValues: [569,18190,73450,35790]}),
-    ScoutHead: new HeroGear(HeroType.Scout, slots.Head,
+        { tier: Tiers.Common, tierLevel: 1, bonusValues: [ 44, 1390, 2990, 1150 ] },
+        { tier: Tiers.Common, tierLevel: 2, bonusValues: [ 21, 660, 1790, 500 ] },
+        { tier: Tiers.Common, tierLevel: 3, bonusValues: [ 24, 770, 2290, 750 ] },
+        { tier: Tiers.Uncommon, tierLevel: 1, bonusValues: [ 34, 1090, 2780, 1000 ] },
+        { tier: Tiers.Uncommon, tierLevel: 2, bonusValues: [ 33, 1050, 2790, 1000 ] },
+        { tier: Tiers.Uncommon, tierLevel: 3, bonusValues: [ 22, 710, 2830, 1000 ] },
+        { tier: Tiers.Rare, tierLevel: 1, bonusValues: [ 22, 710, 2870, 1050 ] },
+        { tier: Tiers.Rare, tierLevel: 2, bonusValues: [ 56, 1780, 3280, 1230 ] },
+        { tier: Tiers.Rare, tierLevel: 3, bonusValues: [ 55, 1780, 4070, 1720 ] },
+        { tier: Tiers.Rare, tierLevel: 4, bonusValues: [ 35, 1110, 4180, 2300 ] },
+        { tier: Tiers.Epic, tierLevel: 1, bonusValues: [ 35, 1100, 4190, 2300 ] },
+        { tier: Tiers.Epic, tierLevel: 2, bonusValues: [ 23, 740, 4180, 2300 ] },
+        { tier: Tiers.Epic, tierLevel: 3, bonusValues: [ 23, 740, 4250, 2350 ] },
+        { tier: Tiers.Epic, tierLevel: 4, bonusValues: [ 21, 670, 4260, 2370 ] },
+        { tier: Tiers.Epic, tierLevel: 5, bonusValues: [ 19, 620, 4250, 2360 ] },
+        { tier: Tiers.Legendary, tierLevel: 1, bonusValues: [ 19, 620, 4260, 2370 ] },
+        { tier: Tiers.Legendary, tierLevel: 2, bonusValues: [ 20, 620, 4250, 2360 ] },
+        { tier: Tiers.Legendary, tierLevel: 3, bonusValues: [ 19, 620, 4260, 2370 ] },
+        { tier: Tiers.Legendary, tierLevel: 4, bonusValues: [ 19, 630, 4250, 2360 ] },
+        { tier: Tiers.Legendary, tierLevel: 5, bonusValues: [ 25, 780, 5430, 2950 ] }),
+    [HeroGearSlot.ScoutHead]: new HeroGear(HeroGearSlot.ScoutHead,
         [Stats.ExplorerAttack, Stats.ExplorerDefense, Stats.RiderHealth, Stats.RiderLethality],
-        {tier: Tiers.Common, tierLevel: 1, bonusValues: [19,30,3130,1350]},
-        {tier: Tiers.Common, tierLevel: 2, bonusValues: [28,43,5200,1950]},
-        {tier: Tiers.Common, tierLevel: 3, bonusValues: [39,59,7780,2850]},
-        {tier: Tiers.Uncommon, tierLevel: 1, bonusValues: [56,82,10770,4100]},
-        {tier: Tiers.Uncommon, tierLevel: 2, bonusValues: [72,104,13760,5300]},
-        {tier: Tiers.Uncommon, tierLevel: 3, bonusValues: [84,119,16820,6500]},
-        {tier: Tiers.Rare, tierLevel: 1, bonusValues: [96,133,19930,7700]},
-        {tier: Tiers.Rare, tierLevel: 2, bonusValues: [143,171,23410,9170]},
-        {tier: Tiers.Rare, tierLevel: 3, bonusValues: [190,208,27870,11300]},
-        {tier: Tiers.Rare, tierLevel: 4, bonusValues: [211,231,31490,14050]},
-        {tier: Tiers.Epic, tierLevel: 1, bonusValues: [232,254,35110,16800]},
-        {tier: Tiers.Epic, tierLevel: 2, bonusValues: [246,270,38730,19550]},
-        {tier: Tiers.Epic, tierLevel: 3, bonusValues: [260,285,42470,22350]},
-        {tier: Tiers.Epic, tierLevel: 4, bonusValues: [275,301,46240,25180]},
-        {tier: Tiers.Epic, tierLevel: 5, bonusValues: [286,314,50020,28020]},
-        {tier: Tiers.Legendary, tierLevel: 1, bonusValues: [298,326,53800,30850]},
-        {tier: Tiers.Legendary, tierLevel: 2, bonusValues: [309,339,57580,33690]},
-        {tier: Tiers.Legendary, tierLevel: 3, bonusValues: [321,351,61360,36520]},
-        {tier: Tiers.Legendary, tierLevel: 4, bonusValues: [332,364,65140,39360]},
-        {tier: Tiers.Legendary, tierLevel: 5, bonusValues: [347,380,70010,43000]}),
-    ScoutBody: new HeroGear(HeroType.Scout, slots.Body,
+        { tier: Tiers.Common, tierLevel: 1, bonusValues: [ 19, 30, 3130, 1350 ] },
+        { tier: Tiers.Common, tierLevel: 2, bonusValues: [ 9, 13, 2070, 600 ] },
+        { tier: Tiers.Common, tierLevel: 3, bonusValues: [ 11, 16, 2580, 900 ] },
+        { tier: Tiers.Uncommon, tierLevel: 1, bonusValues: [ 17, 23, 2990, 1250 ] },
+        { tier: Tiers.Uncommon, tierLevel: 2, bonusValues: [ 16, 22, 2990, 1200 ] },
+        { tier: Tiers.Uncommon, tierLevel: 3, bonusValues: [ 12, 15, 3060, 1200 ] },
+        { tier: Tiers.Rare, tierLevel: 1, bonusValues: [ 12, 14, 3110, 1200 ] },
+        { tier: Tiers.Rare, tierLevel: 2, bonusValues: [ 47, 38, 3480, 1470 ] },
+        { tier: Tiers.Rare, tierLevel: 3, bonusValues: [ 47, 37, 4460, 2130 ] },
+        { tier: Tiers.Rare, tierLevel: 4, bonusValues: [ 21, 23, 3620, 2750 ] },
+        { tier: Tiers.Epic, tierLevel: 1, bonusValues: [ 21, 23, 3620, 2750 ] },
+        { tier: Tiers.Epic, tierLevel: 2, bonusValues: [ 14, 16, 3620, 2750 ] },
+        { tier: Tiers.Epic, tierLevel: 3, bonusValues: [ 14, 15, 3740, 2800 ] },
+        { tier: Tiers.Epic, tierLevel: 4, bonusValues: [ 15, 16, 3770, 2830 ] },
+        { tier: Tiers.Epic, tierLevel: 5, bonusValues: [ 11, 13, 3780, 2840 ] },
+        { tier: Tiers.Legendary, tierLevel: 1, bonusValues: [ 12, 12, 3780, 2830 ] },
+        { tier: Tiers.Legendary, tierLevel: 2, bonusValues: [ 11, 13, 3780, 2840 ] },
+        { tier: Tiers.Legendary, tierLevel: 3, bonusValues: [ 12, 12, 3780, 2830 ] },
+        { tier: Tiers.Legendary, tierLevel: 4, bonusValues: [ 11, 13, 3780, 2840 ] },
+        { tier: Tiers.Legendary, tierLevel: 5, bonusValues: [ 15, 16, 4870, 3640 ] }),
+    [HeroGearSlot.ScoutBody]: new HeroGear(HeroGearSlot.ScoutBody,
         [Stats.ExplorerAttack, Stats.ExplorerHealth, Stats.RiderLethality],
-        {tier: Tiers.Common, tierLevel: 1, bonusValues: [19,857,3810]},
-        {tier: Tiers.Common, tierLevel: 2, bonusValues: [28,1250,6350]},
-        {tier: Tiers.Common, tierLevel: 3, bonusValues: [39,1730,9420]},
-        {tier: Tiers.Uncommon, tierLevel: 1, bonusValues: [56,2390,13060]},
-        {tier: Tiers.Uncommon, tierLevel: 2, bonusValues: [72,3040,16700]},
-        {tier: Tiers.Uncommon, tierLevel: 3, bonusValues: [84,3470,20410]},
-        {tier: Tiers.Rare, tierLevel: 1, bonusValues: [96,3900,24170]},
-        {tier: Tiers.Rare, tierLevel: 2, bonusValues: [143,4990,28410]},
-        {tier: Tiers.Rare, tierLevel: 3, bonusValues: [190,6080,33550]},
-        {tier: Tiers.Rare, tierLevel: 4, bonusValues: [211,6760,38210]},
-        {tier: Tiers.Epic, tierLevel: 1, bonusValues: [232,7440,42870]},
-        {tier: Tiers.Epic, tierLevel: 2, bonusValues: [246,7900,47520]},
-        {tier: Tiers.Epic, tierLevel: 3, bonusValues: [260,8350,52150]},
-        {tier: Tiers.Epic, tierLevel: 4, bonusValues: [280,8990,56870]},
-        {tier: Tiers.Epic, tierLevel: 5, bonusValues: [291,9330,61600]},
-        {tier: Tiers.Legendary, tierLevel: 1, bonusValues: [301,9670,66320]},
-        {tier: Tiers.Legendary, tierLevel: 2, bonusValues: [312,10010,71050]},
-        {tier: Tiers.Legendary, tierLevel: 3, bonusValues: [323,10360,75770]},
-        {tier: Tiers.Legendary, tierLevel: 4, bonusValues: [333,10700,80500]},
-        {tier: Tiers.Legendary, tierLevel: 5, bonusValues: [347,11140,86570]}),
-    ScoutFoot: new HeroGear(HeroType.Scout, slots.Foot,
+        { tier: Tiers.Common, tierLevel: 1, bonusValues: [ 19, 857, 3810 ] },
+        { tier: Tiers.Common, tierLevel: 2, bonusValues: [ 9, 393, 2540 ] },
+        { tier: Tiers.Common, tierLevel: 3, bonusValues: [ 11, 480, 3070 ] },
+        { tier: Tiers.Uncommon, tierLevel: 1, bonusValues: [ 17, 660, 3640 ] },
+        { tier: Tiers.Uncommon, tierLevel: 2, bonusValues: [ 16, 650, 3640 ] },
+        { tier: Tiers.Uncommon, tierLevel: 3, bonusValues: [ 12, 430, 3710 ] },
+        { tier: Tiers.Rare, tierLevel: 1, bonusValues: [ 12, 430, 3760 ] },
+        { tier: Tiers.Rare, tierLevel: 2, bonusValues: [ 47, 1090, 4240 ] },
+        { tier: Tiers.Rare, tierLevel: 3, bonusValues: [ 47, 1090, 5140 ] },
+        { tier: Tiers.Rare, tierLevel: 4, bonusValues: [ 21, 680, 4660 ] },
+        { tier: Tiers.Epic, tierLevel: 1, bonusValues: [ 21, 680, 4660 ] },
+        { tier: Tiers.Epic, tierLevel: 2, bonusValues: [ 14, 460, 4650 ] },
+        { tier: Tiers.Epic, tierLevel: 3, bonusValues: [ 14, 450, 4630 ] },
+        { tier: Tiers.Epic, tierLevel: 4, bonusValues: [ 20, 640, 4720 ] },
+        { tier: Tiers.Epic, tierLevel: 5, bonusValues: [ 11, 340, 4730 ] },
+        { tier: Tiers.Legendary, tierLevel: 1, bonusValues: [ 10, 340, 4720 ] },
+        { tier: Tiers.Legendary, tierLevel: 2, bonusValues: [ 11, 340, 4730 ] },
+        { tier: Tiers.Legendary, tierLevel: 3, bonusValues: [ 11, 350, 4720 ] },
+        { tier: Tiers.Legendary, tierLevel: 4, bonusValues: [ 10, 340, 4730 ] },
+        { tier: Tiers.Legendary, tierLevel: 5, bonusValues: [ 14, 440, 6070 ] }),
+    [HeroGearSlot.ScoutFoot]: new HeroGear(HeroGearSlot.ScoutFoot,
         [Stats.ExplorerDefense, Stats.ExplorerHealth, Stats.RiderHealth, Stats.RiderLethality],
-        {tier: Tiers.Common, tierLevel: 1, bonusValues: [30,1590,29300,900]},
-        {tier: Tiers.Common, tierLevel: 2, bonusValues: [43,2330,4410,1300]},
-        {tier: Tiers.Common, tierLevel: 3, bonusValues: [59,3210,6440,1900]},
-        {tier: Tiers.Uncommon, tierLevel: 1, bonusValues: [82,4450,9090,2700]},
-        {tier: Tiers.Uncommon, tierLevel: 2, bonusValues: [104,5640,11780,3550]},
-        {tier: Tiers.Uncommon, tierLevel: 3, bonusValues: [119,6450,14450,4360]},
-        {tier: Tiers.Rare, tierLevel: 1, bonusValues: [133,7250,17700,5150]},
-        {tier: Tiers.Rare, tierLevel: 2, bonusValues: [171,9280,21020,6130]},
-        {tier: Tiers.Rare, tierLevel: 3, bonusValues: [208,11300,24590,7450]},
-        {tier: Tiers.Rare, tierLevel: 4, bonusValues: [231,12560,30210,9310]},
-        {tier: Tiers.Epic, tierLevel: 1, bonusValues: [254,13830,35840,11170]},
-        {tier: Tiers.Epic, tierLevel: 2, bonusValues: [270,14670,41470,13030]},
-        {tier: Tiers.Epic, tierLevel: 3, bonusValues: [285,15510,46990,14900]},
-        {tier: Tiers.Epic, tierLevel: 4, bonusValues: [293,15960,52660,16790]},
-        {tier: Tiers.Epic, tierLevel: 5, bonusValues: [307,16710,58340,18680]},
-        {tier: Tiers.Legendary, tierLevel: 1, bonusValues: [301,9670,66320]},
-        {tier: Tiers.Legendary, tierLevel: 2, bonusValues: [301,9670,66320]},
-        {tier: Tiers.Legendary, tierLevel: 3, bonusValues: [301,9670,66320]},
-        {tier: Tiers.Legendary, tierLevel: 4, bonusValues: [301,9670,66320]},
-        {tier: Tiers.Legendary, tierLevel: 5, bonusValues: []}),
+        { tier: Tiers.Common, tierLevel: 1, bonusValues: [ 30, 1590, 29300, 900 ] },
+        { tier: Tiers.Common, tierLevel: 2, bonusValues: [ 13, 740, 1480, 400 ] },
+        { tier: Tiers.Common, tierLevel: 3, bonusValues: [ 16, 880, 2030, 600 ] },
+        { tier: Tiers.Uncommon, tierLevel: 1, bonusValues: [ 23, 1240, 2650, 800 ] },
+        { tier: Tiers.Uncommon, tierLevel: 2, bonusValues: [ 22, 1190, 2690, 850 ] },
+        { tier: Tiers.Uncommon, tierLevel: 3, bonusValues: [ 15, 810, 2670, 810 ] },
+        { tier: Tiers.Rare, tierLevel: 1, bonusValues: [ 14, 800, 3250, 790 ] },
+        { tier: Tiers.Rare, tierLevel: 2, bonusValues: [ 38, 2030, 3320, 980 ] },
+        { tier: Tiers.Rare, tierLevel: 3, bonusValues: [ 37, 2020, 3570, 1320 ] },
+        { tier: Tiers.Rare, tierLevel: 4, bonusValues: [ 23, 1260, 5620, 1860 ] },
+        { tier: Tiers.Epic, tierLevel: 1, bonusValues: [ 23, 1270, 5630, 1860 ] },
+        { tier: Tiers.Epic, tierLevel: 2, bonusValues: [ 16, 840, 5630, 1860 ] },
+        { tier: Tiers.Epic, tierLevel: 3, bonusValues: [ 15, 840, 5520, 1870 ] },
+        { tier: Tiers.Epic, tierLevel: 4, bonusValues: [ 8, 450, 5670, 1890 ] },
+        { tier: Tiers.Epic, tierLevel: 5, bonusValues: [ 14, 750, 5680, 1890 ] },
+        { tier: Tiers.Legendary, tierLevel: 1, bonusValues: [ 14, 760, 5680, 1890 ] },
+        { tier: Tiers.Legendary, tierLevel: 2, bonusValues: [ 14, 750, 5670, 1890 ] },
+        { tier: Tiers.Legendary, tierLevel: 3, bonusValues: [ 14, 760, 5680, 1890 ] },
+        { tier: Tiers.Legendary, tierLevel: 4, bonusValues: [ 13, 750, 5670, 1890 ] },
+        { tier: Tiers.Legendary, tierLevel: 5, bonusValues: [ 18, 760, 7210, 2430 ] })
 } as const;

@@ -46,6 +46,10 @@ export class Building {
         this.stats = [...stats];
         this.levels = levelData.map((bonusValues, i) => new BuildingLevel(this, i + 1, ...bonusValues));
     }
+
+    get category() {
+        return SourceCategory.Buildings;
+    }
 }
 
 export class BuildingLevel {
@@ -69,6 +73,18 @@ export class BuildingLevel {
 
     get tier() {
         return Tiers.Common;
+    }
+
+    get bonusValues() {
+        return this.bonuses.map(b => b.value);
+    }
+
+    get provider() {
+        return this.building;
+    }
+
+    get tierLevel() {
+        return null;
     }
 }
 

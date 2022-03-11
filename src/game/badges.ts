@@ -54,6 +54,10 @@ export class ChiefBadge {
     get name() {
         return this.slot + ' Badge';
     }
+
+    get category() {
+        return SourceCategory.ChiefBadges;
+    }
 }
 
 export class ChiefBadgeLevel {
@@ -81,6 +85,18 @@ export class ChiefBadgeLevel {
 
     get tier() {
         return Tiers.Common;
+    }
+
+    get tierLevel() {
+        return null;
+    }
+
+    get bonusValues() {
+        return this.bonuses.map(b => b.value);
+    }
+
+    get provider() {
+        return this.badge;
     }
 }
 

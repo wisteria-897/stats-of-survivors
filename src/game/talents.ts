@@ -1,4 +1,4 @@
-import { Bonus, SourceCategory, Tiers } from './bonus';
+import { Bonus, BonusProviderLevel, SourceCategory, Tiers } from './bonus';
 import { Stat, Stats } from './stat';
 
 export enum TalentTree {
@@ -120,11 +120,23 @@ export class Talent {
         this.name = name;
         this.tree = tree;
     }
+
+    get category() {
+        return SourceCategory.Talents;
+    }
 }
 
 export class SkillTalent extends Talent {
     constructor(name: TalentName, tree: TalentTree) {
         super(name, tree);
+    }
+
+    get stats(): Stat[] {
+        return [];
+    }
+
+    get levels(): BonusProviderLevel[] {
+        return [];
     }
 }
 
@@ -139,6 +151,14 @@ export class StatTalent extends Talent {
         for (let i = 1; i <= maxLevel; i++) {
             this.levels.push(new TalentLevel(this, i, bonusValue));
         }
+    }
+
+    get category() {
+        return SourceCategory.Talents;
+    }
+
+    get stats() {
+        return [this.stat];
     }
 }
 
@@ -163,6 +183,18 @@ export class TalentLevel {
 
     get tier() {
         return Tiers.Common;
+    }
+
+    get provider() {
+        return this.talent;
+    }
+
+    get bonusValues() {
+        return this.bonuses.map(b => b.value);
+    }
+
+    get tierLevel() {
+        return null;
     }
 }
 
