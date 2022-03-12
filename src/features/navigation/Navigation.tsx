@@ -1,16 +1,8 @@
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import { NavLink } from 'react-router-dom';
-import {
-    setCurrentPage,
-    selectCurrentPage,
-    Page
-} from './navigationSlice';
 import styles from './Navigation.module.css';
 
 export function Navigation() {
-    const currentPage = useAppSelector(selectCurrentPage);
-    const dispatch = useAppDispatch();
-
     type LinkClassNameFunction = (x: {isActive: boolean}) => string;
     const linkClassNameFn: LinkClassNameFunction = ({isActive}) => (isActive) ? styles.active : '';
     return (

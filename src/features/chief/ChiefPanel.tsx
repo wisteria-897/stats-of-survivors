@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { SyntheticEvent } from 'react';
 import { Subtract } from 'utility-types';
 import { useNavigate, useParams, Link, NavLink, Outlet } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
@@ -7,18 +7,16 @@ import { aggregateBonuses } from '../../game/bonus';
 import { getVipLevel } from '../../game/vip';
 import { HeroGears } from '../../game/heroGear';
 import { ChiefGears } from '../../game/chiefGear';
-import { ResearchTech, ResearchTechs, ResearchTechName } from '../../game/research';
-import { StatTalent, Talent, Talents, TalentName } from '../../game/talents';
+import { ResearchTechs } from '../../game/research';
+import { Talents } from '../../game/talents';
 import { AllianceTechs } from '../../game/allianceTech';
-import { Building, Buildings, BuildingName } from '../../game/buildings';
+import { Buildings } from '../../game/buildings';
 import { ChiefBadges } from '../../game/badges';
 import { Alliance, selectAllianceByTag } from '../alliance/allianceSlice';
 import {
     Chief,
-    ChiefId,
     createChief,
     addChief,
-    updateChief,
     partialUpdateChief,
     selectChief,
     selectChiefs
@@ -35,57 +33,6 @@ type SubComponentProps = {
     chief: Chief,
     alliance: Alliance | null,
     dispatch: ReturnType<typeof useAppDispatch>
-}
-
-const ResearchLevelList = ({chief}: SubComponentProps) => {
-    const listItems = (!chief || !chief.research) ? <li key="none">&lt;None&gt;</li>
-        : Object.entries(chief.research)
-            .filter(([k, v]) => v !== 0)
-            .map(([k, v]) => <li key={k}><span>{k}: </span><span>{v}</span></li>);
-
-    return (
-        <section>
-            <h2>Chief Research</h2>
-            <ul>
-                {listItems}
-            </ul>
-        </section>
-    );
-}
-
-const TalentLevelList = ({chief}: SubComponentProps) => {
-    const listItems = (!chief || !chief.talents) ? <li key="none">&lt;None&gt;</li>
-        : Object.entries(chief.talents)
-            .filter(([k, v]) => v !== 0)
-            .map(([k, v]) => <li key={k}><span>{k}: </span><span>{v}</span></li>);
-
-    return (
-        <section>
-            <h2>Talents</h2>
-            <ul>
-                {listItems}
-            </ul>
-        </section>
-    );
-}
-
-const BuildingLevelList = ({chief}: SubComponentProps) => {
-    const listItems = (!chief || !chief.buildings) ? <li key="none">&lt;None&gt;</li>
-        : Object.entries(chief.buildings)
-            .filter(([k, v]) => v !== 0)
-            .map(entry => {
-                const [k, v] = entry as [BuildingName, number];
-                return <li key={k}><span>{Buildings[k].levels[v - 1].name}</span></li>;
-            });
-
-    return (
-        <section>
-            <h2>Buildings</h2>
-            <ul>
-                {listItems}
-            </ul>
-        </section>
-    );
 }
 
 function getAllianceBonuses(alliance: Alliance) {
@@ -113,108 +60,6 @@ function getChiefBonuses(chief: Chief) {
     ];
 }
 
-const ResearchLevelEditor = (props: {tech: ResearchTech, level: number, onChange: (tech: ResearchTech, level: number) => any}) => {
-    const {tech, level, onChange} = props;
-    return (
-        <LevelPicker key={tech.name} label={tech.name} level={level} min={0} max={tech.levels.length}
-            onChange={(value: number) => onChange(tech, value)} />
-    );
-}
-
-const TalentLevelEditor = (props: {talent: Talent, level: number, onChange: (talent: Talent, level: number) => any}) => {
-    const {talent, level, onChange} = props;
-    const max = (talent instanceof StatTalent) ? talent.levels.length : 1;
-    return (
-        <LevelPicker key={talent.name} label={talent.name} level={level} min={0} max={max}
-            onChange={(value: number) => onChange(talent, value)} />
-    );
-}
-
-const BuildingLevelEditor = (props: {building: Building, level: number, onChange: (building: Building, level: number) => any}) => {
-    const {building, level, onChange} = props;
-    return (
-        <LevelPicker key={building.name} label={building.name} level={level} min={0} max={building.levels.length}
-            onChange={(value: number) => onChange(building, value)} />
-    );
-}
-
-const ChiefEditor = (props: {chief: Chief, onComplete: (update: Chief | null) => any}) => {
-    const {chief, onComplete} = props;
-    const [chiefName, setChiefName] = useState(chief.name);
-    const [allianceTag, setAllianceTag] = useState(chief.allianceTag);
-    const [vipLevel, setVipLevel] = useState(chief.vipLevel);
-    const [chiefLevel, setChiefLevel] = useState(chief.level);
-    const [research, setResearch] = useState(chief.research);
-    const [talents, setTalents] = useState(chief.talents);
-    const [buildings, setBuildings] = useState(chief.buildings);
-
-    const onSave = () => {
-        const updatedChief = Object.assign({}, chief, {
-            name: chiefName,
-            level: chiefLevel,
-            allianceTag, vipLevel, research, talents, buildings
-        });
-        onComplete(updatedChief);
-    }
-
-    const researchEditors = Object.entries(research).map(entry => {
-        const [techName, level] = entry as [techName: ResearchTechName, level: number];
-        const onChange = (tech: ResearchTech, value: number) => {
-            const update = {[tech.name]: value} as {[key in ResearchTechName]: number};
-            setResearch(Object.assign({}, research, update));
-        }
-        return <ResearchLevelEditor key={techName} tech={ResearchTechs[techName]} level={level} onChange={onChange} />;
-    });
-
-    const talentEditors = Object.entries(talents).map(entry => {
-        const [talentName, level] = entry as [talentName: TalentName, level: number];
-        const onChange = (talent: Talent, value: number) => {
-            const update = {[talent.name]: value} as {[key in TalentName]: number};
-            setTalents(Object.assign({}, talents, update));
-        }
-        return <TalentLevelEditor key={talentName} talent={Talents[talentName]} level={level} onChange={onChange} />;
-    });
-
-    const buildingEditors = Object.entries(buildings).map(entry => {
-        const [buildingName, level] = entry as [buildingName: BuildingName, level: number];
-        const onChange = (building: Building, value: number) => {
-            const update = {[building.name]: value} as {[key in BuildingName]: number};
-            setBuildings(Object.assign({}, buildings, update));
-        }
-        return <BuildingLevelEditor key={buildingName} building={Buildings[buildingName]} level={level} onChange={onChange} />;
-    });
-
-    return (
-        <div className={styles.chiefEditor}>
-            <h2>Edit Chief</h2>
-            <label>
-                <span>Name:</span>
-                <input type="text" placeholder="Chief name" value={chiefName} onChange={(e) => setChiefName(e.target.value)} />
-            </label>
-            <label>
-                <span>Alliance:</span>
-                <input type="text" placeholder="Tag" minLength={3} maxLength={3} value={allianceTag || ''} onChange={(e) => setAllianceTag(e.target.value)} />
-            </label>
-            <LevelPicker label="Chief level:" min={0} max={60} level={chiefLevel} onChange={setChiefLevel} />
-            <LevelPicker label="VIP level:" min={0} max={12} level={vipLevel} onChange={setVipLevel} />
-            <h2>Chief Tech</h2>
-            <ul>
-                {researchEditors}
-            </ul>
-            <h2>Talents</h2>
-            <ul>
-                {talentEditors}
-            </ul>
-            <h2>Buildings</h2>
-            <ul>
-                {buildingEditors}
-            </ul>
-            <button onClick={(e) => onSave()}>💾 Save</button>
-            <button onClick={(e) => onComplete(null)}>❌ Cancel</button>
-        </div>
-    );
-}
-
 function subPanelOf<T extends SubComponentProps>(Component: React.ComponentType<T>) {
     return function SPO(props: Subtract<T, SubComponentProps>) {
         const dispatch = useAppDispatch();
@@ -234,10 +79,8 @@ function subPanelOf<T extends SubComponentProps>(Component: React.ComponentType<
 }
 
 export const ChiefStatsPanel = subPanelOf(({chief, alliance}) => {
-    if (!alliance) {
-        return <p>Not found</p>;
-    }
-    const statBonuses = [...getChiefBonuses(chief), ...getAllianceBonuses(alliance)];
+    const allianceBonuses = alliance ? getAllianceBonuses(alliance) : [];
+    const statBonuses = [...getChiefBonuses(chief), ...allianceBonuses];
     return (
         <section>
             <h2>Stat Bonuses</h2>
@@ -246,27 +89,37 @@ export const ChiefStatsPanel = subPanelOf(({chief, alliance}) => {
     );
 });
 
-export const BuildingsPanel = subPanelOf(props => (
-    <BuildingLevelList {...props}/>
+export const BuildingsPanel = subPanelOf(({chief, dispatch}) => (
+    <section>
+        <h2>Buildings</h2>
+        <LeveledBonusProviderList providers={Buildings} levels={chief.buildings}
+            onChange={update => dispatch(partialUpdateChief({id: chief.id, value: {buildings: update}}))}/>
+    </section>
 ));
 
-export const TalentsPanel = subPanelOf(props => (
-    <TalentLevelList {...props}/>
+export const TalentsPanel = subPanelOf(({chief, dispatch}) => (
+    <section>
+        <h2>Talents</h2>
+        <LeveledBonusProviderList providers={Talents} levels={chief.talents}
+            onChange={update => dispatch(partialUpdateChief({id: chief.id, value: {talents: update}}))}/>
+    </section>
 ));
 
-export const ChiefResearchPanel = subPanelOf(props => (
-    <ResearchLevelList {...props}/>
+export const ChiefResearchPanel = subPanelOf(({chief, dispatch}) => (
+    <section>
+        <h2>Research</h2>
+        <LeveledBonusProviderList providers={ResearchTechs} levels={chief.research}
+            onChange={update => dispatch(partialUpdateChief({id: chief.id, value: {research: update}}))}/>
+    </section>
 ));
 
-export const HeroGearPanel = subPanelOf(({chief, alliance, dispatch}) => {
-    return (
-        <section>
-            <h2>Hero Gear</h2>
-            <LeveledBonusProviderList providers={HeroGears} levels={chief.heroGear}
-                onChange={update => dispatch(partialUpdateChief({id: chief.id, value: {heroGear: update}}))}/>
-        </section>
-    );
-});
+export const HeroGearPanel = subPanelOf(({chief, alliance, dispatch}) => (
+    <section>
+        <h2>Hero Gear</h2>
+        <LeveledBonusProviderList providers={HeroGears} levels={chief.heroGear}
+            onChange={update => dispatch(partialUpdateChief({id: chief.id, value: {heroGear: update}}))}/>
+    </section>
+));
 
 export const ChiefGearPanel = subPanelOf(({chief, alliance}) => {
     const dispatch = useAppDispatch();
@@ -286,36 +139,37 @@ export const ChiefGearPanel = subPanelOf(({chief, alliance}) => {
     );
 });
 
+export const ChiefBasicsPanel = subPanelOf(({chief, dispatch}) => {
+    const partialUpdate = (update: any) => {
+        dispatch(partialUpdateChief({id: chief.id, value: update}));
+    }
+
+    return (
+        <section>
+            <label>
+                <span>Name:</span>
+                <input type="text" placeholder="Chief name" value={chief.name} onChange={(e) => partialUpdate({name: e.target.value})}/>
+            </label>
+            <label>
+                <span>Alliance:</span>
+                <input type="text" placeholder="Tag" minLength={3} maxLength={3} value={chief.allianceTag || ''} onChange={(e) => partialUpdate({allianceTag: e.target.value})}/>
+            </label>
+            <LevelPicker label="Chief level:" min={0} max={60} level={chief.level} onChange={value => partialUpdate({level: value})}/>
+            <LevelPicker label="VIP level:" min={0} max={12} level={chief.vipLevel} onChange={value => partialUpdate({vipLevel: value})}/>
+        </section>
+    );
+});
+
 export const ChiefDisplayPanel = () => {
-    const dispatch = useAppDispatch();
-    const navigate = useNavigate();
     const params = useParams();
-    const [isEditing, setIsEditing] = useState(false);
     const chief = useAppSelector(state => selectChief(state, params.chiefId || ''));
     if (chief == null) {
         return <p>Not found</p>;
     }
     const vipLevel = getVipLevel(chief.vipLevel);
 
-
-    const onEditComplete = (update: Chief | null) => {
-        if (update) {
-            dispatch(updateChief(update));
-        }
-        setIsEditing(false);
-    }
-
-    if (isEditing) {
-        return <ChiefEditor chief={chief} onComplete={onEditComplete} />;
-    }
-
-    const onCopyChief = () => {
-        const newChief = createChief();
-        newChief.name = 'Copy of ' + chief.name;
-        dispatch(addChief(newChief));
-        navigate(`/chiefs/${newChief.id}`);
-    }
-
+    type LinkClassNameFunction = (x: {isActive: boolean}) => string;
+    const linkClassNameFn: LinkClassNameFunction = ({isActive}) => (isActive) ? styles.active : '';
     return (
         <section className={styles.chiefPanel}>
             <header>
@@ -327,19 +181,25 @@ export const ChiefDisplayPanel = () => {
                 <nav className={styles.subNav}>
                     <ul>
                         <li>
-                            <NavLink to={`/chiefs/${chief.id}`}>Stats</NavLink>
+                            <NavLink to={`/chiefs/${chief.id}`} end className={linkClassNameFn}>Stats</NavLink>
                         </li>
                         <li>
-                            <NavLink to={`/chiefs/${chief.id}/chiefGear`}>Chief Gear</NavLink>
+                            <NavLink to={`/chiefs/${chief.id}/basics`} className={linkClassNameFn}>Basics</NavLink>
                         </li>
                         <li>
-                            <NavLink to={`/chiefs/${chief.id}/heroGear`}>Hero Gear</NavLink>
+                            <NavLink to={`/chiefs/${chief.id}/chiefGear`} className={linkClassNameFn}>Chief Gear</NavLink>
                         </li>
                         <li>
-                            <NavLink to={`/chiefs/${chief.id}/research`}>Research</NavLink>
+                            <NavLink to={`/chiefs/${chief.id}/heroGear`} className={linkClassNameFn}>Hero Gear</NavLink>
                         </li>
                         <li>
-                            <NavLink to={`/chiefs/${chief.id}/talents`}>talents</NavLink>
+                            <NavLink to={`/chiefs/${chief.id}/research`} className={linkClassNameFn}>Research</NavLink>
+                        </li>
+                        <li>
+                            <NavLink to={`/chiefs/${chief.id}/talents`} className={linkClassNameFn}>Talents</NavLink>
+                        </li>
+                        <li>
+                            <NavLink to={`/chiefs/${chief.id}/buildings`} className={linkClassNameFn}>Buildings</NavLink>
                         </li>
                     </ul>
                 </nav>
@@ -350,7 +210,17 @@ export const ChiefDisplayPanel = () => {
 }
 
 export const ChiefList = () => {
+    const navigate = useNavigate();
+    const dispatch = useAppDispatch();
     const chiefs = useAppSelector((state) => selectChiefs(state));
+
+    const onAddChief = (e: SyntheticEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const newChief = createChief();
+        dispatch(addChief(newChief));
+        navigate(`/chiefs/${newChief.id}/basics`);
+    }
 
     const chiefItems = chiefs.map(chief => {
         return (
@@ -362,30 +232,10 @@ export const ChiefList = () => {
 
     return (
         <section className={styles.chiefList}>
-            <Link to="/chiefs/new" className={styles.listAction}>＋ Add Chief</Link>
+            <button className={styles.listAction} onClick={onAddChief}>＋ Add Chief</button>
             <ul>
                 {chiefItems}
             </ul>
-        </section>
-    );
-}
-
-export function AddChiefPanel() {
-    const dispatch = useAppDispatch();
-    const navigate = useNavigate();
-    const [newChief, setNewChief] = useState(createChief())
-
-    const onAddComplete = (chief: Chief | null) => {
-        if (chief != null) {
-            dispatch(addChief(chief));
-            navigate(`/chiefs/${chief.id}`);
-        } else {
-            navigate("/chiefs");
-        }
-    }
-    return (
-        <section className={styles.addChiefPanel}>
-            <ChiefEditor chief={newChief} onComplete={onAddComplete}/>
         </section>
     );
 }

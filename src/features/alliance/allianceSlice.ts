@@ -35,7 +35,6 @@ const defaultAlliance: Alliance = {
 
 export const allianceStatePersister = createPersister('alliance', initialState, undefined, data => {
     const state = JSON.parse(data);
-    console.log('Persister load', state);
     state.alliances = state.alliances.map((alliance: Alliance) => {
         return Object.assign({}, defaultAlliance, alliance);
     });
@@ -52,7 +51,6 @@ export const allianceSlice = createSlice({
     reducers: {
         addAlliance: (state, action: PayloadAction<Alliance>) => {
             state.alliances = [...state.alliances, action.payload];
-            console.log('addAlliance', state.alliances);
         },
 
         updateAlliance: (state, action: PayloadAction<Alliance>) => {
@@ -62,7 +60,6 @@ export const allianceSlice = createSlice({
                 updated[index] = action.payload;
                 state.alliances = updated;
             }
-            console.log('updateAlliance', state.alliances);
         },
 
         setSelectedAlliance: (state, action: PayloadAction<AllianceTag | null>) => {

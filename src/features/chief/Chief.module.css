@@ -1,8 +1,3 @@
-.chiefList,
-.addChiefPanel {
-    height: 100%;
-}
-
 .chiefPanel {
     position: relative;
     height: 100%;
@@ -48,47 +43,28 @@
     overflow: scroll;
 }
 
-.detailSections {
+.subPanel label {
     display: flex;
     flex-flow: row wrap;
-    column-gap: 50px;
-    padding: 0 10px;
+    margin: 10px;
+    width: 300px;
 }
 
-.chiefEditor {
-    padding: 0 10px;
-    height: 100%;
-    overflow: scroll;
-}
-
-.chiefEditor label {
-    display: block;
-}
-
-.chiefEditor label > span {
+.subPanel label > span {
     display: inline-block;
-    width: 275px;
-}
-
-.detailSections section > ul {
-    width: 400px;
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
+    min-width: 100px;
+    flex: 1 0 auto;
 }
 
 .listAction {
     display: inline-block;
-    padding: 3px 10px;
     border: 2px solid #ddd;
     border-radius: 2px;
+    background-color: transparent;
+    color: inherit;
     font-weight: bold;
-    text-decoration: none;
-}
-
-.listAction,
-.listAction:visited {
-    color: #ddd;
+    font-size: 100%;
+    cursor: pointer;
 }
 
 .listAction:hover {

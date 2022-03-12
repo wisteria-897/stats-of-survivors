@@ -1,10 +1,22 @@
 export type EnumMap<TKey extends string, TValue> = {[key in TKey]: TValue};
 export type PartialEnumMap<TKey extends string, TValue> = {[key in TKey]?: TValue};
 
+type ValueFunction<TKey extends string, TValue, TResult> = (k: TKey, v: TValue) => TResult;
 export function enumMapOf<
     T extends string,
-    U extends any
->(source: EnumMap<T, any>, emptyValue: U): EnumMap<T, U> {
-    const o = Object.fromEntries(Object.keys(source).map(k => [k as T, emptyValue]));
-    return o as EnumMap<T, U>;
+    U extends any,
+    V extends Exclude<any, Function>
+>(source: EnumMap<T, U>, value: V | ValueFunction<T, U, V>): EnumMap<T, V> {
+    let valueFn: ValueFunction<T, U, V>;
+    if (typeof value === 'function') {
+        valueFn = value as ValueFunction<T, U, V>;
+    } else {
+        valueFn = (k: T, v: U): V => value;
+    }
+
+    const entries = Object.entries(source).map(entry => {
+        const [k, v] =  entry as [T, U];
+        return [k, valueFn(k, v)];
+    });
+    return Object.fromEntries(entries) as EnumMap<T, V>;
 }

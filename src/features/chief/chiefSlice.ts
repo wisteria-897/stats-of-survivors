@@ -61,7 +61,6 @@ const maybeUpgradeEntry = <T>(o: {[key: string]: T}, defaultValue: T, ...keys: s
 
 export const chiefStatePersister = createPersister('chief', initialState, undefined, data => {
     const state = JSON.parse(data);
-    console.log('Persister load', state);
     state.chiefs = state.chiefs.map((chief: Chief) => {
         chief.heroGear = {
             [HeroGearSlot.BrawlerHead]: maybeUpgradeEntry(chief.heroGear, 0, HeroGearSlot.BrawlerHead, 'Brawler/Head'),
@@ -85,15 +84,6 @@ export function createChief() {
 
 const getById = (state: ChiefState, id: ChiefId): Chief | null => {
     return state.chiefs.find(c => c.id === id) || null;
-};
-
-type ChiefFunction<T> = (chief: Chief) => T;
-const withChief = <T>(state: ChiefState, id: ChiefId, fn: ChiefFunction<T>): T | null => {
-    const chief = getById(state, id);
-    if (chief) {
-        return fn(chief);
-    }
-    return null;
 };
 
 export const chiefSlice = createSlice({

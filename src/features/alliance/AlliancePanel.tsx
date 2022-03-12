@@ -7,14 +7,11 @@ import { StatBonusList } from '../bonus/BonusList';
 import { AllianceTech, AllianceTechName, AllianceTechs, StatAllianceTech } from '../../game/allianceTech';
 import {
     Alliance,
-    AllianceTag,
     createAlliance,
     addAlliance,
     updateAlliance,
-    setSelectedAlliance,
     selectAlliances,
     selectAllianceByTag,
-    selectSelectedAlliance
 } from './allianceSlice';
 import styles from './Alliance.module.css';
 
@@ -68,7 +65,6 @@ const AllianceEditor = (props: {alliance: Alliance, onComplete: (update: Allianc
             level: allianceLevel,
             allianceTech: allianceTech
         });
-        console.log('AllianceEditor', updatedAlliance);
         onComplete(updatedAlliance);
     }
 
@@ -158,7 +154,6 @@ export const AllianceDisplayPanel = () => {
 export const AddAlliancePanel = () => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    const [newAlliance, setNewAlliance] = useState(createAlliance());
 
     const onAddComplete = (alliance: Alliance | null) => {
         if (alliance != null) {
@@ -169,7 +164,7 @@ export const AddAlliancePanel = () => {
         }
     }
 
-    return <AllianceEditor alliance={newAlliance} onComplete={onAddComplete}/>;
+    return <AllianceEditor alliance={createAlliance()} onComplete={onAddComplete}/>;
 }
 
 export const AllianceList = () => {

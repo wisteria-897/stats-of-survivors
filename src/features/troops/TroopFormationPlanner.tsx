@@ -197,7 +197,6 @@ function CustomTroopRatio(props: {ratio: TroopRatio, onChange: (newRatio: TroopR
                     onChange={(e) => {
                         const value = e.target.value;
                         if (value != null) {
-                            console.log(value);
                             onChange(new TroopRatio(infantry, riders, hunters, value));
                         }
                     }} />
@@ -221,7 +220,6 @@ function CustomMarchCapacity(props: {capacity: MarchCapacity, onChange: (newCapa
                     onChange={(e) => {
                         const value = e.target.value;
                         if (value != null) {
-                            console.log(value);
                             onChange(new MarchCapacity(capacity.capacity, value));
                         }
                     }} />

@@ -286,7 +286,7 @@ export function BonusLevelSelector({title, provider, level, onChange}: BonusLeve
     const [showStatTable, setShowStatTable] = useState(false);
 
     const providerLevel = level > 0 ? provider.levels[level - 1] : null;
-    const levelLabel = providerLevel ? providerLevel.name : '<None>';
+    const levelLabel = providerLevel ? providerLevel.name : provider.name + ': <None>';
     const canDecrement = level > 0;
     const canIncrement = level < provider.levels.length;
 
@@ -303,7 +303,7 @@ export function BonusLevelSelector({title, provider, level, onChange}: BonusLeve
                 <button className={styles.expander} onClick={(e) => setShowStatTable(!showStatTable)}>
                     {showStatTable ? '▿' : '▹'}
                 </button>
-                <span className={styles.bonusLevelLabel + ' ' + tierStyle}>{levelLabel}</span>
+                <span className={styles.bonusLevelLabel + ' ' + tierStyle} onClick={(e) => setShowStatTable(!showStatTable)}>{levelLabel}</span>
                 <div>
                     <button disabled={!canIncrement} onClick={(e) => onChange(provider, level + 1)}>▲</button>
                     <button disabled={!canDecrement} onClick={(e) => onChange(provider, level - 1)}>▼</button>
@@ -326,7 +326,6 @@ type LeveledBonusProviderListProps<T extends string, U extends LeveledBonusProvi
 export function LeveledBonusProviderList<T extends string, U extends LeveledBonusProvider>(
     {providers, levels, onChange}: LeveledBonusProviderListProps<T, U>
 ) {
-    console.log('LeveledBonusProviderList', providers, levels, onChange);
     const selectors = Object.keys(levels).map(key => {
         const slot = key as T;
         return (
