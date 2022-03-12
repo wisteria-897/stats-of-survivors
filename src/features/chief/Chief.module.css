@@ -17,7 +17,7 @@
     flex: 0 0 auto;
 }
 
-.chiefPanel > header > h2 {
+.chiefPanel > header > h1 {
     font-size: 150%;
     font-weight: bold;
     padding-left: 10px;
@@ -62,21 +62,9 @@
     width: 275px;
 }
 
-.chiefEditorGearList {
+.detailSections section > ul {
+    width: 400px;
     list-style-type: none;
+    margin: 0;
     padding: 0;
 }
-
-.chiefEditorGearList select {
-    width: 175px;
-}
-
-.chiefEditorHeroGearList {
-    list-style-type: none;
-    padding: 0;
-}
-
-.chiefEditorHeroGearList select {
-    width: 300px;
-}
-

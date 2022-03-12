@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { chainable } from '../../util/itertools';
-import { Stat, StatUnit, Stats } from '../../game/stat';
-import { SourceCategory, Tier, groupBonuses, getBonusesFrom, Bonus, BonusSource } from '../../game/bonus';
+import { Stat, StatUnit, Stats, StatCategorySort } from '../../game/stat';
+import { LeveledBonusProvider, SourceCategory, Tier, groupBonuses, getBonusesFrom, Bonus, BonusSource } from '../../game/bonus';
 import styles from './Bonus.module.css';
 
 const percentFormatter = new Intl.NumberFormat('en-US', {
@@ -57,21 +57,25 @@ const getSource = (bonus: Bonus) => {
     return 'Unknown';
 }
 
-function BonusListItem(props: {bonus: Bonus}) {
+function BonusListItem(props: {bonus: Bonus, className?: string, hideValue?: boolean}) {
     const {bonus} = props;
+    const hideValue = !!props.hideValue;
+    const itemClassName = props.className || '';
     return (
-        <li>
+        <li className={itemClassName}>
             <div className={styles.bonusContainer}>
                 {bonus.source ? <BonusSourceDisplay source={bonus.source}/> : <span>Unknown</span>}
-                <BonusValue value={bonus.value} stat={bonus.stat}/>
+                {hideValue || <BonusValue value={bonus.value} stat={bonus.stat}/>}
             </div>
         </li>
     );
 }
 
-function BonusGroupListItem(props: {label: string, bonuses: Bonus[], children?: React.ReactNode}) {
+function BonusGroupListItem(props: {label: string, bonuses: Bonus[], hideValue?: boolean, className?: string, children?: React.ReactNode}) {
     const {label, bonuses, children} = props;
     const [showChildren, setShowChildren] = useState(false);
+    const hideValue = !!props.hideValue;
+    const itemClassName = props.className || '';
 
     const total = bonuses.reduce((total, bonus) => total + bonus.value, 0);
 
@@ -83,30 +87,49 @@ function BonusGroupListItem(props: {label: string, bonuses: Bonus[], children?: 
     }
 
     return (
-        <li>
+        <li className={itemClassName}>
             <div className={styles.bonusContainer} onClick={(e) => setShowChildren(!showChildren)}>
                 <span>{String(label)}</span>
-                <BonusValue stat={bonuses[0].stat} value={total}/>
+                {hideValue || <BonusValue stat={bonuses[0].stat} value={total}/>}
             </div>
             {extendedChildren}
         </li>
     );
 }
 
-export function BonusList(props: {bonuses?: Bonus[], children?: React.ReactNode, groupBy?: (bonus: Bonus) => any}) {
-    const {children, groupBy} = props;
-    let bonuses = props.bonuses || [];
+type BonusListClassNames = {
+    list?: string,
+    groupItem?: string,
+    bonusItem?: string
+}
+
+type BonusListProps = {
+    bonuses?: Bonus[];
+    hideValue?: boolean;
+    classNames?: BonusListClassNames;
+    children?: React.ReactNode;
+    groupBy?: (bonus: Bonus) => any;
+    orderBy?: (a: any, b: any) => number;
+}
+export function BonusList({bonuses, classNames, hideValue, children, groupBy, orderBy}: BonusListProps) {
+    bonuses = bonuses || [];
+    hideValue = !!hideValue;
+    const callerClassNames = Object.assign({}, {list: '', groupItem: '', bonusItem: ''}, classNames);
 
     let items = null;
     if (groupBy) {
         const groups = groupBonuses(bonuses, groupBy);
-        items = chainable(() => groups.entries())
-            .map(([groupKey, groupBonuses]) => (
-                <BonusGroupListItem key={groupKey} label={groupKey} bonuses={groupBonuses}>
-                    {children}
-                </BonusGroupListItem>
-            ))
-            .asArray();
+        const groupEntries = [...groups.entries()];
+        if (orderBy) {
+            groupEntries.sort((a, b) => orderBy(a[0], b[0]));
+        }
+        items = groupEntries.map(([groupKey, groupBonuses]) => (
+            <BonusGroupListItem key={groupKey} className={callerClassNames.groupItem} label={groupKey}
+                bonuses={groupBonuses} hideValue={hideValue}
+            >
+                {children}
+            </BonusGroupListItem>
+        ));
     } else {
         items = bonuses.map(b => {
             let name = 'Unknown';
@@ -116,11 +139,11 @@ export function BonusList(props: {bonuses?: Bonus[], children?: React.ReactNode,
                 category = ('category' in b.source) ? b.source.category : b.source.source.category;
             }
             const key = category + ':' + name + ':' + b.stat.name;
-            return <BonusListItem key={key} bonus={b} />;
+            return <BonusListItem key={key} className={callerClassNames.bonusItem} bonus={b} hideValue={hideValue}/>;
         });
     }
 
-    return <ul className={styles.bonusList}>{items}</ul>;
+    return <ul className={styles.bonusList + ' ' + callerClassNames.list}>{items}</ul>;
 }
 
 const BonusValue = (props: { stat: Stat, value: number }) => {
@@ -192,3 +215,138 @@ export const BonusPopOver = (props: { x: number, y: number, source: BonusSource,
         </aside>
     );
 }
+
+type BonusTableProps = {
+    columns: {bonuses: Bonus[] | string, title: string}[];
+}
+export function BonusTable({columns}: BonusTableProps) {
+    const statSet = new Set<Stat>();
+    const columnData = columns.map(c => {
+        if (typeof(c.bonuses) === 'string') {
+            return c.bonuses;
+        }
+        c.bonuses.forEach(b => statSet.add(b.stat));
+        return c.bonuses.reduce((result, b) => result.set(b.stat, b.value), new Map<Stat, number>());
+    });
+    columns.forEach(c => {
+        if (typeof(c.bonuses) !== 'string') {
+            c.bonuses.forEach(b => statSet.add(b.stat));
+        }
+    });
+    const stats = [...statSet.values()].sort((a, b) => a.name.localeCompare(b.name));
+
+    const headers = columns.map((c, i) => <th key={c.title + ':' + i}>{c.title}</th>);
+
+    const rows = stats.map((stat, rowNumber) => {
+        const rowKey = stat.name;
+        const cells = columnData.map((c, i) => {
+            const cellKey = rowKey + ':' + columns[i].title + ':' + i;
+            if (typeof(c) === 'string') {
+                if (rowNumber === 0) {
+                    return <td key={cellKey} rowSpan={stats.length} className={styles.noColumnData}>{c}</td>;
+                } else {
+                    return null;
+                }
+            } else if (c.has(stat)) {
+                return <td key={cellKey}>{getDisplayValue(stat, c.get(stat) as number)}</td>;
+            } else {
+                return <td key={cellKey} className={styles.noCellData}></td>;
+            }
+        });
+        return <tr key={rowKey}><td>{stat.name}</td>{cells}</tr>;
+    });
+    return (
+        <table className={styles.bonusTable}>
+            <thead>
+                <tr><th>Stats</th>{headers}</tr>
+            </thead>
+            <tbody>
+                {rows}
+            </tbody>
+        </table>
+    );
+}
+
+export function StatBonusList(props: {bonuses: Bonus[]}) {
+    const {bonuses} = props;
+    const classNames = {groupItem: styles.bonusListStatCategory};
+    return (
+        <BonusList bonuses={bonuses} classNames={classNames} hideValue={true}
+            groupBy={(b) => b.stat.category}
+            orderBy={StatCategorySort.byUsefulness}
+        >
+            <BonusList groupBy={(b) => b.stat} orderBy={(a, b) => a.name.localeCompare(b.name)}>
+                <BonusList groupBy={getCategory}>
+                    <BonusList/>
+                </BonusList>
+            </BonusList>
+        </BonusList>
+    );
+}
+
+type BonusLevelSelectorProps = {
+    title?: string,
+    provider: LeveledBonusProvider,
+    level: number,
+    onChange: (provider: LeveledBonusProvider, level: number) => any
+}
+export function BonusLevelSelector({title, provider, level, onChange}: BonusLevelSelectorProps) {
+    const [showStatTable, setShowStatTable] = useState(false);
+
+    const providerLevel = level > 0 ? provider.levels[level - 1] : null;
+    const levelLabel = providerLevel ? providerLevel.name : '<None>';
+    const canDecrement = level > 0;
+    const canIncrement = level < provider.levels.length;
+
+    const statColumns = !showStatTable ? [] : [
+        {title: 'Current', bonuses: canDecrement ? getBonusesFrom(provider, 1, level) : 'None'},
+        {title: 'Next', bonuses: canIncrement ? getBonusesFrom(provider, level + 1) : 'Max'}
+    ];
+
+    const tierStyle = (providerLevel && providerLevel.tierLevel) ? styles[providerLevel.tierLevel.tier.name + 'Inverse'] : '';
+    return (
+        <div className={styles.bonusLevelSelector}>
+            {title && <h3>{title}</h3>}
+            <div className={styles.levelSelectorControls}>
+                <button className={styles.expander} onClick={(e) => setShowStatTable(!showStatTable)}>
+                    {showStatTable ? '▿' : '▹'}
+                </button>
+                <span className={styles.bonusLevelLabel + ' ' + tierStyle}>{levelLabel}</span>
+                <div>
+                    <button disabled={!canIncrement} onClick={(e) => onChange(provider, level + 1)}>▲</button>
+                    <button disabled={!canDecrement} onClick={(e) => onChange(provider, level - 1)}>▼</button>
+                </div>
+                <div>
+                    <button disabled={!canIncrement} onClick={(e) => onChange(provider, provider.levels.length)}>Max</button>
+                    <button disabled={!canDecrement} onClick={(e) => onChange(provider, 0)}>None</button>
+                </div>
+            </div>
+            {showStatTable && <BonusTable columns={statColumns} />}
+        </div>
+    );
+}
+
+type LeveledBonusProviderListProps<T extends string, U extends LeveledBonusProvider> = {
+    providers: {[key in T]: U};
+    levels: {[key in T]: number};
+    onChange: (update: {[key in T]: number}) => any;
+}
+export function LeveledBonusProviderList<T extends string, U extends LeveledBonusProvider>(
+    {providers, levels, onChange}: LeveledBonusProviderListProps<T, U>
+) {
+    const selectors = Object.entries(levels).map(entry => {
+        const [slot, level] = entry as [T, number];
+        return (
+            <li key={slot}>
+                <BonusLevelSelector provider={providers[slot]} level={levels[slot]}
+                    onChange={(provider, level) => {
+                        onChange(Object.assign({}, levels, {[slot]: level}));
+                    }}
+                />
+            </li>
+        );
+    });
+
+    return <ul className={styles.leveledBonusProviderList}>{selectors}</ul>;
+}
+

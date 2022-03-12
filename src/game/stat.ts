@@ -8,12 +8,40 @@ export enum StatUnit {
     Units
 }
 
+export enum StatCategory {
+    Military = 'Military',
+    SettlementDefense = 'Settlement Defense',
+    Development = 'Development',
+    Resources = 'Resources',
+    Alliance = 'Alliance',
+    Exploration = 'Exploration'
+}
+
+export const StatCategorySort = {
+    byUsefulness: (a: any, b: any) => {
+        const orderMap: {[key in StatCategory]: number} = {
+            [StatCategory.Military]: 0,
+            [StatCategory.SettlementDefense]: 1,
+            [StatCategory.Development]: 2,
+            [StatCategory.Resources]: 3,
+            [StatCategory.Alliance]: 4,
+            [StatCategory.Exploration]: 5
+        };
+        if (a === b || !(a in orderMap) || !(b in orderMap)) {
+            return 0;
+        }
+        return orderMap[a as StatCategory] < orderMap[b as StatCategory] ? -1 : 1;
+    }
+}
+
 export class Stat {
     readonly name: string;
+    readonly category: StatCategory;
     readonly type: StatUnit;
 
-    constructor(name: string, type=StatUnit.Percent) {
+    constructor(name: string, category: StatCategory, type=StatUnit.Percent) {
         this.name = name;
+        this.category = category;
         this.type = type;
         registry.register(this);
     }
@@ -26,69 +54,63 @@ export class Stat {
 export const getStatByName = registry.getById.bind(registry);
 
 export const Stats = {
-    Food: new Stat('Food'),
-    Wood: new Stat('Wood'),
-    Metal: new Stat('Metal'),
-    Gas: new Stat('Gas'),
-    Prosperity: new Stat('Prosperity'),
-    BattlePower: new Stat('Battle Power'),
-    TroopAttack: new Stat('Troop Attack'),
-    TroopDefense: new Stat('Troop Defense'),
-    TroopHealth: new Stat('Troop Health'),
-    TroopLethality: new Stat('Troop Lethality'),
-    InfantryAttack: new Stat('Infantry Attack'),
-    InfantryDefense: new Stat('Infantry Defense'),
-    InfantryHealth: new Stat('Infantry Health'),
-    InfantryLethality: new Stat('Infantry Lethality'),
-    RiderAttack: new Stat('Rider Attack'),
-    RiderDefense: new Stat('Rider Defense'),
-    RiderHealth: new Stat('Rider Health'),
-    RiderLethality: new Stat('Rider Lethality'),
-    HunterAttack: new Stat('Hunter Attack'),
-    HunterDefense: new Stat('Hunter Defense'),
-    HunterHealth: new Stat('Hunter Health'),
-    HunterLethality: new Stat('Hunter Lethality'),
-    ConstructionSpeed: new Stat('Construction Speed'),
-    ResearchSpeed: new Stat('Research Speed'),
-    HealingSpeed: new Stat('Healing Speed'),
-    TrainingSpeed: new Stat('Training Speed'),
-    MarchSpeed: new Stat('March Speed'),
-    RallySpeed: new Stat('Rally Speed'),
-    HealingCapacity: new Stat('Healing Capacity', StatUnit.Units),
-    TrainingCapacity: new Stat('Training Capacity', StatUnit.Units),
-    MarchCapacity: new Stat('March Capacity', StatUnit.Units),
-    RallyCapacity: new Stat('Rally Capacity', StatUnit.Units),
-    MarchCount: new Stat('March Count', StatUnit.Units),
-    FoodGatheringSpeed: new Stat('Food Gathering Speed'),
-    WoodGatheringSpeed: new Stat('Wood Gathering Speed'),
-    MetalGatheringSpeed: new Stat('Metal Gathering Speed'),
-    GasGatheringSpeed: new Stat('Gas Gathering Speed'),
-    FoodProductionSpeed: new Stat('Food Production Speed'),
-    WoodProductionSpeed: new Stat('Wood Production Speed'),
-    MetalProductionSpeed: new Stat('Metal Production Speed'),
-    GasProductionSpeed: new Stat('Gas Production Speed'),
-    TimerReduction: new Stat('Timer Reduction', StatUnit.Seconds),
-    MaxDonationHonor: new Stat('Max Donation Honor', StatUnit.Units),
-    AllianceConstructionSpeed: new Stat('Alliance Construction Speed'),
-    AllianceMembershipCapacity: new Stat('Alliance Membership Capacity', StatUnit.Units),
-    AllianceTowerCapacity: new Stat('Alliance Tower Capacity', StatUnit.Units),
-    AllianceBuildingDurability: new Stat('Alliance Building Durability'),
-    EnemyBuildingBurningSpeed: new Stat('Enemy Building Burning Speed'),
-    RallyChiefCapacity: new Stat('Rally Chief Capacity', StatUnit.Units),
-    TimerHelpDuration: new Stat('Timer Help Duration', StatUnit.Seconds),
-    TimerHelpCapacity: new Stat('Timer Help Capacity', StatUnit.Units),
-    AllianceFoodCapacity: new Stat('Alliance Food Capacity'),
-    AllianceWoodCapacity: new Stat('Alliance Wood Capacity'),
-    AllianceMetalCapacity: new Stat('Alliance Metal Capacity'),
-    AllianceGasCapacity: new Stat('Alliance Gas Capacity'),
-    FoodCapacity: new Stat('Food Capacity', StatUnit.Units),
-    WoodCapacity: new Stat('Wood Capacity', StatUnit.Units),
-    MetalCapacity: new Stat('Metal Capacity', StatUnit.Units),
-    GasCapacity: new Stat('Gas Capacity', StatUnit.Units),
-    FormationCount: new Stat('Troop Formation Count', StatUnit.Units),
-    ExplorerAttack: new Stat('Explorer Attack', StatUnit.Units),
-    ExplorerDefense: new Stat('Explorer Defense', StatUnit.Units),
-    ExplorerHealth: new Stat('Explorer Health', StatUnit.Units),
-    ExplorerLethality: new Stat('Explorer Lethality', StatUnit.Units),
-    ReinforcementCapacity: new Stat('Reinforcement Capacity', StatUnit.Units)
+    TroopAttack: new Stat('Troop Attack', StatCategory.Military),
+    TroopDefense: new Stat('Troop Defense', StatCategory.Military),
+    TroopHealth: new Stat('Troop Health', StatCategory.Military),
+    TroopLethality: new Stat('Troop Lethality', StatCategory.Military),
+    InfantryAttack: new Stat('Infantry Attack', StatCategory.Military),
+    InfantryDefense: new Stat('Infantry Defense', StatCategory.Military),
+    InfantryHealth: new Stat('Infantry Health', StatCategory.Military),
+    InfantryLethality: new Stat('Infantry Lethality', StatCategory.Military),
+    RiderAttack: new Stat('Rider Attack', StatCategory.Military),
+    RiderDefense: new Stat('Rider Defense', StatCategory.Military),
+    RiderHealth: new Stat('Rider Health', StatCategory.Military),
+    RiderLethality: new Stat('Rider Lethality', StatCategory.Military),
+    HunterAttack: new Stat('Hunter Attack', StatCategory.Military),
+    HunterDefense: new Stat('Hunter Defense', StatCategory.Military),
+    HunterHealth: new Stat('Hunter Health', StatCategory.Military),
+    HunterLethality: new Stat('Hunter Lethality', StatCategory.Military),
+    ConstructionSpeed: new Stat('Construction Speed', StatCategory.Development),
+    ResearchSpeed: new Stat('Research Speed', StatCategory.Development),
+    HealingSpeed: new Stat('Healing Speed', StatCategory.Military),
+    TrainingSpeed: new Stat('Training Speed', StatCategory.Military),
+    MarchSpeed: new Stat('March Speed', StatCategory.Military),
+    RallySpeed: new Stat('Rally Speed', StatCategory.Military),
+    HealingCapacity: new Stat('Healing Capacity', StatCategory.Military, StatUnit.Units),
+    TrainingCapacity: new Stat('Training Capacity', StatCategory.Military, StatUnit.Units),
+    MarchCapacity: new Stat('March Capacity', StatCategory.Military, StatUnit.Units),
+    RallyCapacity: new Stat('Rally Capacity', StatCategory.Military, StatUnit.Units),
+    MarchCount: new Stat('March Count', StatCategory.Military, StatUnit.Units),
+    FoodGatheringSpeed: new Stat('Food Gathering Speed', StatCategory.Resources),
+    WoodGatheringSpeed: new Stat('Wood Gathering Speed', StatCategory.Resources),
+    MetalGatheringSpeed: new Stat('Metal Gathering Speed', StatCategory.Resources),
+    GasGatheringSpeed: new Stat('Gas Gathering Speed', StatCategory.Resources),
+    FoodProductionSpeed: new Stat('Food Production Speed', StatCategory.Resources),
+    WoodProductionSpeed: new Stat('Wood Production Speed', StatCategory.Resources),
+    MetalProductionSpeed: new Stat('Metal Production Speed', StatCategory.Resources),
+    GasProductionSpeed: new Stat('Gas Production Speed', StatCategory.Resources),
+    TimerReduction: new Stat('Timer Reduction', StatCategory.Development, StatUnit.Seconds),
+    MaxDonationHonor: new Stat('Max Donation Honor', StatCategory.Development, StatUnit.Units),
+    AllianceConstructionSpeed: new Stat('Alliance Construction Speed', StatCategory.Alliance),
+    AllianceMembershipCapacity: new Stat('Alliance Membership Capacity', StatCategory.Alliance, StatUnit.Units),
+    AllianceTowerCapacity: new Stat('Alliance Tower Capacity', StatCategory.Alliance, StatUnit.Units),
+    AllianceBuildingDurability: new Stat('Alliance Building Durability', StatCategory.Alliance),
+    EnemyBuildingBurningSpeed: new Stat('Enemy Building Burning Speed', StatCategory.Alliance),
+    RallyChiefCapacity: new Stat('Rally Chief Capacity', StatCategory.Military, StatUnit.Units),
+    TimerHelpDuration: new Stat('Timer Help Duration', StatCategory.Development, StatUnit.Seconds),
+    TimerHelpCapacity: new Stat('Timer Help Capacity', StatCategory.Development, StatUnit.Units),
+    AllianceFoodCapacity: new Stat('Alliance Food Capacity', StatCategory.Alliance),
+    AllianceWoodCapacity: new Stat('Alliance Wood Capacity', StatCategory.Alliance),
+    AllianceMetalCapacity: new Stat('Alliance Metal Capacity', StatCategory.Alliance),
+    AllianceGasCapacity: new Stat('Alliance Gas Capacity', StatCategory.Alliance),
+    FoodCapacity: new Stat('Food Capacity', StatCategory.Resources, StatUnit.Units),
+    WoodCapacity: new Stat('Wood Capacity', StatCategory.Resources, StatUnit.Units),
+    MetalCapacity: new Stat('Metal Capacity', StatCategory.Resources, StatUnit.Units),
+    GasCapacity: new Stat('Gas Capacity', StatCategory.Resources, StatUnit.Units),
+    FormationCount: new Stat('Troop Formation Count', StatCategory.Military, StatUnit.Units),
+    ExplorerAttack: new Stat('Explorer Attack', StatCategory.Exploration, StatUnit.Units),
+    ExplorerDefense: new Stat('Explorer Defense', StatCategory.Exploration, StatUnit.Units),
+    ExplorerHealth: new Stat('Explorer Health', StatCategory.Exploration, StatUnit.Units),
+    ExplorerLethality: new Stat('Explorer Lethality', StatCategory.Exploration, StatUnit.Units),
+    ReinforcementCapacity: new Stat('Reinforcement Capacity', StatCategory.Military, StatUnit.Units)
 };

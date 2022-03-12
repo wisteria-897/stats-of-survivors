@@ -151,11 +151,20 @@ export const chiefSlice = createSlice({
                 updated[index] = action.payload;
                 state.chiefs = updated;
             }
+        },
+
+        partialUpdateChief: (state, action: PayloadActionWithId<ChiefId, any>) => {
+            const index = state.chiefs.findIndex((c: Chief) => c.id === action.payload.id);
+            if (index >= 0) {
+                const updated = [...state.chiefs];
+                updated[index] = Object.assign({}, updated[index], action.payload.value);
+                state.chiefs = updated;
+            }
         }
     }
 });
 
-export const { setChief, addChief, copyChief, updateChief } = chiefSlice.actions;
+export const { setChief, addChief, copyChief, updateChief, partialUpdateChief } = chiefSlice.actions;
 
 export const selectChief = (state: RootState, id?: ChiefId): Chief | null => {
     let chiefId;

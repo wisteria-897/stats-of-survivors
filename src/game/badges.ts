@@ -76,7 +76,7 @@ export class ChiefBadgeLevel {
     }
 
     get name() {
-        return this.badge.slot + ' ' + this.badgeTier + ' Badge';
+        return this.badge.slot.split(' ')[0] + ' ' + this.badgeTier + ' Badge ' + 'I'.repeat(this.badgeTierLevel);
     }
 
     get category() {

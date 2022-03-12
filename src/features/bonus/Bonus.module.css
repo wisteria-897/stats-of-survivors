@@ -37,12 +37,32 @@
 }
 
 .Epic {
-    background-color: #62f;
+    background-color: #82f;
 }
 
 .Legendary {
     background-color: #f80;
     color: #000;
+}
+
+.CommonInverse {
+    color: #dadbdd;
+}
+
+.UncommonInverse {
+    color: #4f4;
+}
+
+.RareInverse {
+    color: #48f;
+}
+
+.EpicInverse {
+    color: #82f;
+}
+
+.LegendaryInverse {
+    color: #f80;
 }
 
 .popOver > ul > li {
@@ -62,6 +82,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    cursor: pointer;
 }
 
 .bonusList,
@@ -81,5 +102,99 @@
     color: #f00;
 }
 
-.statName {
+.bonusLevelSelector > h3 {
+    margin: 5px 0;
+}
+
+.bonusLevelSelector button {
+    border: 2px solid #ddd;
+    border-radius: 2px;
+    background-color: transparent;
+    color: inherit;
+    font-size: 100%;
+    cursor: pointer;
+    margin: 1px;
+    padding: 3px;
+}
+
+.bonusLevelSelector button:hover {
+    color: #222;
+    background-color: #ddd;
+}
+
+.bonusLevelSelector button:disabled {
+    color: #888;
+    background-color: transparent;
+    border-color: #888;
+    cursor: default;
+}
+
+.bonusLevelSelector button.expander {
+    border: none;
+    font-size: 150%;
+}
+
+.levelSelectorControls {
+    display: flex;
+    flex-flow: row nowrap;
+    column-gap: 5px;
+    align-items: center;
+}
+
+.levelSelectorControls > div {
+    display: flex;
+    flex-flow: column wrap;
+}
+
+.bonusLevelLabel {
+    font-size: 150%;
+    font-weight: bold;
+    flex: 1 1 auto;
+}
+
+.bonusTable {
+    width: 100%;
+    text-align: right;
+}
+
+.bonusTable td {
+    font-family: monospace;
+    font-weight: bold;
+    color: #0f0;
+    width: 75px;
+}
+
+.bonusTable td:first-child,
+.bonusTable th:first-child {
+    text-align: left;
+}
+
+.bonusTable td:first-child {
+    font-family: inherit;
+    font-weight: normal;
+    color: inherit;
+    width: auto;
+}
+
+.bonusTable td.noColumnData {
+    text-align: center;
+    color: #aaa;
+}
+
+.bonusListStatCategory {
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-bottom: none;
+}
+
+.bonusListStatCategory:last-child {
+    border-bottom: 2px solid #ddd;
+}
+
+.bonusListStatCategory > div > span {
+    font-size: 125%;
+}
+
+.bonusListStatCategory > div > span:before {
+    content: '▷';
 }

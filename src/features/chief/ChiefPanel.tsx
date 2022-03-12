@@ -2,18 +2,17 @@ import React, { useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import { EnumMap } from '../../util/types';
 import { chainable } from '../../util/itertools';
-import { safeParseInt } from '../../util/parse';
 import LevelPicker from '../../ui/level/LevelPicker';
-import { aggregateBonuses, Bonus, LeveledBonusProvider, getBonusesFrom } from '../../game/bonus';
+import { aggregateBonuses, Bonus } from '../../game/bonus';
 import { getVipLevel } from '../../game/vip';
-import { HeroGear, HeroGearSlot, HeroGears } from '../../game/heroGear';
-import { ChiefGear, ChiefGearSlot, ChiefGears } from '../../game/chiefGear';
+import { HeroGears } from '../../game/heroGear';
+import { ChiefGears } from '../../game/chiefGear';
 import { ResearchTech, ResearchTechs, ResearchTechName } from '../../game/research';
 import { StatTalent, Talent, Talents, TalentName } from '../../game/talents';
 import { AllianceTech, AllianceTechs, AllianceTechName, StatAllianceTech } from '../../game/allianceTech';
 import { Building, Buildings, BuildingName } from '../../game/buildings';
-import { ChiefBadge, ChiefBadges, ChiefBadgeSlot } from '../../game/badges';
-import { selectAllianceByTag } from '../alliance/allianceSlice';
+import { ChiefBadges } from '../../game/badges';
+import { Alliance, selectAllianceByTag } from '../alliance/allianceSlice';
 import {
     Chief,
     ChiefId,
@@ -22,10 +21,11 @@ import {
     addChief,
     copyChief,
     updateChief,
+    partialUpdateChief,
     selectChief,
     selectChiefs
 } from './chiefSlice';
-import { BonusList, BonusSourceDisplay } from '../bonus/BonusList';
+import { BonusList, LeveledBonusProviderList, StatBonusList } from '../bonus/BonusList';
 import styles from './Chief.module.css';
 
 const getChiefDisplayName = (chief: Chief): string => {
@@ -33,38 +33,7 @@ const getChiefDisplayName = (chief: Chief): string => {
 };
 
 
-const getChiefGearListItems = (chief: Chief): JSX.Element[] => {
-    return Object.entries(ChiefGears).map(entry => {
-        const [slot, gear] = entry as [ChiefGearSlot, ChiefGear];
-        const gearLevel = chief.chiefGear[slot];
-        const glContent = gearLevel ? <BonusSourceDisplay source={gear.levels[gearLevel - 1]}/> : <span>&lt;None&gt;</span>;
-        return <li key={slot}>{glContent}</li>;
-    });
-};
-
 type SubComponentProps = { chief: Chief }
-
-const ChiefGearDisplayPanel = (props: { chief: Chief }) => {
-    const { chief } = props;
-
-    return (
-        <section>
-            <h3>Chief Gear</h3>
-            <ul>
-                {getChiefGearListItems(chief)}
-            </ul>
-        </section>
-    );
-};
-
-const getHeroGearListItems = (chief: Chief): JSX.Element[] => {
-    return Object.entries(HeroGears).map(entry => {
-        const [slot, hg] = entry as [HeroGearSlot, HeroGear];
-        const gearLevel = chief.heroGear[slot];
-        const glContent = gearLevel ? <BonusSourceDisplay source={hg.levels[gearLevel - 1]}/> : <span>&lt;None&gt;</span>;
-        return <li key={slot}>{glContent}</li>;
-    });
-};
 
 const ResearchLevelList = ({chief}: SubComponentProps) => {
     const listItems = (!chief || !chief.research) ? <li key="none">&lt;None&gt;</li>
@@ -74,7 +43,7 @@ const ResearchLevelList = ({chief}: SubComponentProps) => {
 
     return (
         <section>
-            <h3>Chief Research</h3>
+            <h2>Chief Research</h2>
             <ul>
                 {listItems}
             </ul>
@@ -90,7 +59,7 @@ const TalentLevelList = ({chief}: SubComponentProps) => {
 
     return (
         <section>
-            <h3>Talents</h3>
+            <h2>Talents</h2>
             <ul>
                 {listItems}
             </ul>
@@ -109,7 +78,7 @@ const BuildingLevelList = ({chief}: SubComponentProps) => {
 
     return (
         <section>
-            <h3>Buildings</h3>
+            <h2>Buildings</h2>
             <ul>
                 {listItems}
             </ul>
@@ -117,39 +86,11 @@ const BuildingLevelList = ({chief}: SubComponentProps) => {
     );
 }
 
-const ChiefBadgeLevelList = ({chief}: SubComponentProps) => {
-    const listItems = (!chief || !chief.badges) ? <li key="none">&lt;None&gt;</li>
-        : Object.entries(chief.badges)
-            .filter(([k, v]) => v != 0)
-            .map(entry => {
-                const [k, v] = entry as [ChiefBadgeSlot, number];
-                return <li key={k}><span>{ChiefBadges[k].levels[v - 1].name}</span></li>;
-            });
-
-    return (
-        <section>
-            <h3>Chief Badges</h3>
-            <ul>
-                {listItems}
-            </ul>
-        </section>
-    );
+function getAllianceBonuses(alliance: Alliance) {
+    return (!alliance || !alliance.allianceTech) ? [] : aggregateBonuses(alliance.allianceTech, AllianceTechs);
 }
 
-const HeroGearDisplayPanel = (props: { chief: Chief }) => {
-    const { chief } = props;
-    return (
-        <section>
-            <h3>Hero Gear</h3>
-            <ul>
-                {getHeroGearListItems(chief)}
-            </ul>
-        </section>
-    );
-};
-
-const ChiefBonusList = (props: {chief: Chief}) => {
-    const {chief} = props;
+function getChiefBonuses(chief: Chief) {
     const vipLevel = getVipLevel(chief.vipLevel);
     const researchBonuses = (!chief || !chief.research) ? [] : aggregateBonuses(chief.research, ResearchTechs);
     const buildingBonuses = (!chief || !chief.buildings) ? [] : aggregateBonuses(chief.buildings, Buildings);
@@ -157,69 +98,16 @@ const ChiefBonusList = (props: {chief: Chief}) => {
     const badgeBonuses = (!chief || !chief.badges) ? [] : aggregateBonuses(chief.badges, ChiefBadges);
     const chiefGearBonuses = (!chief || !chief.chiefGear) ? [] : aggregateBonuses(chief.chiefGear, ChiefGears);
     const heroGearBonuses = (!chief || !chief.heroGear) ? [] : aggregateBonuses(chief.heroGear, HeroGears);
-    console.log('BonusList', chief.heroGear, heroGearBonuses);
 
-    const alliance = useAppSelector(state => selectAllianceByTag(state, chief.allianceTag || ''));
-    const allianceTechBonuses = (!alliance || !alliance.allianceTech) ? [] : aggregateBonuses(alliance.allianceTech, AllianceTechs);
 
-    console.log(buildingBonuses);
-    const bonuses: Bonus[] = [
+    return [
         ...chiefGearBonuses,
         ...heroGearBonuses,
         ...researchBonuses,
         ...talentBonuses,
         ...buildingBonuses,
-        ...badgeBonuses,
-        ...allianceTechBonuses
+        ...badgeBonuses
     ];
-
-    const getCategory = (b: Bonus) => {
-        if (b.source) {
-            return ('category' in b.source) ? b.source.category : b.source.source.category;
-        }
-        return 'Unknown';
-    }
-
-    return (
-        <div>
-            <div>
-                <h3>Bonuses</h3>
-                <BonusList bonuses={bonuses} groupBy={(b) => b.stat}>
-                    <BonusList groupBy={getCategory}>
-                        <BonusList/>
-                    </BonusList>
-                </BonusList>
-            </div>
-        </div>
-    );
-}
-
-const ChiefGearSelector = (props: {level: number, slot: ChiefGearSlot, onChange: (level: number) => any}) => {
-    const {level, slot, onChange} = props;
-    const options = ChiefGears[slot].levels.map(gl => <option key={gl.level} value={gl.level}>{gl.name}</option>);
-    return (
-        <label className={styles.chiefGearSelector}>
-            <span>{slot}:</span>
-            <select value={level} onChange={(e) => onChange(safeParseInt(e.target.value))}>
-                <option value="0">&lt;None&gt;</option>
-                {options}
-            </select>
-        </label>
-    );
-}
-
-const HeroGearSelector = (props: {level: number, gear: HeroGear, onChange: (level: number) => any}) => {
-    const {level, gear, onChange} = props;
-    const options = gear.levels.map(gl => <option key={gl.level} value={gl.level}>{gl.name}</option>);
-    return (
-        <label className={styles.chiefGearSelector}>
-            <span>{gear.heroType} {gear.name}:</span>
-            <select value={level} onChange={(e) => onChange(safeParseInt(e.target.value))}>
-                <option value="0">&lt;None&gt;</option>
-                {options}
-            </select>
-        </label>
-    );
 }
 
 const ResearchLevelEditor = (props: {tech: ResearchTech, level: number, onChange: (tech: ResearchTech, level: number) => any}) => {
@@ -247,20 +135,6 @@ const BuildingLevelEditor = (props: {building: Building, level: number, onChange
     );
 }
 
-const ChiefBadgeLevelEditor = (props: {badge: ChiefBadge, level: number, onChange: (badge: ChiefBadge, level: number) => any}) => {
-    const {badge, level, onChange} = props;
-    const options = badge.levels.map(bl => <option key={bl.level} value={bl.level}>{bl.badgeTier} {bl.badgeTierLevel}</option>);
-    return (
-        <label className={styles.badgeLevelSelector}>
-            <span>{badge.name}:</span>
-            <select value={level} onChange={(e) => onChange(badge, safeParseInt(e.target.value))}>
-                <option value="0">&lt;None&gt;</option>
-                {options}
-            </select>
-        </label>
-    );
-}
-
 const ChiefEditor = (props: {chief: Chief, onComplete: (update: Chief | null) => any}) => {
     const emptyResearch: {[key in ResearchTechName]?: number} = {};
     for (const techName in ResearchTechs) {
@@ -277,38 +151,22 @@ const ChiefEditor = (props: {chief: Chief, onComplete: (update: Chief | null) =>
         return result;
     }, EnumMap.empty<number>(BuildingName)) as {[key in BuildingName]: number}
 
-    const emptyBadges = Object.entries(ChiefBadges).map(([k, v]) => v as ChiefBadge).reduce((result, badge) => {
-        result[badge.slot] = 0;
-        return result;
-    }, EnumMap.empty<number>(ChiefBadgeSlot)) as {[key in ChiefBadgeSlot]: number}
-
     const {chief, onComplete} = props;
     const [chiefName, setChiefName] = useState(chief.name);
     const [allianceTag, setAllianceTag] = useState(chief.allianceTag);
     const [vipLevel, setVipLevel] = useState(chief.vipLevel);
     const [chiefLevel, setChiefLevel] = useState(chief.level);
-    const [chiefGear, setChiefGear] = useState(chief.chiefGear);
-    const [heroGear, setHeroGear] = useState(chief.heroGear);
     const [research, setResearch] = useState(chief.research || emptyResearch);
     const [talents, setTalents] = useState(chief.talents || emptyTalents);
     const [buildings, setBuildings] = useState(chief.buildings || emptyBuildings);
-    const [badges, setBadges] = useState(chief.badges || emptyBadges);
 
     const onSave = () => {
         const updatedChief = Object.assign({}, chief, {
             name: chiefName,
             level: chiefLevel,
-            allianceTag, vipLevel, chiefGear, heroGear, research, talents, buildings, badges
+            allianceTag, vipLevel, research, talents, buildings
         });
         onComplete(updatedChief);
-    }
-
-    const setChiefGearSlot = (slot: ChiefGearSlot, level: number) => {
-        setChiefGear(Object.assign({}, chiefGear, {[slot]: level}));
-    }
-
-    const setHeroGearSlot = (gear: HeroGear, level: number) => {
-        setHeroGear(Object.assign({}, heroGear, {[gear.key]: level}));
     }
 
     const researchEditors = Object.entries(research).map(entry => {
@@ -338,24 +196,6 @@ const ChiefEditor = (props: {chief: Chief, onComplete: (update: Chief | null) =>
         return <BuildingLevelEditor key={buildingName} building={Buildings[buildingName]} level={level} onChange={onChange} />;
     });
 
-    const badgeEditors = Object.entries(badges).map(entry => {
-        const [badgeSlot, level] = entry as [badgeSlot: ChiefBadgeSlot, level: number];
-        const onChange = (badge: ChiefBadge, value: number) => {
-            const update = {[badge.slot]: value} as {[key in ChiefBadgeSlot]: number};
-            setBadges(Object.assign({}, badges, update));
-        }
-        return <ChiefBadgeLevelEditor key={badgeSlot} badge={ChiefBadges[badgeSlot]} level={level} onChange={onChange} />;
-    });
-
-    const heroGearEditors = Object.entries(heroGear).map(entry => {
-        const [gearSlot, level] = entry as [gearSlot: HeroGearSlot, level: number];
-        const onChange = (value: number) => {
-            const update = {[gearSlot]: value} as {[key in HeroGearSlot]: number};
-            setHeroGear(Object.assign({}, heroGear, update));
-        }
-        return <HeroGearSelector key={gearSlot} gear={HeroGears[gearSlot]} level={level} onChange={onChange} />;
-    });
-
     return (
         <div className={styles.chiefEditor}>
             <h2>Edit Chief</h2>
@@ -369,50 +209,15 @@ const ChiefEditor = (props: {chief: Chief, onComplete: (update: Chief | null) =>
             </label>
             <LevelPicker label="Chief level:" min={0} max={60} level={chiefLevel} onChange={setChiefLevel} />
             <LevelPicker label="VIP level:" min={0} max={12} level={vipLevel} onChange={setVipLevel} />
-            <h3>Chief Gear</h3>
-            <ul className={styles.chiefEditorGearList}>
-                <li>
-                    <ChiefGearSelector slot={ChiefGearSlot.Helmet} level={chiefGear[ChiefGearSlot.Helmet]}
-                        onChange={(level: number) => setChiefGearSlot(ChiefGearSlot.Helmet, level)} />
-                </li>
-                <li>
-                    <ChiefGearSelector slot={ChiefGearSlot.Armor} level={chiefGear[ChiefGearSlot.Armor]}
-                        onChange={(level: number) => setChiefGearSlot(ChiefGearSlot.Armor, level)} />
-                </li>
-                <li>
-                    <ChiefGearSelector slot={ChiefGearSlot.Kneepads} level={chiefGear[ChiefGearSlot.Kneepads]}
-                        onChange={(level: number) => setChiefGearSlot(ChiefGearSlot.Kneepads, level)} />
-                </li>
-                <li>
-                    <ChiefGearSelector slot={ChiefGearSlot.AssaultRifle} level={chiefGear[ChiefGearSlot.AssaultRifle]}
-                        onChange={(level: number) => setChiefGearSlot(ChiefGearSlot.AssaultRifle, level)} />
-                </li>
-                <li>
-                    <ChiefGearSelector slot={ChiefGearSlot.Boots} level={chiefGear[ChiefGearSlot.Boots]}
-                        onChange={(level: number) => setChiefGearSlot(ChiefGearSlot.Boots, level)} />
-                </li>
-                <li>
-                    <ChiefGearSelector slot={ChiefGearSlot.Communicator} level={chiefGear[ChiefGearSlot.Communicator]}
-                        onChange={(level: number) => setChiefGearSlot(ChiefGearSlot.Communicator, level)} />
-                </li>
-            </ul>
-            <h3>Chief Badges</h3>
-            <ul>
-                {badgeEditors}
-            </ul>
-            <h3>Hero Gear</h3>
-            <ul className={styles.chiefEditorHeroGearList}>
-                {heroGearEditors}
-            </ul>
-            <h3>Chief Tech</h3>
+            <h2>Chief Tech</h2>
             <ul>
                 {researchEditors}
             </ul>
-            <h3>Talents</h3>
+            <h2>Talents</h2>
             <ul>
                 {talentEditors}
             </ul>
-            <h3>Buildings</h3>
+            <h2>Buildings</h2>
             <ul>
                 {buildingEditors}
             </ul>
@@ -427,6 +232,9 @@ const ChiefDisplayPanel = (props: {chief: Chief}) => {
     const {chief} = props;
     const [isEditing, setIsEditing] = useState(false);
     const vipLevel = getVipLevel(chief.vipLevel);
+    const alliance = useAppSelector(state => selectAllianceByTag(state, chief.allianceTag || ''));
+    const statBonuses = [...getChiefBonuses(chief), ...getAllianceBonuses(alliance)];
+
     const dispatch = useAppDispatch();
 
     const onEditComplete = (update: Chief | null) => {
@@ -443,7 +251,7 @@ const ChiefDisplayPanel = (props: {chief: Chief}) => {
     return (
         <section className={styles.chiefPanel}>
             <header>
-                <h2 className={styles.name}>{getChiefDisplayName(chief)}</h2>
+                <h1 className={styles.name}>{getChiefDisplayName(chief)}</h1>
                 <span className={styles.keyStats}>
                     <span className={styles.keyStat}>{vipLevel.name}</span>
                     <span className={styles.keyStat}>Level {chief.level}</span>
@@ -454,9 +262,21 @@ const ChiefDisplayPanel = (props: {chief: Chief}) => {
             </header>
             <section className={styles.detailSections}>
                 <div>
-                    <ChiefGearDisplayPanel chief={chief}/>
-                    <ChiefBadgeLevelList chief={chief}/>
-                    <HeroGearDisplayPanel chief={chief}/>
+                    <section>
+                        <h2>Chief Gear</h2>
+                        <LeveledBonusProviderList providers={ChiefGears} levels={chief.chiefGear}
+                            onChange={update => dispatch(partialUpdateChief({id: chief.id, value: {chiefGear: update}}))}/>
+                    </section>
+                    <section>
+                        <h2>Chief Gear Badges</h2>
+                        <LeveledBonusProviderList providers={ChiefBadges} levels={chief.badges}
+                            onChange={update => dispatch(partialUpdateChief({id: chief.id, value: {badges: update}}))}/>
+                    </section>
+                    <section>
+                        <h2>Hero Gear</h2>
+                        <LeveledBonusProviderList providers={HeroGears} levels={chief.heroGear}
+                            onChange={update => dispatch(partialUpdateChief({id: chief.id, value: {heroGear: update}}))}/>
+                    </section>
                 </div>
                 <div>
                     <ResearchLevelList chief={chief}/>
@@ -464,7 +284,10 @@ const ChiefDisplayPanel = (props: {chief: Chief}) => {
                     <BuildingLevelList chief={chief}/>
                 </div>
                 <div>
-                    <ChiefBonusList chief={chief}/>
+                    <section>
+                        <h2>Stat Bonuses</h2>
+                        <StatBonusList bonuses={statBonuses}/>
+                    </section>
                 </div>
             </section>
         </section>

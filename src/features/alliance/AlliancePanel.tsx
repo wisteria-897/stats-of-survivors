@@ -3,7 +3,7 @@ import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import { EnumMap } from '../../util/types';
 import { aggregateBonuses, Bonus } from '../../game/bonus';
 import LevelPicker from '../../ui/level/LevelPicker';
-import { BonusList } from '../bonus/BonusList';
+import { StatBonusList } from '../bonus/BonusList';
 import { AllianceTech, AllianceTechName, AllianceTechs, StatAllianceTech } from '../../game/allianceTech';
 import {
     Alliance,
@@ -19,22 +19,6 @@ import styles from './Alliance.module.css';
 
 type SubComponentProps = {alliance: Alliance}
 
-const AllianceBonusList = ({alliance}: SubComponentProps) => {
-    const allianceTechLevelBonuses = (!alliance || !alliance.allianceTech) ? []
-        : aggregateBonuses(alliance.allianceTech, AllianceTechs);
-    const bonuses: Bonus[] = [
-        ...allianceTechLevelBonuses
-    ];
-
-    return (
-        <div>
-            <h3>Bonuses</h3>
-            <BonusList bonuses={bonuses} groupBy={(b) => b.stat}>
-                <BonusList/>
-            </BonusList>
-        </div>
-    );
-}
 const AllianceTechLevelList = ({alliance}: SubComponentProps) => {
     const listItems = (!alliance || !alliance.allianceTech) ? []
         : Object.entries(alliance.allianceTech)
@@ -124,10 +108,15 @@ const AllianceEditor = (props: {alliance: Alliance, onComplete: (update: Allianc
     );
 }
 
+function getStatBonuses(alliance: Alliance) {
+    return (!alliance || !alliance.allianceTech) ? []
+        : aggregateBonuses(alliance.allianceTech, AllianceTechs);
+}
 
 const AllianceDisplayPanel = ({alliance}: SubComponentProps) => {
-    const [isEditing, setIsEditing] = useState(false);
     const dispatch = useAppDispatch();
+    const statBonuses = getStatBonuses(alliance);
+    const [isEditing, setIsEditing] = useState(false);
 
     const onEditComplete = (update: Alliance | null) => {
         if (update) {
@@ -155,7 +144,10 @@ const AllianceDisplayPanel = ({alliance}: SubComponentProps) => {
                     <AllianceTechLevelList alliance={alliance}/>
                 </div>
                 <div>
-                    <AllianceBonusList alliance={alliance}/>
+                    <div>
+                        <h2>Bonuses</h2>
+                        <StatBonusList bonuses={statBonuses}/>
+                    </div>
                 </div>
             </section>
         </section>
