@@ -87,10 +87,6 @@ export class AllianceTech {
 }
 
 export class AbilityAllianceTech extends AllianceTech {
-    constructor(name: string, tree: AllianceTechTree) {
-        super(name, tree);
-    }
-
     get stats(): Stat[] {
         return [];
     }

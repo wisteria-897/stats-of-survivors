@@ -89,7 +89,6 @@ export function getBonusesFrom(source: LeveledBonusProvider, startLevel: number,
     if (!(source && ('levels' in source) && source.levels)) {
         return [];
     }
-    const bonuses = [];
     const resolvedEndLevel = (endLevel === undefined ? startLevel : endLevel);
     const levels = source.levels.slice(startLevel - 1, resolvedEndLevel);
     return source.stats.map((stat, index) => {
@@ -103,8 +102,8 @@ export function getBonusesFrom(source: LeveledBonusProvider, startLevel: number,
 export function aggregateBonuses<T extends string>(levels: {[key in T]: number}, sources: {[key in T]: LeveledBonusProvider}): Bonus[] {
     return Object.entries(levels)
             .filter(entry => {
-                const [k, v] = entry as [T, number];
-                return v > 0;
+                const level = entry[1] as number;
+                return level > 0;
             })
             .reduce((result, entry) => {
                 const [name, level] = entry as [T, number];

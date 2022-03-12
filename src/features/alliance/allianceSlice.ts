@@ -52,7 +52,7 @@ export const allianceSlice = createSlice({
         },
 
         updateAlliance: (state, action: PayloadAction<Alliance>) => {
-            const index = state.alliances.findIndex((a: Alliance) => a.tag == action.payload.tag);
+            const index = state.alliances.findIndex((a: Alliance) => a.tag === action.payload.tag);
             if (index >= 0) {
                 const updated = [...state.alliances];
                 updated[index] = action.payload;
@@ -74,7 +74,7 @@ export const selectAlliances = (state: RootState) => {
 }
 
 export const selectAllianceByTag = (state: RootState, tag: AllianceTag) => {
-    return state.alliance.alliances.find((a: Alliance) => a.tag == tag) || null;
+    return state.alliance.alliances.find((a: Alliance) => a.tag === tag) || null;
 }
 
 export const selectSelectedAlliance = (state: RootState) => {

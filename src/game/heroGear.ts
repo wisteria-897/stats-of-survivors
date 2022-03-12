@@ -1,7 +1,6 @@
 import { Tiers, Bonus } from './bonus';
 import { SourceCategory, Tier } from './bonus';
 import { Stat, Stats } from './stat';
-import Registry from './registry';
 
 export enum HeroType {
     Brawler = 'Brawler',

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import { EnumMap } from '../../util/types';
-import { aggregateBonuses, Bonus } from '../../game/bonus';
+import { aggregateBonuses } from '../../game/bonus';
 import LevelPicker from '../../ui/level/LevelPicker';
 import { StatBonusList } from '../bonus/BonusList';
 import { AllianceTech, AllianceTechName, AllianceTechs, StatAllianceTech } from '../../game/allianceTech';
@@ -22,7 +22,7 @@ type SubComponentProps = {alliance: Alliance}
 const AllianceTechLevelList = ({alliance}: SubComponentProps) => {
     const listItems = (!alliance || !alliance.allianceTech) ? []
         : Object.entries(alliance.allianceTech)
-            .filter(([k, v]) => v != 0)
+            .filter(([k, v]) => v !== 0)
             .map(([k, v]) => <li key={k}><span>{k}: </span><span>{v}</span></li>);
 
     let techList;

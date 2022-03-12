@@ -269,7 +269,7 @@ export function TroopFormationPlanner() {
     const [customCapacity, setCustomCapacity] = useState(new MarchCapacity(1000000));
 
     const addRatioToList = (ratio: TroopRatio) => {
-        if (ratios.find(r => r.key == ratio.key)) {
+        if (ratios.find(r => r.key === ratio.key)) {
             return;
         }
 
@@ -298,7 +298,7 @@ export function TroopFormationPlanner() {
     }
 
     const addCapacityToList = (capacity: MarchCapacity) => {
-        if (savedCapacities.find((c: MarchCapacity) => c.key == capacity.key)) {
+        if (savedCapacities.find((c: MarchCapacity) => c.key === capacity.key)) {
             return;
         }
 

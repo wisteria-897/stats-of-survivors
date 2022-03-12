@@ -21,7 +21,7 @@ export function migrate(newKey: string, oldKeys: string[], transform: (jsonValue
     if (newJson) {
         const fullNewKey = storageKeyBase + ':' + newKey;
         localStorage.setItem(fullNewKey, newJson);
-        if (localStorage.getItem(fullNewKey) == newJson) {
+        if (localStorage.getItem(fullNewKey) === newJson) {
             fullOldKeys.forEach(key => localStorage.removeItem(key));
         }
     }

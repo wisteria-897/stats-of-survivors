@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { createPersister, migrate } from '../../util/persistence';
-import TimeSpan from '../../util/timespan';
 import { SpeedUpSet, SpeedUpType } from '../../game/speedUps';
 import { SpeedUpCalculator } from './SpeedUpCalculator';
 import styles from './Speedups.module.css';

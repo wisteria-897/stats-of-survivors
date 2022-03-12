@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import { EnumMap } from '../../util/types';
-import { chainable } from '../../util/itertools';
 import LevelPicker from '../../ui/level/LevelPicker';
-import { aggregateBonuses, Bonus } from '../../game/bonus';
+import { aggregateBonuses } from '../../game/bonus';
 import { getVipLevel } from '../../game/vip';
 import { HeroGears } from '../../game/heroGear';
 import { ChiefGears } from '../../game/chiefGear';
 import { ResearchTech, ResearchTechs, ResearchTechName } from '../../game/research';
 import { StatTalent, Talent, Talents, TalentName } from '../../game/talents';
-import { AllianceTech, AllianceTechs, AllianceTechName, StatAllianceTech } from '../../game/allianceTech';
+import { AllianceTechs } from '../../game/allianceTech';
 import { Building, Buildings, BuildingName } from '../../game/buildings';
 import { ChiefBadges } from '../../game/badges';
 import { Alliance, selectAllianceByTag } from '../alliance/allianceSlice';
@@ -25,7 +24,7 @@ import {
     selectChief,
     selectChiefs
 } from './chiefSlice';
-import { BonusList, LeveledBonusProviderList, StatBonusList } from '../bonus/BonusList';
+import { LeveledBonusProviderList, StatBonusList } from '../bonus/BonusList';
 import styles from './Chief.module.css';
 
 const getChiefDisplayName = (chief: Chief): string => {
@@ -38,7 +37,7 @@ type SubComponentProps = { chief: Chief }
 const ResearchLevelList = ({chief}: SubComponentProps) => {
     const listItems = (!chief || !chief.research) ? <li key="none">&lt;None&gt;</li>
         : Object.entries(chief.research)
-            .filter(([k, v]) => v != 0)
+            .filter(([k, v]) => v !== 0)
             .map(([k, v]) => <li key={k}><span>{k}: </span><span>{v}</span></li>);
 
     return (
@@ -54,7 +53,7 @@ const ResearchLevelList = ({chief}: SubComponentProps) => {
 const TalentLevelList = ({chief}: SubComponentProps) => {
     const listItems = (!chief || !chief.talents) ? <li key="none">&lt;None&gt;</li>
         : Object.entries(chief.talents)
-            .filter(([k, v]) => v != 0)
+            .filter(([k, v]) => v !== 0)
             .map(([k, v]) => <li key={k}><span>{k}: </span><span>{v}</span></li>);
 
     return (
@@ -70,7 +69,7 @@ const TalentLevelList = ({chief}: SubComponentProps) => {
 const BuildingLevelList = ({chief}: SubComponentProps) => {
     const listItems = (!chief || !chief.buildings) ? <li key="none">&lt;None&gt;</li>
         : Object.entries(chief.buildings)
-            .filter(([k, v]) => v != 0)
+            .filter(([k, v]) => v !== 0)
             .map(entry => {
                 const [k, v] = entry as [BuildingName, number];
                 return <li key={k}><span>{Buildings[k].levels[v - 1].name}</span></li>;
@@ -101,6 +100,7 @@ function getChiefBonuses(chief: Chief) {
 
 
     return [
+        ...vipLevel.bonuses,
         ...chiefGearBonuses,
         ...heroGearBonuses,
         ...researchBonuses,

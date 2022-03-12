@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { chainable } from '../../util/itertools';
-import { Stat, StatUnit, Stats, StatCategorySort } from '../../game/stat';
-import { LeveledBonusProvider, SourceCategory, Tier, groupBonuses, getBonusesFrom, Bonus, BonusSource } from '../../game/bonus';
+import { Stat, StatUnit, StatCategorySort } from '../../game/stat';
+import { LeveledBonusProvider, Tier, groupBonuses, getBonusesFrom, Bonus, BonusSource } from '../../game/bonus';
 import styles from './Bonus.module.css';
 
 const percentFormatter = new Intl.NumberFormat('en-US', {
@@ -48,13 +47,6 @@ const getCategory = (bonus: Bonus): string => {
         }
     }
     return category || 'Unknown';
-}
-
-const getSource = (bonus: Bonus) => {
-    if (bonus.source) {
-        return ('source' in bonus.source) ? {mapKey: bonus.source.source, groupKey: bonus.source} : bonus.source;
-    }
-    return 'Unknown';
 }
 
 function BonusListItem(props: {bonus: Bonus, className?: string, hideValue?: boolean}) {
@@ -334,8 +326,8 @@ type LeveledBonusProviderListProps<T extends string, U extends LeveledBonusProvi
 export function LeveledBonusProviderList<T extends string, U extends LeveledBonusProvider>(
     {providers, levels, onChange}: LeveledBonusProviderListProps<T, U>
 ) {
-    const selectors = Object.entries(levels).map(entry => {
-        const [slot, level] = entry as [T, number];
+    const selectors = Object.keys(levels).map(key => {
+        const slot = key as T;
         return (
             <li key={slot}>
                 <BonusLevelSelector provider={providers[slot]} level={levels[slot]}

@@ -3,8 +3,8 @@ import { EnumMap } from '../../util/types';
 import { PayloadActionWithId } from '../../util/payload';
 import { RootState } from '../../app/store';
 import { createPersister } from '../../util/persistence';
-import { ChiefGear, ChiefGearSlot } from '../../game/chiefGear';
-import { HeroGear, HeroGearSlot } from '../../game/heroGear';
+import { ChiefGearSlot } from '../../game/chiefGear';
+import { HeroGearSlot } from '../../game/heroGear';
 import { ResearchTech, ResearchTechName, ResearchTechs } from '../../game/research';
 import { Talent, TalentName, Talents } from '../../game/talents';
 import { Building, BuildingName, Buildings } from '../../game/buildings';
@@ -145,7 +145,7 @@ export const chiefSlice = createSlice({
         },
 
         updateChief: (state, action: PayloadAction<Chief>) => {
-            const index = state.chiefs.findIndex((c: Chief) => c.id == action.payload.id);
+            const index = state.chiefs.findIndex((c: Chief) => c.id === action.payload.id);
             if (index >= 0) {
                 const updated = [...state.chiefs];
                 updated[index] = action.payload;

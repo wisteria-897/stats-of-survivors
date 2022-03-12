@@ -127,10 +127,6 @@ export class Talent {
 }
 
 export class SkillTalent extends Talent {
-    constructor(name: TalentName, tree: TalentTree) {
-        super(name, tree);
-    }
-
     get stats(): Stat[] {
         return [];
     }
