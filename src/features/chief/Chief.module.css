@@ -22,18 +22,25 @@
     font-size: 150%;
     font-weight: bold;
     padding-left: 10px;
+    margin: 0;
 }
 
 .keyStats {
     display: flex;
     flex-flow: row nowrap;
     column-gap: 10px;
-    flex: 1 0 auto;
+    flex: 0 0 auto;
     align-items: center;
 }
 
 .keyStat {
     display: inline-block;
+}
+
+.keyStat:last-child {
+    padding-right: 30px;
+    margin-right: 20px;
+    border-right: 2px solid #eee;
 }
 
 .chiefPanel > section {
@@ -87,4 +94,55 @@
 .listAction:hover {
     background-color: #ddd;
     color: #222;
+}
+
+.subNav {
+    flex: 1 0 auto;
+}
+
+.subNav > ul {
+    display: flex;
+    flex-wrap: row wrap;
+    column-gap: 5px;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.subNav a {
+    display: inline-block;
+    padding: 10px;
+    text-transform: uppercase;
+    text-decoration: none;
+}
+
+.subNav a,
+.subNav a:visited {
+    color: #ddd;
+}
+
+.subNav a.active,
+.subNav a.active:visited {
+    font-weight: bold;
+    color: #eee;
+}
+
+.subNav a:hover {
+    background-color: #666;
+    color: #000;
+}
+
+.subNav a.active:hover {
+    color: #eee;
+}
+
+.subPanel {
+    display: flex;
+    display: row wrap;
+    column-gap: 50px;
+}
+
+.subPanel > section {
+    flex: 1 0 auto;
+    max-width: 500px;
 }

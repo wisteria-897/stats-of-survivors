@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useNavigate, useParams, Link, Outlet } from 'react-router-dom';
+import { Subtract } from 'utility-types';
+import { useNavigate, useParams, Link, NavLink, Outlet } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import LevelPicker from '../../ui/level/LevelPicker';
 import { aggregateBonuses } from '../../game/bonus';
@@ -30,7 +31,11 @@ const getChiefDisplayName = (chief: Chief): string => {
 };
 
 
-type SubComponentProps = { chief: Chief }
+type SubComponentProps = {
+    chief: Chief,
+    alliance: Alliance | null,
+    dispatch: ReturnType<typeof useAppDispatch>
+}
 
 const ResearchLevelList = ({chief}: SubComponentProps) => {
     const listItems = (!chief || !chief.research) ? <li key="none">&lt;None&gt;</li>
@@ -210,6 +215,76 @@ const ChiefEditor = (props: {chief: Chief, onComplete: (update: Chief | null) =>
     );
 }
 
+function subPanelOf<T extends SubComponentProps>(Component: React.ComponentType<T>) {
+    return function SPO(props: Subtract<T, SubComponentProps>) {
+        const dispatch = useAppDispatch();
+        const params = useParams();
+        const chief = useAppSelector(state => selectChief(state, params.chiefId || ''));
+        const alliance = useAppSelector(state => selectAllianceByTag(state, (chief && chief.allianceTag) || ''));
+        if (!chief) {
+            return <p>Not Found</p>;
+        }
+
+        return (
+            <section className={styles.subPanel}>
+                <Component {...props as T} chief={chief} alliance={alliance} dispatch={dispatch}/>
+            </section>
+        );
+    }
+}
+
+export const ChiefStatsPanel = subPanelOf(({chief, alliance}) => {
+    if (!alliance) {
+        return <p>Not found</p>;
+    }
+    const statBonuses = [...getChiefBonuses(chief), ...getAllianceBonuses(alliance)];
+    return (
+        <section>
+            <h2>Stat Bonuses</h2>
+            <StatBonusList bonuses={statBonuses}/>
+        </section>
+    );
+});
+
+export const BuildingsPanel = subPanelOf(props => (
+    <BuildingLevelList {...props}/>
+));
+
+export const TalentsPanel = subPanelOf(props => (
+    <TalentLevelList {...props}/>
+));
+
+export const ChiefResearchPanel = subPanelOf(props => (
+    <ResearchLevelList {...props}/>
+));
+
+export const HeroGearPanel = subPanelOf(({chief, alliance, dispatch}) => {
+    return (
+        <section>
+            <h2>Hero Gear</h2>
+            <LeveledBonusProviderList providers={HeroGears} levels={chief.heroGear}
+                onChange={update => dispatch(partialUpdateChief({id: chief.id, value: {heroGear: update}}))}/>
+        </section>
+    );
+});
+
+export const ChiefGearPanel = subPanelOf(({chief, alliance}) => {
+    const dispatch = useAppDispatch();
+    return (
+        <>
+            <section>
+                <h2>Chief Gear</h2>
+                <LeveledBonusProviderList providers={ChiefGears} levels={chief.chiefGear}
+                    onChange={update => dispatch(partialUpdateChief({id: chief.id, value: {chiefGear: update}}))}/>
+            </section>
+            <section>
+                <h2>Chief Gear Badges</h2>
+                <LeveledBonusProviderList providers={ChiefBadges} levels={chief.badges}
+                    onChange={update => dispatch(partialUpdateChief({id: chief.id, value: {badges: update}}))}/>
+            </section>
+        </>
+    );
+});
 
 export const ChiefDisplayPanel = () => {
     const dispatch = useAppDispatch();
@@ -217,12 +292,10 @@ export const ChiefDisplayPanel = () => {
     const params = useParams();
     const [isEditing, setIsEditing] = useState(false);
     const chief = useAppSelector(state => selectChief(state, params.chiefId || ''));
-    const alliance = useAppSelector(state => selectAllianceByTag(state, (chief && chief.allianceTag) || ''));
     if (chief == null) {
         return <p>Not found</p>;
     }
     const vipLevel = getVipLevel(chief.vipLevel);
-    const statBonuses = [...getChiefBonuses(chief), ...getAllianceBonuses(alliance)];
 
 
     const onEditComplete = (update: Chief | null) => {
@@ -251,39 +324,27 @@ export const ChiefDisplayPanel = () => {
                     <span className={styles.keyStat}>{vipLevel.name}</span>
                     <span className={styles.keyStat}>Level {chief.level}</span>
                 </span>
-                <button className={styles.chiefAction} onClick={(e) => setIsEditing(true)}>✏️  Edit Chief</button>
-                <button className={styles.chiefAction} onClick={(e) => onCopyChief()}>📋 Copy Chief</button>
+                <nav className={styles.subNav}>
+                    <ul>
+                        <li>
+                            <NavLink to={`/chiefs/${chief.id}`}>Stats</NavLink>
+                        </li>
+                        <li>
+                            <NavLink to={`/chiefs/${chief.id}/chiefGear`}>Chief Gear</NavLink>
+                        </li>
+                        <li>
+                            <NavLink to={`/chiefs/${chief.id}/heroGear`}>Hero Gear</NavLink>
+                        </li>
+                        <li>
+                            <NavLink to={`/chiefs/${chief.id}/research`}>Research</NavLink>
+                        </li>
+                        <li>
+                            <NavLink to={`/chiefs/${chief.id}/talents`}>talents</NavLink>
+                        </li>
+                    </ul>
+                </nav>
             </header>
-            <section className={styles.detailSections}>
-                <div>
-                    <section>
-                        <h2>Chief Gear</h2>
-                        <LeveledBonusProviderList providers={ChiefGears} levels={chief.chiefGear}
-                            onChange={update => dispatch(partialUpdateChief({id: chief.id, value: {chiefGear: update}}))}/>
-                    </section>
-                    <section>
-                        <h2>Chief Gear Badges</h2>
-                        <LeveledBonusProviderList providers={ChiefBadges} levels={chief.badges}
-                            onChange={update => dispatch(partialUpdateChief({id: chief.id, value: {badges: update}}))}/>
-                    </section>
-                    <section>
-                        <h2>Hero Gear</h2>
-                        <LeveledBonusProviderList providers={HeroGears} levels={chief.heroGear}
-                            onChange={update => dispatch(partialUpdateChief({id: chief.id, value: {heroGear: update}}))}/>
-                    </section>
-                </div>
-                <div>
-                    <ResearchLevelList chief={chief}/>
-                    <TalentLevelList chief={chief}/>
-                    <BuildingLevelList chief={chief}/>
-                </div>
-                <div>
-                    <section>
-                        <h2>Stat Bonuses</h2>
-                        <StatBonusList bonuses={statBonuses}/>
-                    </section>
-                </div>
-            </section>
+            <Outlet/>
         </section>
     );
 }
