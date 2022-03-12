@@ -5,10 +5,10 @@ import { RootState } from '../../app/store';
 import { createPersister } from '../../util/persistence';
 import { ChiefGears, ChiefGearSlot } from '../../game/chiefGear';
 import { HeroGears, HeroGearSlot } from '../../game/heroGear';
-import { ResearchTech, ResearchTechName, ResearchTechs } from '../../game/research';
-import { Talent, TalentName, Talents } from '../../game/talents';
-import { Building, BuildingName, Buildings } from '../../game/buildings';
-import { ChiefBadge, ChiefBadgeSlot, ChiefBadges } from '../../game/badges';
+import { ResearchTechName, ResearchTechs } from '../../game/research';
+import { TalentName, Talents } from '../../game/talents';
+import { BuildingName, Buildings } from '../../game/buildings';
+import { ChiefBadgeSlot, ChiefBadges } from '../../game/badges';
 const uuid = require('uuid');
 
 export type ChiefId = string;

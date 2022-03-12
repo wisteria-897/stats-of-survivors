@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
-import { enumMapOf } from '../../util/types';
 import { aggregateBonuses } from '../../game/bonus';
 import LevelPicker from '../../ui/level/LevelPicker';
 import { StatBonusList } from '../bonus/BonusList';

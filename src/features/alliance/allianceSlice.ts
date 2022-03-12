@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../../app/store';
 import { enumMapOf } from '../../util/types';
 import { createPersister } from '../../util/persistence';
-import { AllianceTech, AllianceTechName, AllianceTechs } from '../../game/allianceTech';
+import { AllianceTechName, AllianceTechs } from '../../game/allianceTech';
 
 export type AllianceTag = string;
 export type AllianceColor = string;
