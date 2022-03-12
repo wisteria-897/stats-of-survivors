@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate, useParams, Link, Outlet } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import { aggregateBonuses } from '../../game/bonus';
 import LevelPicker from '../../ui/level/LevelPicker';
@@ -12,6 +13,7 @@ import {
     updateAlliance,
     setSelectedAlliance,
     selectAlliances,
+    selectAllianceByTag,
     selectSelectedAlliance
 } from './allianceSlice';
 import styles from './Alliance.module.css';
@@ -107,10 +109,16 @@ function getStatBonuses(alliance: Alliance) {
         : aggregateBonuses(alliance.allianceTech, AllianceTechs);
 }
 
-const AllianceDisplayPanel = ({alliance}: SubComponentProps) => {
+export const AllianceDisplayPanel = () => {
+    const params = useParams();
     const dispatch = useAppDispatch();
-    const statBonuses = getStatBonuses(alliance);
     const [isEditing, setIsEditing] = useState(false);
+    const alliance = useAppSelector(state => selectAllianceByTag(state, params.allianceTag || ''));
+    if (alliance == null) {
+        return <p>Not found</p>;
+    }
+
+    const statBonuses = getStatBonuses(alliance);
 
     const onEditComplete = (update: Alliance | null) => {
         if (update) {
@@ -131,7 +139,6 @@ const AllianceDisplayPanel = ({alliance}: SubComponentProps) => {
                     <span className={styles.keyStat}>Level {alliance.level}</span>
                 </span>
                 <button className={styles.allianceAction} onClick={(e) => setIsEditing(true)}>✏️  Edit Alliance</button>
-                <button className={styles.allianceAction} onClick={(e) => dispatch(setSelectedAlliance(null))}>👥 Select Alliance</button>
             </header>
             <section className={styles.detailSections}>
                 <div>
@@ -148,39 +155,37 @@ const AllianceDisplayPanel = ({alliance}: SubComponentProps) => {
     );
 }
 
-const AllianceList = () => {
+export const AddAlliancePanel = () => {
     const dispatch = useAppDispatch();
-    const [newAlliance, setNewAlliance] = useState(null as Alliance | null);
-    const alliances = useAppSelector((state) => selectAlliances(state));
-
-    const onSelectAlliance = (tag: AllianceTag) => {
-        dispatch(setSelectedAlliance(tag));
-    }
+    const navigate = useNavigate();
+    const [newAlliance, setNewAlliance] = useState(createAlliance());
 
     const onAddComplete = (alliance: Alliance | null) => {
-        console.log('onAddComplete', alliance);
         if (alliance != null) {
             dispatch(addAlliance(alliance));
-            onSelectAlliance(alliance.tag);
+            navigate(`/alliances/${alliance.tag}`);
+        } else {
+            navigate(`/alliances`);
         }
-        setNewAlliance(null);
     }
 
-    if (newAlliance) {
-        return <AllianceEditor alliance={newAlliance} onComplete={onAddComplete}/>;
-    }
+    return <AllianceEditor alliance={newAlliance} onComplete={onAddComplete}/>;
+}
+
+export const AllianceList = () => {
+    const alliances = useAppSelector((state) => selectAlliances(state));
 
     const allianceItems = alliances.map((alliance: Alliance) => {
         return (
             <li key={alliance.tag}>
-                <a href="#" onClick={(e) => onSelectAlliance(alliance.tag)}>{alliance.name}</a>
+                <Link to={`/alliances/${alliance.tag}`}>{alliance.name}</Link>
             </li>
         );
     });
 
     return (
         <section className={styles.allianceList}>
-            <button onClick={(e) => setNewAlliance(createAlliance())}>➕ Add Alliance</button>
+            <Link to={`/alliances/new`} className={styles.listAction}>＋ Add Alliance</Link>
             <ul>
                 {allianceItems}
             </ul>
@@ -188,11 +193,6 @@ const AllianceList = () => {
     );
 }
 
-export default function AlliancePanel() {
-    const alliance = useAppSelector(state => selectSelectedAlliance(state));
-    if (alliance) {
-        return <AllianceDisplayPanel alliance={alliance} />;
-    } else {
-        return <AllianceList />;
-    }
+export function AlliancePanel() {
+    return <Outlet/>;
 }

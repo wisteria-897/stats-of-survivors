@@ -1,4 +1,5 @@
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
+import { NavLink } from 'react-router-dom';
 import {
     setCurrentPage,
     selectCurrentPage,
@@ -10,6 +11,8 @@ export function Navigation() {
     const currentPage = useAppSelector(selectCurrentPage);
     const dispatch = useAppDispatch();
 
+    type LinkClassNameFunction = (x: {isActive: boolean}) => string;
+    const linkClassNameFn: LinkClassNameFunction = ({isActive}) => (isActive) ? styles.active : '';
     return (
         <nav className={styles.navBar}>
             <ul>
@@ -17,17 +20,18 @@ export function Navigation() {
                     Stats of Survivors
                     <span className={styles.byline}>~ by <a href="https://github.com/wisteria-897" target="_blank" rel="noreferrer noopener">wisteria-897</a></span>
                 </li>
-                <li className={styles.navItem + ' ' + (currentPage === Page.Chief ? styles.active : '')}
-                    onClick={() => dispatch(setCurrentPage(Page.Chief))}>Chiefs</li>
-                <li className={styles.navItem + ' ' + (currentPage === Page.Alliance ? styles.active : '')}
-                    onClick={() => dispatch(setCurrentPage(Page.Alliance))}>Alliances</li>
-                <li className={styles.navItem + ' ' + (currentPage === Page.Formations ? styles.active : '')}
-                    onClick={() => dispatch(setCurrentPage(Page.Formations))}>Formations</li>
-                <li className={styles.navItem + ' ' + (currentPage === Page.SpeedUps ? styles.active : '')}
-                    onClick={() => dispatch(setCurrentPage(Page.SpeedUps))}>SpeedUps</li>
-                {/*<li className={styles.navItem + ' ' + (currentPage === Page.CustomChestPlanner ? styles.active : '')}
-                    onClick={() => dispatch(setCurrentPage(Page.CustomChestPlanner))}>Custom Chests</li>
-                */}
+                <li className={styles.navItem}>
+                    <NavLink to="/chiefs" className={linkClassNameFn}>Chiefs</NavLink>
+                </li>
+                <li className={styles.navItem}>
+                    <NavLink to="/alliances" className={linkClassNameFn}>Alliances</NavLink>
+                </li>
+                <li className={styles.navItem}>
+                    <NavLink to="/formations" className={linkClassNameFn}>Formations</NavLink>
+                </li>
+                <li className={styles.navItem}>
+                    <NavLink to="/speedups" className={linkClassNameFn}>SpeedUps</NavLink>
+                </li>
             </ul>
         </nav>
     );

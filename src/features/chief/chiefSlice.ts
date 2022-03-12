@@ -100,23 +100,8 @@ export const chiefSlice = createSlice({
     name: 'chief',
     initialState: chiefStatePersister.load(),
     reducers: {
-        setChief: (state, action: PayloadAction<ChiefId | null>) => {
-            state.selectedId = action.payload;
-        },
-
         addChief: (state, action: PayloadAction<Chief>) => {
             state.chiefs = [...state.chiefs, action.payload];
-        },
-
-        copyChief: (state, action: PayloadAction<ChiefId>) => {
-            withChief(state, action.payload, chief => {
-                const newChief = Object.assign({}, chief, {
-                    id: uuid.v4(),
-                    name: 'Copy of ' + chief.name
-                });
-                state.chiefs = [...state.chiefs, newChief];
-                state.selectedId = newChief.id;
-            });
         },
 
         updateChief: (state, action: PayloadAction<Chief>) => {
@@ -139,20 +124,10 @@ export const chiefSlice = createSlice({
     }
 });
 
-export const { setChief, addChief, copyChief, updateChief, partialUpdateChief } = chiefSlice.actions;
+export const { addChief, updateChief, partialUpdateChief } = chiefSlice.actions;
 
-export const selectChief = (state: RootState, id?: ChiefId): Chief | null => {
-    let chiefId;
-    if (id === undefined) {
-        if (state.chief.selectedId == null) {
-            return null;
-        }
-        chiefId = state.chief.selectedId;
-    } else {
-        chiefId = id;
-    }
-
-    return getById(state.chief, chiefId);
+export const selectChief = (state: RootState, id: ChiefId): Chief | null => {
+    return getById(state.chief, id);
 };
 
 export const selectChiefs = (state: RootState): Chief[] => state.chief.chiefs;

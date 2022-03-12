@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate, useParams, Link, Outlet } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import LevelPicker from '../../ui/level/LevelPicker';
 import { aggregateBonuses } from '../../game/bonus';
@@ -15,9 +16,7 @@ import {
     Chief,
     ChiefId,
     createChief,
-    setChief,
     addChief,
-    copyChief,
     updateChief,
     partialUpdateChief,
     selectChief,
@@ -212,14 +211,19 @@ const ChiefEditor = (props: {chief: Chief, onComplete: (update: Chief | null) =>
 }
 
 
-const ChiefDisplayPanel = (props: {chief: Chief}) => {
-    const {chief} = props;
+export const ChiefDisplayPanel = () => {
+    const dispatch = useAppDispatch();
+    const navigate = useNavigate();
+    const params = useParams();
     const [isEditing, setIsEditing] = useState(false);
+    const chief = useAppSelector(state => selectChief(state, params.chiefId || ''));
+    const alliance = useAppSelector(state => selectAllianceByTag(state, (chief && chief.allianceTag) || ''));
+    if (chief == null) {
+        return <p>Not found</p>;
+    }
     const vipLevel = getVipLevel(chief.vipLevel);
-    const alliance = useAppSelector(state => selectAllianceByTag(state, chief.allianceTag || ''));
     const statBonuses = [...getChiefBonuses(chief), ...getAllianceBonuses(alliance)];
 
-    const dispatch = useAppDispatch();
 
     const onEditComplete = (update: Chief | null) => {
         if (update) {
@@ -232,6 +236,13 @@ const ChiefDisplayPanel = (props: {chief: Chief}) => {
         return <ChiefEditor chief={chief} onComplete={onEditComplete} />;
     }
 
+    const onCopyChief = () => {
+        const newChief = createChief();
+        newChief.name = 'Copy of ' + chief.name;
+        dispatch(addChief(newChief));
+        navigate(`/chiefs/${newChief.id}`);
+    }
+
     return (
         <section className={styles.chiefPanel}>
             <header>
@@ -241,8 +252,7 @@ const ChiefDisplayPanel = (props: {chief: Chief}) => {
                     <span className={styles.keyStat}>Level {chief.level}</span>
                 </span>
                 <button className={styles.chiefAction} onClick={(e) => setIsEditing(true)}>✏️  Edit Chief</button>
-                <button className={styles.chiefAction} onClick={(e) => dispatch(copyChief(chief.id))}>📋 Copy Chief</button>
-                <button className={styles.chiefAction} onClick={(e) => dispatch(setChief(null))}>👥 Select Chief</button>
+                <button className={styles.chiefAction} onClick={(e) => onCopyChief()}>📋 Copy Chief</button>
             </header>
             <section className={styles.detailSections}>
                 <div>
@@ -278,38 +288,20 @@ const ChiefDisplayPanel = (props: {chief: Chief}) => {
     );
 }
 
-const ChiefList = () => {
-    const dispatch = useAppDispatch();
-    const [newChief, setNewChief] = useState(null as Chief | null);
+export const ChiefList = () => {
     const chiefs = useAppSelector((state) => selectChiefs(state));
-
-    const onSelectChief = (id: ChiefId) => {
-        dispatch(setChief(id));
-    }
-
-    const onAddComplete = (chief: Chief | null) => {
-        if (chief != null) {
-            dispatch(addChief(chief));
-            onSelectChief(chief.id);
-        }
-        setNewChief(null);
-    }
-
-    if (newChief) {
-        return <ChiefEditor chief={newChief} onComplete={onAddComplete}/>;
-    }
 
     const chiefItems = chiefs.map(chief => {
         return (
             <li key={chief.id}>
-                <a href="#" onClick={(e) => onSelectChief(chief.id)}>{chief.name}</a>
+                <Link to={`/chiefs/${chief.id}`}>{chief.name}</Link>
             </li>
         );
     });
 
     return (
         <section className={styles.chiefList}>
-            <button onClick={(e) => setNewChief(createChief())}>➕ Add Chief</button>
+            <Link to="/chiefs/new" className={styles.listAction}>＋ Add Chief</Link>
             <ul>
                 {chiefItems}
             </ul>
@@ -317,11 +309,30 @@ const ChiefList = () => {
     );
 }
 
-export function ChiefPanel() {
-    const chief: Chief | null = useAppSelector((state) => selectChief(state));
+export function AddChiefPanel() {
+    const dispatch = useAppDispatch();
+    const navigate = useNavigate();
+    const [newChief, setNewChief] = useState(createChief())
 
-    if (chief) {
-        return <ChiefDisplayPanel chief={chief} />
+    const onAddComplete = (chief: Chief | null) => {
+        if (chief != null) {
+            dispatch(addChief(chief));
+            navigate(`/chiefs/${chief.id}`);
+        } else {
+            navigate("/chiefs");
+        }
     }
-    return <ChiefList />;
+    return (
+        <section className={styles.addChiefPanel}>
+            <ChiefEditor chief={newChief} onComplete={onAddComplete}/>
+        </section>
+    );
+}
+
+export function ChiefPanel() {
+    return (
+        <section className={styles.chiefPanel}>
+            <Outlet />
+        </section>
+    );
 }
