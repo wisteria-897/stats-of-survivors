@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../../app/store';
-import { EnumMap } from '../../util/types';
+import { enumMapOf } from '../../util/types';
 import { createPersister } from '../../util/persistence';
 import { AllianceTech, AllianceTechName, AllianceTechs } from '../../game/allianceTech';
 
@@ -25,21 +25,25 @@ const initialState: AllianceState = {
     selectedAllianceTag: null
 };
 
-export const allianceStatePersister = createPersister('alliance', initialState);
+const defaultAlliance: Alliance = {
+    name: 'Alliance',
+    tag: '000',
+    level: 1,
+    color: '#000000',
+    allianceTech: enumMapOf(AllianceTechs, 0)
+};
+
+export const allianceStatePersister = createPersister('alliance', initialState, undefined, data => {
+    const state = JSON.parse(data);
+    console.log('Persister load', state);
+    state.alliances = state.alliances.map((alliance: Alliance) => {
+        return Object.assign({}, defaultAlliance, alliance);
+    });
+    return state;
+});
 
 export const createAlliance = () => {
-    const emptyAllianceTech = Object.entries(AllianceTechs).map(([k, v]) => v as AllianceTech).reduce((result, tech) => {
-        result[tech.name] = 0;
-        return result;
-    }, EnumMap.empty<number>(AllianceTechName)) as {[key in AllianceTechName]: number};
-
-    return {
-        name: 'Alliance',
-        tag: '000',
-        level: 1,
-        color: '#000',
-        allianceTech: emptyAllianceTech
-    };
+    return Object.assign({}, defaultAlliance);
 }
 
 export const allianceSlice = createSlice({

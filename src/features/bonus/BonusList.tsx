@@ -326,6 +326,7 @@ type LeveledBonusProviderListProps<T extends string, U extends LeveledBonusProvi
 export function LeveledBonusProviderList<T extends string, U extends LeveledBonusProvider>(
     {providers, levels, onChange}: LeveledBonusProviderListProps<T, U>
 ) {
+    console.log('LeveledBonusProviderList', providers, levels, onChange);
     const selectors = Object.keys(levels).map(key => {
         const slot = key as T;
         return (

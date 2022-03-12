@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
-import { EnumMap } from '../../util/types';
 import LevelPicker from '../../ui/level/LevelPicker';
 import { aggregateBonuses } from '../../game/bonus';
 import { getVipLevel } from '../../game/vip';
@@ -136,29 +135,14 @@ const BuildingLevelEditor = (props: {building: Building, level: number, onChange
 }
 
 const ChiefEditor = (props: {chief: Chief, onComplete: (update: Chief | null) => any}) => {
-    const emptyResearch: {[key in ResearchTechName]?: number} = {};
-    for (const techName in ResearchTechs) {
-        emptyResearch[techName as ResearchTechName] = 0;
-    }
-
-    const emptyTalents = Object.entries(Talents).map(([k, v]) => v as Talent).reduce((result, talent) => {
-        result[talent.name] = 0;
-        return result;
-    }, EnumMap.empty<number>(TalentName)) as {[key in TalentName]: number}
-
-    const emptyBuildings = Object.entries(Buildings).map(([k, v]) => v as Building).reduce((result, building) => {
-        result[building.name] = 0;
-        return result;
-    }, EnumMap.empty<number>(BuildingName)) as {[key in BuildingName]: number}
-
     const {chief, onComplete} = props;
     const [chiefName, setChiefName] = useState(chief.name);
     const [allianceTag, setAllianceTag] = useState(chief.allianceTag);
     const [vipLevel, setVipLevel] = useState(chief.vipLevel);
     const [chiefLevel, setChiefLevel] = useState(chief.level);
-    const [research, setResearch] = useState(chief.research || emptyResearch);
-    const [talents, setTalents] = useState(chief.talents || emptyTalents);
-    const [buildings, setBuildings] = useState(chief.buildings || emptyBuildings);
+    const [research, setResearch] = useState(chief.research);
+    const [talents, setTalents] = useState(chief.talents);
+    const [buildings, setBuildings] = useState(chief.buildings);
 
     const onSave = () => {
         const updatedChief = Object.assign({}, chief, {

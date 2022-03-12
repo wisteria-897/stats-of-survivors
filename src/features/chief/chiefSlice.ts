@@ -1,10 +1,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { EnumMap } from '../../util/types';
+import { enumMapOf } from '../../util/types';
 import { PayloadActionWithId } from '../../util/payload';
 import { RootState } from '../../app/store';
 import { createPersister } from '../../util/persistence';
-import { ChiefGearSlot } from '../../game/chiefGear';
-import { HeroGearSlot } from '../../game/heroGear';
+import { ChiefGears, ChiefGearSlot } from '../../game/chiefGear';
+import { HeroGears, HeroGearSlot } from '../../game/heroGear';
 import { ResearchTech, ResearchTechName, ResearchTechs } from '../../game/research';
 import { Talent, TalentName, Talents } from '../../game/talents';
 import { Building, BuildingName, Buildings } from '../../game/buildings';
@@ -33,8 +33,22 @@ export interface ChiefState {
 
 const initialState: ChiefState = {
     chiefs: [],
-    selectedId: null,
+    selectedId: null
 };
+
+const defaultChief: Chief = {
+    id: uuid.v4(),
+    name: 'Survivor',
+    level: 1,
+    vipLevel: 0,
+    allianceTag: null,
+    chiefGear: enumMapOf(ChiefGears, 0),
+    heroGear: enumMapOf(HeroGears, 0),
+    badges: enumMapOf(ChiefBadges, 0),
+    research: enumMapOf(ResearchTechs, 0),
+    talents: enumMapOf(Talents, 0),
+    buildings: enumMapOf(Buildings, 0)
+}
 
 const maybeUpgradeEntry = <T>(o: {[key: string]: T}, defaultValue: T, ...keys: string[]) => {
     for (const key of keys) {
@@ -60,53 +74,14 @@ export const chiefStatePersister = createPersister('chief', initialState, undefi
             [HeroGearSlot.ScoutBody]: maybeUpgradeEntry(chief.heroGear, 0, HeroGearSlot.ScoutBody, 'Scout/Body'),
             [HeroGearSlot.ScoutFoot]: maybeUpgradeEntry(chief.heroGear, 0, HeroGearSlot.ScoutFoot, 'Scout/Foot')
         };
-        return chief;
+        return Object.assign({}, defaultChief, chief);
     });
     return state;
 });
 
-export const createChief = () => {
-    const research = Object.entries(ResearchTechs).map(([k, v]) => v as ResearchTech).reduce((result, tech) => {
-        result[tech.name] = 0;
-        return result;
-    }, EnumMap.empty<number>(ResearchTechName)) as {[key in ResearchTechName]: number}
-
-    const talents = Object.entries(Talents).map(([k, v]) => v as Talent).reduce((result, talent) => {
-        result[talent.name] = 0;
-        return result;
-    }, EnumMap.empty<number>(TalentName)) as {[key in TalentName]: number}
-
-    const buildings = Object.entries(Buildings).map(([k, v]) => v as Building).reduce((result, building) => {
-        result[building.name] = 0;
-        return result;
-    }, EnumMap.empty<number>(BuildingName)) as {[key in BuildingName]: number}
-
-    const badges = Object.entries(ChiefBadges).map(([k, v]) => v as ChiefBadge).reduce((result, badge) => {
-        result[badge.slot] = 0;
-        return result;
-    }, EnumMap.empty<number>(ChiefBadgeSlot)) as {[key in ChiefBadgeSlot]: number}
-
-    return {
-        id: uuid.v4(),
-        name: 'Survivor',
-        level: 1,
-        vipLevel: 0,
-        allianceTag: null,
-        chiefGear: {
-            [ChiefGearSlot.Helmet]:       0, [ChiefGearSlot.Armor]: 0, [ChiefGearSlot.Kneepads]:     0,
-            [ChiefGearSlot.AssaultRifle]: 0, [ChiefGearSlot.Boots]: 0, [ChiefGearSlot.Communicator]: 0
-        },
-        heroGear: {
-            [HeroGearSlot.BrawlerHead]:  0, [HeroGearSlot.BrawlerBody]:  0, [HeroGearSlot.BrawlerFoot]:  0,
-            [HeroGearSlot.MarksmanHead]: 0, [HeroGearSlot.MarksmanBody]: 0, [HeroGearSlot.MarksmanFoot]: 0,
-            [HeroGearSlot.ScoutHead]:    0, [HeroGearSlot.ScoutBody]:    0, [HeroGearSlot.ScoutFoot]:    0
-        },
-        research,
-        talents,
-        buildings,
-        badges
-    };
-};
+export function createChief() {
+    return Object.assign({}, defaultChief, {id: uuid.v4()});
+}
 
 const getById = (state: ChiefState, id: ChiefId): Chief | null => {
     return state.chiefs.find(c => c.id === id) || null;

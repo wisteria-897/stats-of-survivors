@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
-import { EnumMap } from '../../util/types';
+import { enumMapOf } from '../../util/types';
 import { aggregateBonuses } from '../../game/bonus';
 import LevelPicker from '../../ui/level/LevelPicker';
 import { StatBonusList } from '../bonus/BonusList';
@@ -54,16 +54,11 @@ const AllianceTechLevelEditor = (props: {tech: AllianceTech, level: number, onCh
 }
 
 const AllianceEditor = (props: {alliance: Alliance, onComplete: (update: Alliance | null) => any}) => {
-    const emptyAllianceTech = Object.entries(AllianceTechs).map(([k, v]) => v as AllianceTech).reduce((result, tech) => {
-        result[tech.name] = 0;
-        return result;
-    }, EnumMap.empty<number>(AllianceTechName)) as {[key in AllianceTechName]: number};
-
     const {alliance, onComplete} = props;
     const [allianceName, setAllianceName] = useState(alliance.name);
     const [allianceTag, setAllianceTag] = useState(alliance.tag);
     const [allianceLevel, setAllianceLevel] = useState(alliance.level);
-    const [allianceTech, setAllianceTech] = useState(alliance.allianceTech || emptyAllianceTech);
+    const [allianceTech, setAllianceTech] = useState(alliance.allianceTech);
 
     const onSave = () => {
         const updatedAlliance = Object.assign({}, alliance, {
