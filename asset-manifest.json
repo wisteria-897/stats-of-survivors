@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/stats-of-survivors/static/css/main.bab6f1d9.css",
-    "main.js": "/stats-of-survivors/static/js/main.3cc460de.js",
+    "main.css": "/stats-of-survivors/static/css/main.a8746a3f.css",
+    "main.js": "/stats-of-survivors/static/js/main.4bd6d0aa.js",
     "index.html": "/stats-of-survivors/index.html",
-    "main.bab6f1d9.css.map": "/stats-of-survivors/static/css/main.bab6f1d9.css.map",
-    "main.3cc460de.js.map": "/stats-of-survivors/static/js/main.3cc460de.js.map"
+    "main.a8746a3f.css.map": "/stats-of-survivors/static/css/main.a8746a3f.css.map",
+    "main.4bd6d0aa.js.map": "/stats-of-survivors/static/js/main.4bd6d0aa.js.map"
   },
   "entrypoints": [
-    "static/css/main.bab6f1d9.css",
-    "static/js/main.3cc460de.js"
+    "static/css/main.a8746a3f.css",
+    "static/js/main.4bd6d0aa.js"
   ]
 }
