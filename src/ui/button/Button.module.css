@@ -1,0 +1,22 @@
+.button {
+    border: 2px solid #ddd;
+    border-radius: 2px;
+    background-color: transparent;
+    color: inherit;
+    font-size: 100%;
+    cursor: pointer;
+    margin: 1px;
+    padding: 3px;
+}
+
+.button:hover {
+    color: #222;
+    background-color: #ddd;
+}
+
+.button:disabled {
+    color: #888;
+    background-color: transparent;
+    border-color: #888;
+    cursor: default;
+}

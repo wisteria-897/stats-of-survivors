@@ -5,14 +5,15 @@ import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import LevelPicker from '../../ui/level/LevelPicker';
 import { ItemAction, ItemList } from '../../ui/list/ItemList';
 import { NavItem, SubNavigation } from '../navigation/Navigation';
-import { aggregateBonuses } from '../../game/bonus';
+import { aggregateBonuses, aggregateSimpleBonuses } from '../../game/bonus';
 import { getVipLevel } from '../../game/vip';
 import { HeroGears } from '../../game/heroGear';
 import { ChiefGears } from '../../game/chiefGear';
 import { ResearchTechs } from '../../game/research';
 import { Talents } from '../../game/talents';
 import { AllianceTechs } from '../../game/allianceTech';
-import { Buildings } from '../../game/buildings';
+import { AnalysisCenters } from '../../game/analysisCenters';
+import { BuildingName, Buildings } from '../../game/buildings';
 import { ChiefBadges } from '../../game/badges';
 import { Alliance, selectAllianceByIdOrTag } from '../alliance/allianceSlice';
 import {
@@ -39,27 +40,22 @@ type SubComponentProps = {
 }
 
 function getAllianceBonuses(alliance: Alliance) {
-    return (!alliance || !alliance.allianceTech) ? [] : aggregateBonuses(alliance.allianceTech, AllianceTechs);
+    return [
+        ...aggregateBonuses(alliance.allianceTech, AllianceTechs),
+        ...aggregateSimpleBonuses(alliance.analysisCenters, AnalysisCenters)
+    ];
 }
 
 function getChiefBonuses(chief: Chief) {
     const vipLevel = getVipLevel(chief.vipLevel);
-    const researchBonuses = (!chief || !chief.research) ? [] : aggregateBonuses(chief.research, ResearchTechs);
-    const buildingBonuses = (!chief || !chief.buildings) ? [] : aggregateBonuses(chief.buildings, Buildings);
-    const talentBonuses = (!chief || !chief.talents) ? [] : aggregateBonuses(chief.talents, Talents);
-    const badgeBonuses = (!chief || !chief.badges) ? [] : aggregateBonuses(chief.badges, ChiefBadges);
-    const chiefGearBonuses = (!chief || !chief.chiefGear) ? [] : aggregateBonuses(chief.chiefGear, ChiefGears);
-    const heroGearBonuses = (!chief || !chief.heroGear) ? [] : aggregateBonuses(chief.heroGear, HeroGears);
-
-
     return [
         ...vipLevel.bonuses,
-        ...chiefGearBonuses,
-        ...heroGearBonuses,
-        ...researchBonuses,
-        ...talentBonuses,
-        ...buildingBonuses,
-        ...badgeBonuses
+        ...aggregateBonuses(chief.chiefGear, ChiefGears),
+        ...aggregateBonuses(chief.heroGear, HeroGears),
+        ...aggregateBonuses(chief.research, ResearchTechs),
+        ...aggregateBonuses(chief.talents, Talents),
+        ...aggregateBonuses(chief.buildings, Buildings),
+        ...aggregateBonuses(chief.badges, ChiefBadges)
     ];
 }
 
@@ -124,23 +120,20 @@ export const HeroGearPanel = subPanelOf(({chief, alliance, dispatch}) => (
     </section>
 ));
 
-export const ChiefGearPanel = subPanelOf(({chief, alliance}) => {
-    const dispatch = useAppDispatch();
-    return (
-        <>
-            <section>
-                <h2>Chief Gear</h2>
-                <LeveledBonusProviderList providers={ChiefGears} levels={chief.chiefGear}
-                    onChange={update => dispatch(partialUpdateChief({id: chief.id, value: {chiefGear: update}}))}/>
-            </section>
-            <section>
-                <h2>Chief Gear Badges</h2>
-                <LeveledBonusProviderList providers={ChiefBadges} levels={chief.badges}
-                    onChange={update => dispatch(partialUpdateChief({id: chief.id, value: {badges: update}}))}/>
-            </section>
-        </>
-    );
-});
+export const ChiefGearPanel = subPanelOf(({chief, alliance, dispatch}) => (
+    <>
+        <section>
+            <h2>Chief Gear</h2>
+            <LeveledBonusProviderList providers={ChiefGears} levels={chief.chiefGear}
+                onChange={update => dispatch(partialUpdateChief({id: chief.id, value: {chiefGear: update}}))}/>
+        </section>
+        <section>
+            <h2>Chief Gear Badges</h2>
+            <LeveledBonusProviderList providers={ChiefBadges} levels={chief.badges}
+                onChange={update => dispatch(partialUpdateChief({id: chief.id, value: {badges: update}}))}/>
+        </section>
+    </>
+));
 
 export const ChiefBasicsPanel = subPanelOf(({chief, dispatch}) => {
     const partialUpdate = (update: any) => {
@@ -173,13 +166,16 @@ export const ChiefDisplayPanel = () => {
     const vipLevel = getVipLevel(chief.vipLevel);
 
     return (
-        <section className={styles.chiefPanel}>
+        <main className={styles.chiefPanel}>
             <header>
-                <h1 className={styles.name}>{getChiefDisplayName(chief, alliance)}</h1>
-                <span className={styles.keyStats}>
-                    <span className={styles.keyStat}>{vipLevel.name}</span>
-                    <span className={styles.keyStat}>Level {chief.level}</span>
-                </span>
+                <div className={styles.chiefInfo}>
+                    <h1>{getChiefDisplayName(chief, alliance)}</h1>
+                    <span className={styles.keyStats}>
+                        <span className={styles.keyStat}>{vipLevel.name}</span>
+                        <span className={styles.keyStat}>Level {chief.level}</span>
+                        <span className={styles.keyStat}>HQ{chief.buildings[BuildingName.Headquarters]}</span>
+                    </span>
+                </div>
                 <SubNavigation>
                     <NavItem end to={`/chiefs/${chief.id}`}>Stats</NavItem>
                     <NavItem to={`/chiefs/${chief.id}/basics`}>Basics</NavItem>
@@ -191,7 +187,7 @@ export const ChiefDisplayPanel = () => {
                 </SubNavigation>
             </header>
             <Outlet/>
-        </section>
+        </main>
     );
 }
 
@@ -217,19 +213,17 @@ export const ChiefList = () => {
     }
 
     return (
-        <ItemList className={styles.chiefList} items={chiefs} path="/chiefs/"
-            addLabel="＋ Add Chief" onAdd={onAddChief}
-        >
-            <ItemAction onClick={onCopyChief}>👥 Copy</ItemAction>
-            <ItemAction onClick={onDeleteChief}>❌ Delete</ItemAction>
-        </ItemList>
-    );
-}
-
-export function ChiefPanel() {
-    return (
-        <section className={styles.chiefPanel}>
-            <Outlet />
-        </section>
+        <main className={styles.chiefPanel}>
+            <section className={styles.subPanel}>
+                <section>
+                    <ItemList className={styles.chiefList} items={chiefs} path="/chiefs/"
+                        addLabel="＋ Add Chief" onAdd={onAddChief}
+                    >
+                        <ItemAction onClick={onCopyChief}>👥 Copy</ItemAction>
+                        <ItemAction onClick={onDeleteChief}>❌ Delete</ItemAction>
+                    </ItemList>
+                </section>
+            </section>
+        </main>
     );
 }

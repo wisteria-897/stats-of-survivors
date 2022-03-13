@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { FunctionButton } from '../../ui/button/Button';
 import { Stat, StatUnit, StatCategorySort } from '../../game/stat';
-import { LeveledBonusProvider, Tier, groupBonuses, getBonusesFrom, Bonus, BonusSource } from '../../game/bonus';
+import { SimpleBonusSource, LeveledBonusProvider, Tier, groupBonuses, getBonusesFrom, Bonus, BonusSource } from '../../game/bonus';
 import styles from './Bonus.module.css';
 
 const percentFormatter = new Intl.NumberFormat('en-US', {
@@ -276,13 +277,49 @@ export function StatBonusList(props: {bonuses: Bonus[]}) {
     );
 }
 
-type BonusLevelSelectorProps = {
+type BonusSourceCheckboxProps = {
+    title?: string,
+    source: SimpleBonusSource,
+    checked: boolean,
+    onChange: (source: SimpleBonusSource, checked: boolean) => void
+};
+export function BonusSourceCheckbox({title, source, checked, onChange}: BonusSourceCheckboxProps) {
+    const [showStatTable, setShowStatTable] = useState(false);
+    const statColumns = !showStatTable ? [] : [{
+        title: checked ? 'Provides' : 'If Active',
+        bonuses: source.bonuses
+    }];
+
+    const checkboxStyle = styles.bonusSourceCheckbox +
+        (checked ? ' ' + styles.bonusSourceChecked : '');
+    return (
+        <div className={styles.bonusLevelSelector}>
+            {title && <h3>{title}</h3>}
+            <div className={styles.levelSelectorControls}>
+                <button className={styles.expander} onClick={(e) => setShowStatTable(!showStatTable)}>
+                    {showStatTable ? '▿' : '▹'}
+                </button>
+                <span className={styles.bonusLevelLabel} onClick={(e) => setShowStatTable(!showStatTable)}>{source.name}</span>
+                <div>
+                    <FunctionButton value={source} className={checkboxStyle}
+                        onClick={(source) => onChange(source, !checked)}
+                    >
+                        {checked ? 'Yes' : 'No'}
+                    </FunctionButton>
+                </div>
+            </div>
+            {showStatTable && <BonusTable columns={statColumns} />}
+        </div>
+    );
+}
+
+type BonusProviderLevelSelectorProps = {
     title?: string,
     provider: LeveledBonusProvider,
     level: number,
     onChange: (provider: LeveledBonusProvider, level: number) => any
-}
-export function BonusLevelSelector({title, provider, level, onChange}: BonusLevelSelectorProps) {
+};
+export function BonusProviderLevelSelector({title, provider, level, onChange}: BonusProviderLevelSelectorProps) {
     const [showStatTable, setShowStatTable] = useState(false);
 
     const providerLevel = level > 0 ? provider.levels[level - 1] : null;
@@ -318,6 +355,32 @@ export function BonusLevelSelector({title, provider, level, onChange}: BonusLeve
     );
 }
 
+type SimpleBonusSourceListProps<T extends string, U extends SimpleBonusSource> = {
+    sources: Record<T, U>;
+    state: Record<T, boolean>;
+    onChange: (update: Record<T, boolean>) => void;
+};
+export function SimpleBonusSourceList<T extends string, U extends SimpleBonusSource>(
+    {sources, state, onChange}: SimpleBonusSourceListProps<T, U>
+) {
+    const checkboxes = Object.keys(state).map(key => {
+        const sourceKey = key as T;
+        return (
+            <li key={sourceKey}>
+                <BonusSourceCheckbox
+                    source={sources[sourceKey]}
+                    checked={state[sourceKey]}
+                    onChange={(source, checked) => {
+                        onChange(Object.assign({}, state, {[sourceKey]: checked}));
+                    }}
+                />
+            </li>
+        );
+    });
+
+    return <ul className={styles.leveledBonusProviderList}>{checkboxes}</ul>;
+}
+
 type LeveledBonusProviderListProps<T extends string, U extends LeveledBonusProvider> = {
     providers: {[key in T]: U};
     levels: {[key in T]: number};
@@ -330,7 +393,7 @@ export function LeveledBonusProviderList<T extends string, U extends LeveledBonu
         const slot = key as T;
         return (
             <li key={slot}>
-                <BonusLevelSelector provider={providers[slot]} level={levels[slot]}
+                <BonusProviderLevelSelector provider={providers[slot]} level={levels[slot]}
                     onChange={(provider, level) => {
                         onChange(Object.assign({}, levels, {[slot]: level}));
                     }}

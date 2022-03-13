@@ -24,7 +24,8 @@ export enum SourceCategory {
     AllianceTech = 'Alliance Tech',
     Heros = 'Heros',
     ChiefBuffs = 'Chief Buffs',
-    StateBuffs = 'State Buffs'
+    StateBuffs = 'State Buffs',
+    AnalysisCenters = 'Analysis Centers'
 }
 
 export interface SimpleBonusSource {
@@ -97,6 +98,15 @@ export function getBonusesFrom(source: LeveledBonusProvider, startLevel: number,
         }, 0);
         return {stat, value, source: {source, startLevel, endLevel: resolvedEndLevel}};
     });
+}
+
+export function aggregateSimpleBonuses<T extends string>(state: Record<T, boolean>, sources: Record<T, SimpleBonusSource>) {
+    return Object.keys(state)
+        .filter(key => !!state[key as T])
+        .map(key => sources[key as T].bonuses)
+        .reduce((result, bonuses) => {
+            return [...result, ...bonuses];
+    }, [] as Bonus[]);
 }
 
 export function aggregateBonuses<T extends string>(levels: {[key in T]: number}, sources: {[key in T]: LeveledBonusProvider}): Bonus[] {

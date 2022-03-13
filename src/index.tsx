@@ -5,8 +5,8 @@ import App from './App';
 import { store } from './app/store';
 import { Provider } from 'react-redux';
 import { HashRouter, Routes, Route } from 'react-router-dom';
-import { BuildingsPanel, ChiefBasicsPanel, ChiefDisplayPanel, ChiefGearPanel, ChiefList, ChiefPanel, ChiefResearchPanel, ChiefStatsPanel, HeroGearPanel, TalentsPanel } from './features/chief/ChiefPanel';
-import { AllianceBasicsPanel, AllianceDisplayPanel, AllianceList, AlliancePanel, AllianceStatsPanel, AllianceTechPanel } from './features/alliance/AlliancePanel';
+import { BuildingsPanel, ChiefBasicsPanel, ChiefDisplayPanel, ChiefGearPanel, ChiefList, ChiefResearchPanel, ChiefStatsPanel, HeroGearPanel, TalentsPanel } from './features/chief/ChiefPanel';
+import { AllianceBasicsPanel, AllianceDisplayPanel, AllianceList, AllianceStatsPanel, AllianceTechPanel, AnalysisCentersPanel } from './features/alliance/AlliancePanel';
 import { TroopPanel } from './features/troops/TroopPanel';
 import SpeedUpPanel from './features/speedups/SpeedUpPanel';
 
@@ -16,7 +16,7 @@ ReactDOM.render(
             <HashRouter>
                 <Routes>
                     <Route path="/" element={<App/>}>
-                        <Route path="chiefs" element={<ChiefPanel/>}>
+                        <Route path="chiefs">
                             <Route index element={<ChiefList/>}/>
                             <Route path=":chiefId" element={<ChiefDisplayPanel/>}>
                                 <Route index element={<ChiefStatsPanel/>}/>
@@ -28,12 +28,13 @@ ReactDOM.render(
                                 <Route path="buildings" element={<BuildingsPanel/>}/>
                             </Route>
                         </Route>
-                        <Route path="alliances" element={<AlliancePanel/>}>
+                        <Route path="alliances">
                             <Route index element={<AllianceList/>}/>
                             <Route path=":allianceId" element={<AllianceDisplayPanel/>}>
                                 <Route index element={<AllianceStatsPanel/>}/>
                                 <Route path="basics" element={<AllianceBasicsPanel/>}/>
                                 <Route path="tech" element={<AllianceTechPanel/>}/>
+                                <Route path="acs" element={<AnalysisCentersPanel/>}/>
                             </Route>
                         </Route>
                         <Route path="speedups" element={<SpeedUpPanel/>} />

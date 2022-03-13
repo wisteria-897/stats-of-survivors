@@ -2,12 +2,13 @@ import React from 'react';
 import { useNavigate, useParams, Outlet } from 'react-router-dom';
 import { Subtract } from 'utility-types';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
-import { aggregateBonuses } from '../../game/bonus';
+import { aggregateBonuses, aggregateSimpleBonuses } from '../../game/bonus';
 import { NavItem, SubNavigation } from '../navigation/Navigation';
 import LevelPicker from '../../ui/level/LevelPicker';
 import { ItemAction, ItemList } from '../../ui/list/ItemList';
-import { LeveledBonusProviderList, StatBonusList } from '../bonus/BonusList';
+import { LeveledBonusProviderList, SimpleBonusSourceList, StatBonusList } from '../bonus/BonusList';
 import { AllianceTechs } from '../../game/allianceTech';
+import { AnalysisCenters } from '../../game/analysisCenters';
 import {
     Alliance,
     createAlliance,
@@ -22,8 +23,11 @@ import styles from './Alliance.module.css';
 type SubComponentProps = {alliance: Alliance, dispatch: ReturnType<typeof useAppDispatch>}
 
 function getStatBonuses(alliance: Alliance) {
-    return (!alliance || !alliance.allianceTech) ? []
+    const allianceTechBonuses = (!alliance || !alliance.allianceTech) ? []
         : aggregateBonuses(alliance.allianceTech, AllianceTechs);
+    const analysisCenterBonuses = !alliance ? []
+        : aggregateSimpleBonuses(alliance.analysisCenters, AnalysisCenters);
+    return [...allianceTechBonuses, ...analysisCenterBonuses];
 }
 
 function subPanelOf<T extends SubComponentProps>(Component: React.ComponentType<T>) {
@@ -32,7 +36,7 @@ function subPanelOf<T extends SubComponentProps>(Component: React.ComponentType<
         const params = useParams();
         const alliance = useAppSelector(state => selectAlliance(state, params.allianceId || ''));
         if (!alliance) {
-            return <p>Alliance not Found</p>;
+            return <p>Alliance not found.</p>;
         }
 
         return (
@@ -53,7 +57,15 @@ export const AllianceStatsPanel = subPanelOf(({alliance}) => (
 export const AllianceTechPanel = subPanelOf(({alliance, dispatch}) => (
     <section>
         <LeveledBonusProviderList providers={AllianceTechs} levels={alliance.allianceTech}
-            onChange={allianceTech => dispatch(partialUpdateAlliance({id: alliance.tag, value: {allianceTech}}))}
+            onChange={allianceTech => dispatch(partialUpdateAlliance({id: alliance.id, value: {allianceTech}}))}
+        />
+    </section>
+));
+
+export const AnalysisCentersPanel = subPanelOf(({alliance, dispatch}) => (
+    <section>
+        <SimpleBonusSourceList sources={AnalysisCenters} state={alliance.analysisCenters}
+            onChange={analysisCenters => dispatch(partialUpdateAlliance({id: alliance.id, value: {analysisCenters}}))}
         />
     </section>
 ));
@@ -91,14 +103,17 @@ export const AllianceDisplayPanel = () => {
     return (
         <section className={styles.alliancePanel}>
             <header>
-                <h1 className={styles.name}>[{alliance.tag}] - {alliance.name}</h1>
-                <span className={styles.keyStats}>
-                    <span className={styles.keyStat}>Level {alliance.level}</span>
-                </span>
+                <div className={styles.allianceInfo}>
+                    <h1 className={styles.name}>[{alliance.tag}] - {alliance.name}</h1>
+                    <span className={styles.keyStats}>
+                        <span className={styles.keyStat}>Level {alliance.level}</span>
+                    </span>
+                </div>
                 <SubNavigation>
                     <NavItem end to={`/alliances/${alliance.id}`}>Stats</NavItem>
                     <NavItem to={`/alliances/${alliance.id}/basics`}>Basics</NavItem>
                     <NavItem to={`/alliances/${alliance.id}/tech`}>Alliance Tech</NavItem>
+                    <NavItem to={`/alliances/${alliance.id}/acs`}>Analysis Centers</NavItem>
                 </SubNavigation>
             </header>
             <Outlet/>
@@ -128,15 +143,17 @@ export const AllianceList = () => {
     }
 
     return (
-        <ItemList items={alliances} path="/alliances/"
-            addLabel="＋ Add Alliance" onAdd={onAdd}
-        >
-            <ItemAction onClick={onCopy}>👥 Copy</ItemAction>
-            <ItemAction onClick={onDelete}>❌ Delete</ItemAction>
-        </ItemList>
+        <main className={styles.alliancePanel}>
+            <section className={styles.subPanel}>
+                <section>
+                    <ItemList items={alliances} path="/alliances/"
+                        addLabel="＋ Add Alliance" onAdd={onAdd}
+                    >
+                        <ItemAction onClick={onCopy}>👥 Copy</ItemAction>
+                        <ItemAction onClick={onDelete}>❌ Delete</ItemAction>
+                    </ItemList>
+                </section>
+            </section>
+        </main>
     );
-}
-
-export function AlliancePanel() {
-    return <Outlet/>;
 }

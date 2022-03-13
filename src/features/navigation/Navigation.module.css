@@ -60,16 +60,22 @@ a.active:hover {
 }
 
 .subNav {
-    flex: 1 0 auto;
+    flex: 1 1 auto;
+    border-left: 2px solid #ddd;
 }
 
 .subNav > ul {
     display: flex;
-    flex-wrap: row wrap;
+    flex-flow: row wrap;
     column-gap: 5px;
     list-style-type: none;
     margin: 0;
     padding: 0;
+    width: fit-content;
+}
+
+.subNav li {
+    flex: 0 0 auto;
 }
 
 .subNav a {

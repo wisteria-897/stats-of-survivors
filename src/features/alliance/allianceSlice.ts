@@ -4,19 +4,21 @@ import { PayloadActionWithId } from '../../util/payload';
 import { enumMapOf } from '../../util/types';
 import { createPersister } from '../../util/persistence';
 import { AllianceTechName, AllianceTechs } from '../../game/allianceTech';
+import { ACType, AnalysisCenters } from '../../game/analysisCenters';
 const uuid = require('uuid');
 
 export type AllianceId = string;
 export type AllianceTag = string;
 export type AllianceColor = string;
 
-export interface Alliance {
+export type Alliance = {
     id: string;
     name: string;
     tag: AllianceTag;
     level: number;
     color: AllianceColor;
     allianceTech: {[key in AllianceTechName]: number};
+    analysisCenters: Record<ACType, boolean>;
 }
 
 export interface AllianceState {
@@ -33,7 +35,8 @@ const defaultAlliance: Alliance = {
     tag: '000',
     level: 1,
     color: '#000000',
-    allianceTech: enumMapOf(AllianceTechs, 0)
+    allianceTech: enumMapOf(AllianceTechs, 0),
+    analysisCenters: enumMapOf(AnalysisCenters, false)
 };
 
 export const allianceStatePersister = createPersister('alliance', initialState, undefined, data => {

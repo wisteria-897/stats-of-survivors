@@ -208,3 +208,28 @@ li:last-child > .bonusLevelSelector {
 .bonusListStatCategory > div > span:before {
     content: '▷';
 }
+
+button.bonusSourceCheckbox {
+    width: 50px;
+    font-size: 125%;
+    font-weight: bold;
+    color: #a00;
+    border-color: #a00;
+    cursor: pointer;
+}
+
+button.bonusSourceCheckbox:hover {
+    background-color: #a00;
+    color: #222;
+    border-color: #222;
+}
+
+button.bonusSourceChecked {
+    border-color: #0f0;
+    color: #0f0;
+}
+button.bonusSourceChecked:hover {
+    background-color: #0f0;
+    border-color: #222;
+    color: #222;
+}

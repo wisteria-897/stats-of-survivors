@@ -1,0 +1,47 @@
+.itemList {
+    width: 100%;
+    max-width: 400px;
+    padding: 10px;
+}
+
+.listActions {
+    margin-bottom: 10px;
+}
+
+.itemList > ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.itemList > ul > li {
+    display: flex;
+    flex-flow: row nowrap;
+    column-gap: 5px;
+    align-items: center;
+    padding: 0 10px;
+}
+
+.itemList li:hover {
+    background-color: #444;
+}
+
+.itemList a {
+    display: inline-block;
+    flex: 1 0 auto;
+    padding: 10px 0;
+}
+
+.itemList a,
+.itemList a:visited {
+    color: #eee;
+}
+
+.itemActions {
+    opacity: 0.5;
+    padding: 5px 0;
+}
+
+.itemList > ul > li:hover > .itemActions {
+    opacity: 1;
+}
