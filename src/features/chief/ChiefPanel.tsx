@@ -12,7 +12,7 @@ import { Talents } from '../../game/talents';
 import { AllianceTechs } from '../../game/allianceTech';
 import { Buildings } from '../../game/buildings';
 import { ChiefBadges } from '../../game/badges';
-import { Alliance, selectAllianceByTag } from '../alliance/allianceSlice';
+import { Alliance, selectAllianceByIdOrTag } from '../alliance/allianceSlice';
 import {
     Chief,
     createChief,
@@ -24,8 +24,8 @@ import {
 import { LeveledBonusProviderList, StatBonusList } from '../bonus/BonusList';
 import styles from './Chief.module.css';
 
-const getChiefDisplayName = (chief: Chief): string => {
-    return (chief.allianceTag ? '[' + chief.allianceTag + '] ' : '') + chief.name;
+const getChiefDisplayName = (chief: Chief, alliance: Alliance | null): string => {
+    return (alliance ? '[' + alliance.tag + '] ' : '') + chief.name;
 };
 
 
@@ -65,7 +65,7 @@ function subPanelOf<T extends SubComponentProps>(Component: React.ComponentType<
         const dispatch = useAppDispatch();
         const params = useParams();
         const chief = useAppSelector(state => selectChief(state, params.chiefId || ''));
-        const alliance = useAppSelector(state => selectAllianceByTag(state, (chief && chief.allianceTag) || ''));
+        const alliance = useAppSelector(state => selectAllianceByIdOrTag(state, (chief && chief.allianceId) || ''));
         if (!chief) {
             return <p>Not Found</p>;
         }
@@ -152,7 +152,7 @@ export const ChiefBasicsPanel = subPanelOf(({chief, dispatch}) => {
             </label>
             <label>
                 <span>Alliance:</span>
-                <input type="text" placeholder="Tag" minLength={3} maxLength={3} value={chief.allianceTag || ''} onChange={(e) => partialUpdate({allianceTag: e.target.value})}/>
+                <input type="text" placeholder="Tag" minLength={3} maxLength={3} value={chief.allianceId || ''} onChange={(e) => partialUpdate({allianceId: e.target.value})}/>
             </label>
             <LevelPicker label="Chief level:" min={0} max={60} level={chief.level} onChange={value => partialUpdate({level: value})}/>
             <LevelPicker label="VIP level:" min={0} max={12} level={chief.vipLevel} onChange={value => partialUpdate({vipLevel: value})}/>
@@ -163,6 +163,7 @@ export const ChiefBasicsPanel = subPanelOf(({chief, dispatch}) => {
 export const ChiefDisplayPanel = () => {
     const params = useParams();
     const chief = useAppSelector(state => selectChief(state, params.chiefId || ''));
+    const alliance = useAppSelector(state => selectAllianceByIdOrTag(state, (chief && chief.allianceId) || ''));
     if (chief == null) {
         return <p>Not found</p>;
     }
@@ -173,7 +174,7 @@ export const ChiefDisplayPanel = () => {
     return (
         <section className={styles.chiefPanel}>
             <header>
-                <h1 className={styles.name}>{getChiefDisplayName(chief)}</h1>
+                <h1 className={styles.name}>{getChiefDisplayName(chief, alliance)}</h1>
                 <span className={styles.keyStats}>
                     <span className={styles.keyStat}>{vipLevel.name}</span>
                     <span className={styles.keyStat}>Level {chief.level}</span>

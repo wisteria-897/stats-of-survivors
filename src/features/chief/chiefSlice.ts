@@ -16,7 +16,7 @@ export interface Chief {
     id: ChiefId;
     name: string;
     level: number;
-    allianceTag: string | null;
+    allianceId: string | null;
     vipLevel: number;
     chiefGear: { [key in ChiefGearSlot]: number };
     heroGear: { [key in HeroGearSlot]: number };
@@ -41,7 +41,7 @@ const defaultChief: Chief = {
     name: 'Survivor',
     level: 1,
     vipLevel: 0,
-    allianceTag: null,
+    allianceId: null,
     chiefGear: enumMapOf(ChiefGears, 0),
     heroGear: enumMapOf(HeroGears, 0),
     badges: enumMapOf(ChiefBadges, 0),
@@ -50,18 +50,24 @@ const defaultChief: Chief = {
     buildings: enumMapOf(Buildings, 0)
 }
 
-const maybeUpgradeEntry = <T>(o: {[key: string]: T}, defaultValue: T, ...keys: string[]) => {
-    for (const key of keys) {
-        if (key in o) {
-            return o[key];
+const maybeUpgradeEntry = <T>(o: {[key: string]: T} | undefined, defaultValue: T, ...keys: string[]) => {
+    if (o) {
+        for (const key of keys) {
+            if (key in o) {
+                return o[key];
+            }
         }
     }
     return defaultValue;
 }
 
+type PartialLegacyChief = Partial<Chief> & {
+    allianceTag?: string
+};
+
 export const chiefStatePersister = createPersister('chief', initialState, undefined, data => {
     const state = JSON.parse(data);
-    state.chiefs = state.chiefs.map((chief: Chief) => {
+    state.chiefs = state.chiefs.map((chief: PartialLegacyChief) => {
         chief.heroGear = {
             [HeroGearSlot.BrawlerHead]: maybeUpgradeEntry(chief.heroGear, 0, HeroGearSlot.BrawlerHead, 'Brawler/Head'),
             [HeroGearSlot.BrawlerBody]: maybeUpgradeEntry(chief.heroGear, 0, HeroGearSlot.BrawlerBody, 'Brawler/Body'),
@@ -73,6 +79,10 @@ export const chiefStatePersister = createPersister('chief', initialState, undefi
             [HeroGearSlot.ScoutBody]: maybeUpgradeEntry(chief.heroGear, 0, HeroGearSlot.ScoutBody, 'Scout/Body'),
             [HeroGearSlot.ScoutFoot]: maybeUpgradeEntry(chief.heroGear, 0, HeroGearSlot.ScoutFoot, 'Scout/Foot')
         };
+        if (chief.allianceId === undefined && ('allianceTag' in chief)) {
+            chief.allianceId = chief.allianceTag;
+            delete chief.allianceTag;
+        }
         return Object.assign({}, defaultChief, chief);
     });
     return state;

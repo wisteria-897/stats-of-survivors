@@ -1,13 +1,17 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../../app/store';
+import { PayloadActionWithId } from '../../util/payload';
 import { enumMapOf } from '../../util/types';
 import { createPersister } from '../../util/persistence';
 import { AllianceTechName, AllianceTechs } from '../../game/allianceTech';
+const uuid = require('uuid');
 
+export type AllianceId = string;
 export type AllianceTag = string;
 export type AllianceColor = string;
 
 export interface Alliance {
+    id: string;
     name: string;
     tag: AllianceTag;
     level: number;
@@ -16,16 +20,15 @@ export interface Alliance {
 }
 
 export interface AllianceState {
-    alliances: Alliance[],
-    selectedAllianceTag: AllianceTag | null;
+    alliances: Alliance[]
 }
 
 const initialState: AllianceState = {
-    alliances: [],
-    selectedAllianceTag: null
+    alliances: []
 };
 
 const defaultAlliance: Alliance = {
+    id: '',
     name: 'Alliance',
     tag: '000',
     level: 1,
@@ -36,13 +39,25 @@ const defaultAlliance: Alliance = {
 export const allianceStatePersister = createPersister('alliance', initialState, undefined, data => {
     const state = JSON.parse(data);
     state.alliances = state.alliances.map((alliance: Alliance) => {
-        return Object.assign({}, defaultAlliance, alliance);
+        return Object.assign({}, defaultAlliance, {id: ''}, alliance);
     });
     return state;
 });
+(state => {
+    const missingIds = state.alliances.reduce((result: boolean, alliance: Alliance) => {
+        if (alliance.id === '') {
+            alliance.id = uuid.v4();
+            return true;
+        }
+        return result;
+    }, false);
+    if (missingIds) {
+        allianceStatePersister.save(state);
+    }
+})(allianceStatePersister.load());
 
 export const createAlliance = () => {
-    return Object.assign({}, defaultAlliance);
+    return Object.assign({}, defaultAlliance, {id: uuid.v4()});
 }
 
 export const allianceSlice = createSlice({
@@ -53,36 +68,32 @@ export const allianceSlice = createSlice({
             state.alliances = [...state.alliances, action.payload];
         },
 
-        updateAlliance: (state, action: PayloadAction<Alliance>) => {
-            const index = state.alliances.findIndex((a: Alliance) => a.tag === action.payload.tag);
+        partialUpdateAlliance: (state, action: PayloadActionWithId<AllianceTag, Partial<Alliance>>) => {
+            const index = state.alliances.findIndex((a: Alliance) => a.id === action.payload.id);
             if (index >= 0) {
                 const updated = [...state.alliances];
-                updated[index] = action.payload;
+                updated[index] = Object.assign({}, updated[index], action.payload.value);
                 state.alliances = updated;
             }
-        },
-
-        setSelectedAlliance: (state, action: PayloadAction<AllianceTag | null>) => {
-            state.selectedAllianceTag = action.payload;
         }
     }
 });
 
-export const { addAlliance, updateAlliance, setSelectedAlliance } = allianceSlice.actions;
+export const { addAlliance, partialUpdateAlliance } = allianceSlice.actions;
 
 export const selectAlliances = (state: RootState) => {
     return state.alliance.alliances;
 }
 
-export const selectAllianceByTag = (state: RootState, tag: AllianceTag) => {
-    return state.alliance.alliances.find((a: Alliance) => a.tag === tag) || null;
+export const selectAlliance = (state: RootState, id: string) => {
+    return state.alliance.alliances.find((a: Alliance) => a.id === id) || null;
 }
 
-export const selectSelectedAlliance = (state: RootState) => {
-    if (state.alliance.selectedAllianceTag == null) {
-        return null;
-    }
-    return selectAllianceByTag(state, state.alliance.selectedAllianceTag);
+export const selectAllianceByIdOrTag = (state: RootState, idOrTag: string) => {
+    const alliance = state.alliance.alliances.find((a: Alliance) => {
+        return (a.id === idOrTag || a.tag === idOrTag);
+    });
+    return alliance || null;
 }
 
 export default allianceSlice.reducer;

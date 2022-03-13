@@ -6,7 +6,7 @@ import { store } from './app/store';
 import { Provider } from 'react-redux';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { BuildingsPanel, ChiefBasicsPanel, ChiefDisplayPanel, ChiefGearPanel, ChiefList, ChiefPanel, ChiefResearchPanel, ChiefStatsPanel, HeroGearPanel, TalentsPanel } from './features/chief/ChiefPanel';
-import { AddAlliancePanel, AllianceDisplayPanel, AllianceList, AlliancePanel } from './features/alliance/AlliancePanel';
+import { AllianceBasicsPanel, AllianceDisplayPanel, AllianceList, AlliancePanel, AllianceStatsPanel, AllianceTechPanel } from './features/alliance/AlliancePanel';
 import { TroopPanel } from './features/troops/TroopPanel';
 import SpeedUpPanel from './features/speedups/SpeedUpPanel';
 
@@ -30,8 +30,11 @@ ReactDOM.render(
                         </Route>
                         <Route path="alliances" element={<AlliancePanel/>}>
                             <Route index element={<AllianceList/>}/>
-                            <Route path="new" element={<AddAlliancePanel/>}/>
-                            <Route path=":allianceTag" element={<AllianceDisplayPanel/>}/>
+                            <Route path=":allianceId" element={<AllianceDisplayPanel/>}>
+                                <Route index element={<AllianceStatsPanel/>}/>
+                                <Route path="basics" element={<AllianceBasicsPanel/>}/>
+                                <Route path="tech" element={<AllianceTechPanel/>}/>
+                            </Route>
                         </Route>
                         <Route path="speedups" element={<SpeedUpPanel/>} />
                         <Route path="formations" element={<TroopPanel/>} />

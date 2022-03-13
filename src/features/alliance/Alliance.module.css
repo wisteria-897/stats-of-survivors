@@ -10,7 +10,6 @@
 }
 
 .alliancePanel > header {
-    max-width: 700px;
     display: flex;
     align-items: center;
     justify-content: flex-start;
@@ -18,17 +17,18 @@
     flex: 0 0 auto;
 }
 
-.alliancePanel > header > h2 {
+.alliancePanel > header > h1 {
     font-size: 150%;
     font-weight: bold;
     padding-left: 10px;
+    margin: 0;
 }
 
 .keyStats {
     display: flex;
     flex-flow: row nowrap;
     column-gap: 10px;
-    flex: 1 0 auto;
+    flex: 0 0 auto;
     align-items: center;
 }
 
@@ -36,32 +36,18 @@
     display: inline-block;
 }
 
+.keyStat:last-child {
+    padding-right: 30px;
+    margin-right: 20px;
+    border-right: 2px solid #eee;
+}
+
 .alliancePanel > section {
-    flex: 1 1 0;
+    flex: 1 0 auto;
     overflow: scroll;
+    max-width: 500px;
 }
 
-.detailSections {
-    display: flex;
-    flex-flow: row wrap;
-    column-gap: 50px;
-    padding: 0 10px;
-}
-
-.allianceEditor {
-    padding: 0 10px;
-    height: 100%;
-    overflow: scroll;
-}
-
-.allianceEditor label {
-    display: block;
-}
-
-.allianceEditor label > span {
-    display: inline-block;
-    width: 275px;
-}
 
 .listAction {
     display: inline-block;
@@ -81,3 +67,17 @@
     background-color: #ddd;
     color: #222;
 }
+
+.subPanel label {
+    display: flex;
+    flex-flow: row wrap;
+    margin: 10px;
+    width: 300px;
+}
+
+.subPanel label > span {
+    display: inline-block;
+    min-width: 100px;
+    flex: 1 0 auto;
+}
+
