@@ -56,8 +56,8 @@ export const allianceStatePersister = createPersister('alliance', initialState, 
     }
 })(allianceStatePersister.load());
 
-export const createAlliance = () => {
-    return Object.assign({}, defaultAlliance, {id: uuid.v4()});
+export const createAlliance = (...sources: Partial<Alliance>[]) => {
+    return Object.assign({}, defaultAlliance, ...sources, {id: uuid.v4()});
 }
 
 export const allianceSlice = createSlice({
@@ -66,6 +66,15 @@ export const allianceSlice = createSlice({
     reducers: {
         addAlliance: (state, action: PayloadAction<Alliance>) => {
             state.alliances = [...state.alliances, action.payload];
+        },
+
+        deleteAlliance: (state, action: PayloadAction<Alliance>) => {
+            const index = state.alliances.findIndex((a: Alliance) => a.id === action.payload.id);
+            if (index >= 0) {
+                const updated = [...state.alliances];
+                updated.splice(index, 1);
+                state.alliances = updated;
+            }
         },
 
         partialUpdateAlliance: (state, action: PayloadActionWithId<AllianceTag, Partial<Alliance>>) => {
@@ -79,7 +88,7 @@ export const allianceSlice = createSlice({
     }
 });
 
-export const { addAlliance, partialUpdateAlliance } = allianceSlice.actions;
+export const { addAlliance, deleteAlliance, partialUpdateAlliance } = allianceSlice.actions;
 
 export const selectAlliances = (state: RootState) => {
     return state.alliance.alliances;

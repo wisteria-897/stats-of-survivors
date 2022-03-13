@@ -1,16 +1,18 @@
 import React from 'react';
-import { useNavigate, useParams, Link, Outlet } from 'react-router-dom';
+import { useNavigate, useParams, Outlet } from 'react-router-dom';
 import { Subtract } from 'utility-types';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import { aggregateBonuses } from '../../game/bonus';
 import { NavItem, SubNavigation } from '../navigation/Navigation';
 import LevelPicker from '../../ui/level/LevelPicker';
+import { ItemAction, ItemList } from '../../ui/list/ItemList';
 import { LeveledBonusProviderList, StatBonusList } from '../bonus/BonusList';
 import { AllianceTechs } from '../../game/allianceTech';
 import {
     Alliance,
     createAlliance,
     addAlliance,
+    deleteAlliance,
     partialUpdateAlliance,
     selectAlliance,
     selectAlliances
@@ -109,27 +111,29 @@ export const AllianceList = () => {
     const navigate = useNavigate();
     const alliances = useAppSelector((state) => selectAlliances(state));
 
-    const onAddAlliance = () => {
+    const onAdd = () => {
         const newAlliance = createAlliance();
         dispatch(addAlliance(newAlliance));
         navigate(`/alliances/${newAlliance.id}/basics`);
     }
 
-    const allianceItems = alliances.map((alliance: Alliance) => {
-        return (
-            <li key={alliance.tag}>
-                <Link to={`/alliances/${alliance.id}`}>{alliance.name}</Link>
-            </li>
-        );
-    });
+    const onCopy = (alliance: Alliance) => {
+        const copy = createAlliance(alliance, {name: `Copy of ${alliance.name}`});
+        dispatch(addAlliance(copy));
+        navigate(`/alliances/${copy.id}/basics`);
+    }
+
+    const onDelete = (alliance: Alliance) => {
+        dispatch(deleteAlliance(alliance));
+    }
 
     return (
-        <section className={styles.allianceList}>
-            <button className={styles.listAction} onClick={onAddAlliance}>＋ Add Alliance</button>
-            <ul>
-                {allianceItems}
-            </ul>
-        </section>
+        <ItemList items={alliances} path="/alliances/"
+            addLabel="＋ Add Alliance" onAdd={onAdd}
+        >
+            <ItemAction onClick={onCopy}>👥 Copy</ItemAction>
+            <ItemAction onClick={onDelete}>❌ Delete</ItemAction>
+        </ItemList>
     );
 }
 

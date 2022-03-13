@@ -1,8 +1,10 @@
-import React, { SyntheticEvent } from 'react';
+import React from 'react';
 import { Subtract } from 'utility-types';
-import { useNavigate, useParams, Link, NavLink, Outlet } from 'react-router-dom';
+import { useNavigate, useParams, Outlet } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import LevelPicker from '../../ui/level/LevelPicker';
+import { ItemAction, ItemList } from '../../ui/list/ItemList';
+import { NavItem, SubNavigation } from '../navigation/Navigation';
 import { aggregateBonuses } from '../../game/bonus';
 import { getVipLevel } from '../../game/vip';
 import { HeroGears } from '../../game/heroGear';
@@ -17,6 +19,7 @@ import {
     Chief,
     createChief,
     addChief,
+    deleteChief,
     partialUpdateChief,
     selectChief,
     selectChiefs
@@ -169,8 +172,6 @@ export const ChiefDisplayPanel = () => {
     }
     const vipLevel = getVipLevel(chief.vipLevel);
 
-    type LinkClassNameFunction = (x: {isActive: boolean}) => string;
-    const linkClassNameFn: LinkClassNameFunction = ({isActive}) => (isActive) ? styles.active : '';
     return (
         <section className={styles.chiefPanel}>
             <header>
@@ -179,31 +180,15 @@ export const ChiefDisplayPanel = () => {
                     <span className={styles.keyStat}>{vipLevel.name}</span>
                     <span className={styles.keyStat}>Level {chief.level}</span>
                 </span>
-                <nav className={styles.subNav}>
-                    <ul>
-                        <li>
-                            <NavLink to={`/chiefs/${chief.id}`} end className={linkClassNameFn}>Stats</NavLink>
-                        </li>
-                        <li>
-                            <NavLink to={`/chiefs/${chief.id}/basics`} className={linkClassNameFn}>Basics</NavLink>
-                        </li>
-                        <li>
-                            <NavLink to={`/chiefs/${chief.id}/chiefGear`} className={linkClassNameFn}>Chief Gear</NavLink>
-                        </li>
-                        <li>
-                            <NavLink to={`/chiefs/${chief.id}/heroGear`} className={linkClassNameFn}>Hero Gear</NavLink>
-                        </li>
-                        <li>
-                            <NavLink to={`/chiefs/${chief.id}/research`} className={linkClassNameFn}>Research</NavLink>
-                        </li>
-                        <li>
-                            <NavLink to={`/chiefs/${chief.id}/talents`} className={linkClassNameFn}>Talents</NavLink>
-                        </li>
-                        <li>
-                            <NavLink to={`/chiefs/${chief.id}/buildings`} className={linkClassNameFn}>Buildings</NavLink>
-                        </li>
-                    </ul>
-                </nav>
+                <SubNavigation>
+                    <NavItem end to={`/chiefs/${chief.id}`}>Stats</NavItem>
+                    <NavItem to={`/chiefs/${chief.id}/basics`}>Basics</NavItem>
+                    <NavItem to={`/chiefs/${chief.id}/chiefGear`}>Chief Gear</NavItem>
+                    <NavItem to={`/chiefs/${chief.id}/heroGear`}>Hero Gear</NavItem>
+                    <NavItem to={`/chiefs/${chief.id}/research`}>Research</NavItem>
+                    <NavItem to={`/chiefs/${chief.id}/talents`}>Talents</NavItem>
+                    <NavItem to={`/chiefs/${chief.id}/buildings`}>Buildings</NavItem>
+                </SubNavigation>
             </header>
             <Outlet/>
         </section>
@@ -215,29 +200,29 @@ export const ChiefList = () => {
     const dispatch = useAppDispatch();
     const chiefs = useAppSelector((state) => selectChiefs(state));
 
-    const onAddChief = (e: SyntheticEvent) => {
-        e.stopPropagation();
-        e.preventDefault();
+    const onAddChief = () => {
         const newChief = createChief();
         dispatch(addChief(newChief));
         navigate(`/chiefs/${newChief.id}/basics`);
     }
 
-    const chiefItems = chiefs.map(chief => {
-        return (
-            <li key={chief.id}>
-                <Link to={`/chiefs/${chief.id}`}>{chief.name}</Link>
-            </li>
-        );
-    });
+    const onDeleteChief = (chief: Chief) => {
+        dispatch(deleteChief(chief));
+    }
+
+    const onCopyChief = (chief: Chief) => {
+        const copy = createChief(chief, {name: `Copy of ${chief.name}`});
+        dispatch(addChief(copy));
+        navigate(`/chiefs/${copy.id}/basics`);
+    }
 
     return (
-        <section className={styles.chiefList}>
-            <button className={styles.listAction} onClick={onAddChief}>＋ Add Chief</button>
-            <ul>
-                {chiefItems}
-            </ul>
-        </section>
+        <ItemList className={styles.chiefList} items={chiefs} path="/chiefs/"
+            addLabel="＋ Add Chief" onAdd={onAddChief}
+        >
+            <ItemAction onClick={onCopyChief}>👥 Copy</ItemAction>
+            <ItemAction onClick={onDeleteChief}>❌ Delete</ItemAction>
+        </ItemList>
     );
 }
 

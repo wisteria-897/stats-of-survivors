@@ -88,8 +88,8 @@ export const chiefStatePersister = createPersister('chief', initialState, undefi
     return state;
 });
 
-export function createChief() {
-    return Object.assign({}, defaultChief, {id: uuid.v4()});
+export function createChief(...sources: Partial<Chief>[]) {
+    return Object.assign({}, defaultChief, ...sources, {id: uuid.v4()});
 }
 
 const getById = (state: ChiefState, id: ChiefId): Chief | null => {
@@ -104,11 +104,11 @@ export const chiefSlice = createSlice({
             state.chiefs = [...state.chiefs, action.payload];
         },
 
-        updateChief: (state, action: PayloadAction<Chief>) => {
+        deleteChief: (state, action: PayloadAction<Chief>) => {
             const index = state.chiefs.findIndex((c: Chief) => c.id === action.payload.id);
             if (index >= 0) {
                 const updated = [...state.chiefs];
-                updated[index] = action.payload;
+                updated.splice(index, 1);
                 state.chiefs = updated;
             }
         },
@@ -124,7 +124,7 @@ export const chiefSlice = createSlice({
     }
 });
 
-export const { addChief, updateChief, partialUpdateChief } = chiefSlice.actions;
+export const { addChief, deleteChief, partialUpdateChief } = chiefSlice.actions;
 
 export const selectChief = (state: RootState, id: ChiefId): Chief | null => {
     return getById(state.chief, id);
