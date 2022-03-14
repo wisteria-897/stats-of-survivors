@@ -22,7 +22,7 @@ export enum SourceCategory {
     Buildings = 'Buildings',
     AllianceLevel = 'Alliance Level',
     AllianceTech = 'Alliance Tech',
-    Heros = 'Heros',
+    Heroes = 'Heroes',
     ChiefBuffs = 'Chief Buffs',
     StateBuffs = 'State Buffs',
     AnalysisCenters = 'Analysis Centers'
@@ -75,7 +75,7 @@ export type LeveledBonusProvider = {
     levels: BonusProviderLevel[];
 }
 
-export type BonusProviderLevel = {
+export type BonusProviderLevel = SimpleBonusSource & {
     provider: LeveledBonusProvider;
     name: string;
     level: number;

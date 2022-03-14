@@ -15,6 +15,7 @@ import { AllianceTechs } from '../../game/allianceTech';
 import { AnalysisCenters } from '../../game/analysisCenters';
 import { BuildingName, Buildings } from '../../game/buildings';
 import { ChiefBadges } from '../../game/badges';
+import { HeroRanks } from '../../game/heroes';
 import { Alliance, selectAllianceByIdOrTag } from '../alliance/allianceSlice';
 import {
     Chief,
@@ -87,6 +88,14 @@ export const ChiefStatsPanel = subPanelOf(({chief, alliance}) => {
         </section>
     );
 });
+
+export const HeroesPanel = subPanelOf(({chief, dispatch}) => (
+    <section>
+        <h2>Hero Ranks</h2>
+        <LeveledBonusProviderList providers={HeroRanks} levels={chief.heroRanks}
+            onChange={heroRanks => dispatch(partialUpdateChief({id: chief.id, value: {heroRanks}}))}/>
+    </section>
+));
 
 export const BuildingsPanel = subPanelOf(({chief, dispatch}) => (
     <section>
@@ -179,8 +188,9 @@ export const ChiefDisplayPanel = () => {
                 <SubNavigation>
                     <NavItem end to={`/chiefs/${chief.id}`}>Stats</NavItem>
                     <NavItem to={`/chiefs/${chief.id}/basics`}>Basics</NavItem>
-                    <NavItem to={`/chiefs/${chief.id}/chiefGear`}>Chief Gear</NavItem>
+                    <NavItem to={`/chiefs/${chief.id}/heroes`}>Heroes</NavItem>
                     <NavItem to={`/chiefs/${chief.id}/heroGear`}>Hero Gear</NavItem>
+                    <NavItem to={`/chiefs/${chief.id}/chiefGear`}>Chief Gear</NavItem>
                     <NavItem to={`/chiefs/${chief.id}/research`}>Research</NavItem>
                     <NavItem to={`/chiefs/${chief.id}/talents`}>Talents</NavItem>
                     <NavItem to={`/chiefs/${chief.id}/buildings`}>Buildings</NavItem>

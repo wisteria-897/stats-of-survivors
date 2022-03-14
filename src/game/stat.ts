@@ -112,5 +112,17 @@ export const Stats = {
     ExplorerDefense: new Stat('Explorer Defense', StatCategory.Exploration, StatUnit.Units),
     ExplorerHealth: new Stat('Explorer Health', StatCategory.Exploration, StatUnit.Units),
     ExplorerLethality: new Stat('Explorer Lethality', StatCategory.Exploration, StatUnit.Units),
-    ReinforcementCapacity: new Stat('Reinforcement Capacity', StatCategory.Military, StatUnit.Units)
+    ReinforcementCapacity: new Stat('Reinforcement Capacity', StatCategory.Military, StatUnit.Units),
+    SettlementTroopAttack: new Stat('Settlement Troop Attack', StatCategory.Military),
+    SettlementTroopDefense: new Stat('Settlement Troop Defense', StatCategory.Military),
+    SettlementTroopHealth: new Stat('Settlement Troop Health', StatCategory.Military),
+    SettlementTroopLethality: new Stat('Settlement Troop Lethality', StatCategory.Military),
+    EnemySettlementTroopAttack: new Stat('Enemy Settlement Troop Attack', StatCategory.Military),
+    EnemySettlementTroopDefense: new Stat('Enemy Settlement Troop Defense', StatCategory.Military),
+    EnemySettlementTroopHealth: new Stat('Enemy Settlement Troop Health', StatCategory.Military),
+    EnemySettlementTroopLethality: new Stat('Enemy Settlement Troop Lethality', StatCategory.Military),
+    TroopInfectedAttack: new Stat('Troop Infected Attack', StatCategory.Military),
+    TroopInfectedDefense: new Stat('Troop Infected Defense', StatCategory.Military),
+    TroopInfectedHealth: new Stat('Troop Infected Health', StatCategory.Military),
+    TroopInfectedLethality: new Stat('Troop Infected Lethality', StatCategory.Military),
 };
