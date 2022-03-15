@@ -16,7 +16,6 @@ export default function HomePanel() {
                     Add more bonus sources:
                     <ul>
                         <li>hero levels</li>
-                        <li>chief gear set bonuses</li>
                         <li>skins</li>
                         <li>alliance level</li>
                         <li>alliance buildings</li>
