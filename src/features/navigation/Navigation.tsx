@@ -8,7 +8,7 @@ export function Navigation() {
         <nav className={styles.navBar}>
             <ul>
                 <li className={styles.appName}>
-                    Stats of Survivors
+                    <NavLink to="/">Stats of Survivors</NavLink>
                     <span className={styles.byline}>~ by <a href="https://github.com/wisteria-897" target="_blank" rel="noreferrer noopener">wisteria-897</a></span>
                 </li>
                 <li className={styles.navItem}>

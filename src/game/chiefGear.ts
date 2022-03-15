@@ -1,5 +1,6 @@
+import { enumMapOf } from '../util/types';
 import { Stat, Stats } from './stat';
-import { Bonus, SourceCategory, Tier, Tiers } from './bonus';
+import { sortByTier, Bonus, SimpleBonusSource, SourceCategory, Tier, TierName, Tiers } from './bonus';
 
 type TierData = { tier: Tier, levels: number[] }
 
@@ -71,6 +72,80 @@ export enum ChiefGearSlot {
     AssaultRifle = 'Assault Rifle',
     Boots = 'Boots',
     Communicator = 'Communicator'
+}
+
+const SetBonusValues = [6230,5010,3940,2870,2070]
+export function getSetBonuses(chiefGear: Record<ChiefGearSlot, number>): Bonus[] {
+    const bonusLevelCounts = [0,0,0,0,0];
+    const tierCounts = enumMapOf(Tiers, 0);
+    Object.entries(chiefGear).forEach(entry => {
+        const [slot, level] = entry as [ChiefGearSlot, number];
+        if (level > 0) {
+            const gear = ChiefGears[slot].levels[level - 1];
+            tierCounts[gear.tier.name] += 1;
+            switch (gear.tier) {
+                //@ts-ignore
+                case Tiers.Legendary:
+                    tierCounts[TierName.Legendary] += 1;
+                //@ts-ignore
+                case Tiers.Epic:
+                    bonusLevelCounts[0] += 1;
+                    tierCounts[TierName.Epic] += 1;
+                //@ts-ignore
+                case Tiers.Rare:
+                    tierCounts[TierName.Rare] += 1;
+                    if (gear.tier !== Tiers.Rare || gear.tierLevel.level >= 2) {
+                        bonusLevelCounts[1] += 1;
+                    }
+                    bonusLevelCounts[2] += 1;
+                case Tiers.Uncommon:
+                    tierCounts[TierName.Uncommon] += 1;
+                    if (gear.tier !== Tiers.Uncommon || gear.tierLevel.level >= 2) {
+                        bonusLevelCounts[3] += 1;
+                    }
+                    bonusLevelCounts[4] += 1;
+            }
+        }
+    });
+
+    const setBonuses = [];
+    const threePieceLevel = bonusLevelCounts.findIndex(count => count >= 3);
+    const orderedTierCounts = Object.entries(tierCounts).sort((a, b) => sortByTier(a[0], b[0]));
+    if (threePieceLevel >= 0) {
+        const sourceTierEntry = orderedTierCounts.find(entry => entry[1] > 3) as [TierName, number];
+        const source: SimpleBonusSource = {
+            name: 'Three Piece Set Bonus',
+            tier: Tiers[sourceTierEntry[0]],
+            category: SourceCategory.ChiefGear,
+            bonuses: []
+        };
+        source.bonuses.push(
+            new Bonus(Stats.InfantryAttack, SetBonusValues[threePieceLevel], source),
+            new Bonus(Stats.RiderAttack, SetBonusValues[threePieceLevel], source),
+            new Bonus(Stats.HunterAttack, SetBonusValues[threePieceLevel], source)
+        );
+
+        setBonuses.push(...source.bonuses);
+    }
+
+    const sixPieceLevel = bonusLevelCounts.findIndex(count => count >= 6);
+    if (sixPieceLevel >= 0) {
+        const sourceTierEntry = orderedTierCounts.find(entry => entry[1] >= 6) as [TierName, number];
+        const source: SimpleBonusSource = {
+            name: 'Six Piece Set Bonus',
+            tier: Tiers[sourceTierEntry[0]],
+            category: SourceCategory.ChiefGear,
+            bonuses: []
+        };
+        source.bonuses.push(
+            new Bonus(Stats.InfantryDefense, SetBonusValues[sixPieceLevel], source),
+            new Bonus(Stats.RiderDefense, SetBonusValues[sixPieceLevel], source),
+            new Bonus(Stats.HunterDefense, SetBonusValues[sixPieceLevel], source)
+        );
+        setBonuses.push(...source.bonuses);
+    }
+
+    return setBonuses;
 }
 
 export const ChiefGears = {

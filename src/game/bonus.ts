@@ -1,15 +1,23 @@
 import { Stat } from './stat';
 
-export interface Tier {
-    name: string;
+export type Tier = {
+    name: TierName;
 }
 
-export const Tiers: { [key: string]: Tier } = {
-    Common: { name: 'Common' } as Tier,
-    Uncommon: { name: 'Uncommon' } as Tier,
-    Rare: { name: 'Rare' } as Tier,
-    Epic: { name: 'Epic' } as Tier,
-    Legendary: { name: 'Legendary' } as Tier
+export enum TierName {
+    Common    = 'Common',
+    Uncommon  = 'Uncommon',
+    Rare      = 'Rare',
+    Epic      = 'Epic',
+    Legendary = 'Legendary'
+}
+
+export const Tiers: Record<TierName, Tier> = {
+    [TierName.Common]: { name: TierName.Common } as Tier,
+    [TierName.Uncommon]: { name: TierName.Uncommon } as Tier,
+    [TierName.Rare]: { name: TierName.Rare } as Tier,
+    [TierName.Epic]: { name: TierName.Epic } as Tier,
+    [TierName.Legendary]: { name: TierName.Legendary } as Tier
 } as const;
 
 export enum SourceCategory {
@@ -33,6 +41,16 @@ export interface SimpleBonusSource {
     tier: Tier;
     category: SourceCategory;
     bonuses: Bonus[];
+}
+
+const OrderedTiers: string[] = [TierName.Legendary, TierName.Epic, TierName.Rare, TierName.Uncommon, TierName.Common];
+export const sortByTier = (a: any, b: any) => {
+    const aIndex = OrderedTiers.findIndex(x => x === String(a));
+    const bIndex = OrderedTiers.findIndex(x => x === String(b));
+    if (aIndex < 0 || bIndex < 0 || aIndex === bIndex) {
+        return 0;
+    }
+    return aIndex < bIndex ? 1 : -1;
 }
 
 export class Bonus {

@@ -8,7 +8,7 @@ import { NavItem, SubNavigation } from '../navigation/Navigation';
 import { aggregateBonuses, aggregateSimpleBonuses, getBonusesFrom } from '../../game/bonus';
 import { getVipLevel } from '../../game/vip';
 import { HeroGearSlot, HeroGears } from '../../game/heroGear';
-import { ChiefGears } from '../../game/chiefGear';
+import { getSetBonuses, ChiefGears } from '../../game/chiefGear';
 import { ResearchTechs } from '../../game/research';
 import { Talents } from '../../game/talents';
 import { AllianceTechs } from '../../game/allianceTech';
@@ -82,6 +82,7 @@ function getChiefBonuses(chief: Chief) {
         ...vipLevel.bonuses,
         ...heroBonuses,
         ...aggregateBonuses(chief.chiefGear, ChiefGears),
+        ...getSetBonuses(chief.chiefGear),
         ...aggregateBonuses(chief.research, ResearchTechs),
         ...aggregateBonuses(chief.talents, Talents),
         ...aggregateBonuses(chief.buildings, Buildings),
