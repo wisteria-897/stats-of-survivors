@@ -9,6 +9,7 @@ import { BuildingsPanel, ChiefBasicsPanel, ChiefDisplayPanel, ChiefGearPanel, Ch
 import { AllianceBasicsPanel, AllianceDisplayPanel, AllianceList, AllianceStatsPanel, AllianceTechPanel, AnalysisCentersPanel } from './features/alliance/AlliancePanel';
 import { TroopPanel } from './features/troops/TroopPanel';
 import SpeedUpPanel from './features/speedups/SpeedUpPanel';
+import HomePanel from './features/home/HomePanel';
 
 ReactDOM.render(
     <React.StrictMode>
@@ -16,6 +17,7 @@ ReactDOM.render(
             <HashRouter>
                 <Routes>
                     <Route path="/" element={<App/>}>
+                        <Route index element={<HomePanel/>}/>
                         <Route path="chiefs">
                             <Route index element={<ChiefList/>}/>
                             <Route path=":chiefId" element={<ChiefDisplayPanel/>}>
