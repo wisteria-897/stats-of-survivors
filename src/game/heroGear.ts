@@ -299,7 +299,7 @@ export const HeroGears = {
         { tier: Tiers.Legendary, tierLevel: 5, bonusValues: [ 14, 440, 6070 ] }),
     [HeroGearSlot.ScoutFoot]: new HeroGear(HeroGearSlot.ScoutFoot,
         [Stats.ExplorerDefense, Stats.ExplorerHealth, Stats.RiderHealth, Stats.RiderLethality],
-        { tier: Tiers.Common, tierLevel: 1, bonusValues: [ 30, 1590, 29300, 900 ] },
+        { tier: Tiers.Common, tierLevel: 1, bonusValues: [ 30, 1590, 2930, 900 ] },
         { tier: Tiers.Common, tierLevel: 2, bonusValues: [ 13, 740, 1480, 400 ] },
         { tier: Tiers.Common, tierLevel: 3, bonusValues: [ 16, 880, 2030, 600 ] },
         { tier: Tiers.Uncommon, tierLevel: 1, bonusValues: [ 23, 1240, 2650, 800 ] },
