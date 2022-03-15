@@ -1,13 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Subtract } from 'utility-types';
 import { useNavigate, useParams, Outlet } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import LevelPicker from '../../ui/level/LevelPicker';
 import { ItemAction, ItemList } from '../../ui/list/ItemList';
 import { NavItem, SubNavigation } from '../navigation/Navigation';
-import { aggregateBonuses, aggregateSimpleBonuses } from '../../game/bonus';
+import { aggregateBonuses, aggregateSimpleBonuses, getBonusesFrom } from '../../game/bonus';
 import { getVipLevel } from '../../game/vip';
-import { HeroGears } from '../../game/heroGear';
+import { HeroGearSlot, HeroGears } from '../../game/heroGear';
 import { ChiefGears } from '../../game/chiefGear';
 import { ResearchTechs } from '../../game/research';
 import { Talents } from '../../game/talents';
@@ -15,7 +15,7 @@ import { AllianceTechs } from '../../game/allianceTech';
 import { AnalysisCenters } from '../../game/analysisCenters';
 import { BuildingName, Buildings } from '../../game/buildings';
 import { ChiefBadges } from '../../game/badges';
-import { HeroRanks } from '../../game/heroes';
+import { HeroName, HeroRanks, HeroType } from '../../game/heroes';
 import { Alliance, selectAllianceByIdOrTag } from '../alliance/allianceSlice';
 import {
     Chief,
@@ -27,6 +27,7 @@ import {
     selectChiefs
 } from './chiefSlice';
 import { LeveledBonusProviderList, StatBonusList } from '../bonus/BonusList';
+import HeroSelector from '../heroes/HeroSelector';
 import styles from './Chief.module.css';
 
 const getChiefDisplayName = (chief: Chief, alliance: Alliance | null): string => {
@@ -47,12 +48,37 @@ function getAllianceBonuses(alliance: Alliance) {
     ];
 }
 
-function getChiefBonuses(chief: Chief) {
+function getChiefBonuses(chief: Chief, brawlerHero: HeroName | null, marksmanHero: HeroName | null, scoutHero: HeroName | null) {
     const vipLevel = getVipLevel(chief.vipLevel);
+    const heroBonuses = [];
+    if (brawlerHero) {
+        heroBonuses.push(...getBonusesFrom(HeroRanks[brawlerHero], 1, chief.heroRanks[brawlerHero]));
+        heroBonuses.push(...aggregateBonuses(chief.heroGear, {
+            [HeroGearSlot.BrawlerHead]: HeroGears[HeroGearSlot.BrawlerHead],
+            [HeroGearSlot.BrawlerBody]: HeroGears[HeroGearSlot.BrawlerBody],
+            [HeroGearSlot.BrawlerFoot]: HeroGears[HeroGearSlot.BrawlerFoot]
+        }));
+    }
+    if (marksmanHero) {
+        heroBonuses.push(...getBonusesFrom(HeroRanks[marksmanHero], 1, chief.heroRanks[marksmanHero]));
+        heroBonuses.push(...aggregateBonuses(chief.heroGear, {
+            [HeroGearSlot.MarksmanHead]: HeroGears[HeroGearSlot.MarksmanHead],
+            [HeroGearSlot.MarksmanBody]: HeroGears[HeroGearSlot.MarksmanBody],
+            [HeroGearSlot.MarksmanFoot]: HeroGears[HeroGearSlot.MarksmanFoot]
+        }));
+    }
+    if (scoutHero) {
+        heroBonuses.push(...getBonusesFrom(HeroRanks[scoutHero], 1, chief.heroRanks[scoutHero]));
+        heroBonuses.push(...aggregateBonuses(chief.heroGear, {
+            [HeroGearSlot.ScoutHead]: HeroGears[HeroGearSlot.ScoutHead],
+            [HeroGearSlot.ScoutBody]: HeroGears[HeroGearSlot.ScoutBody],
+            [HeroGearSlot.ScoutFoot]: HeroGears[HeroGearSlot.ScoutFoot]
+        }));
+    }
     return [
         ...vipLevel.bonuses,
+        ...heroBonuses,
         ...aggregateBonuses(chief.chiefGear, ChiefGears),
-        ...aggregateBonuses(chief.heroGear, HeroGears),
         ...aggregateBonuses(chief.research, ResearchTechs),
         ...aggregateBonuses(chief.talents, Talents),
         ...aggregateBonuses(chief.buildings, Buildings),
@@ -79,11 +105,37 @@ function subPanelOf<T extends SubComponentProps>(Component: React.ComponentType<
 }
 
 export const ChiefStatsPanel = subPanelOf(({chief, alliance}) => {
+    const [brawlerHero, setBrawlerHero] = useState(null as HeroName | null);
+    const [marksmanHero, setMarksmanHero] = useState(null as HeroName | null);
+    const [scoutHero, setScoutHero] = useState(null as HeroName | null);
+
     const allianceBonuses = alliance ? getAllianceBonuses(alliance) : [];
-    const statBonuses = [...getChiefBonuses(chief), ...allianceBonuses];
+    const statBonuses = [...getChiefBonuses(chief, brawlerHero, marksmanHero, scoutHero), ...allianceBonuses];
+    const heroFilter = (type: HeroType) =>{
+        return (name: HeroName) => HeroRanks[name].type === type && chief.heroRanks[name] > 0;
+    }
+
     return (
         <section>
             <h2>Stat Bonuses</h2>
+            <section>
+                <h3>Options</h3>
+                <label>
+                    <span>Brawler</span>
+                    <HeroSelector value={brawlerHero} filter={heroFilter(HeroType.Brawler)}
+                        onChange={name => setBrawlerHero(name)}/>
+                </label>
+                <label>
+                    <span>Marksman</span>
+                    <HeroSelector value={marksmanHero} filter={heroFilter(HeroType.Marksman)}
+                        onChange={setMarksmanHero}/>
+                </label>
+                <label>
+                    <span>Scout</span>
+                    <HeroSelector value={scoutHero} filter={heroFilter(HeroType.Scout)}
+                        onChange={setScoutHero}/>
+                </label>
+            </section>
             <StatBonusList bonuses={statBonuses}/>
         </section>
     );

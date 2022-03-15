@@ -141,7 +141,7 @@ export function BonusList({bonuses, classNames, hideValue, children, groupBy, or
 
 const BonusValue = (props: { stat: Stat, value: number }) => {
     const {stat, value} = props;
-    return <span className={styles.bonusValue + (value < 0 ? styles.penaltyValue : '')}>{getDisplayValue(stat, value)}</span>;
+    return <span className={styles.bonusValue}>{getDisplayValue(stat, value)}</span>;
 }
 
 type PopoverData = { x: number, y: number, show: boolean, timeoutId: number | null };

@@ -109,14 +109,14 @@ export function aggregateSimpleBonuses<T extends string>(state: Record<T, boolea
     }, [] as Bonus[]);
 }
 
-export function aggregateBonuses<T extends string>(levels: {[key in T]: number}, sources: {[key in T]: LeveledBonusProvider}): Bonus[] {
-    return Object.entries(levels)
-            .filter(entry => {
-                const level = entry[1] as number;
-                return level > 0;
-            })
+export function aggregateBonuses<T extends string>(levels: Partial<Record<T, number>>, sources: Partial<Record<T, LeveledBonusProvider>>): Bonus[] {
+    return Object.entries(sources)
             .reduce((result, entry) => {
-                const [name, level] = entry as [T, number];
-                return [...result, ...getBonusesFrom(sources[name], 1, level)];
+                const [key, source] = entry as [T, LeveledBonusProvider];
+                const level = (key in levels ? levels[key] : 0);
+                if (level > 0) {
+                    return [...result, ...getBonusesFrom(source, 1, level)];
+                }
+                return result;
             }, [] as Bonus[]);
 }

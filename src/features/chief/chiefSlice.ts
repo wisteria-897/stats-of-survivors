@@ -78,7 +78,7 @@ export const chiefStatePersister = createPersister('chief', initialState, undefi
             [HeroGearSlot.BrawlerFoot]: maybeUpgradeEntry(chief.heroGear, 0, HeroGearSlot.BrawlerFoot, 'Brawler/Foot'),
             [HeroGearSlot.MarksmanHead]: maybeUpgradeEntry(chief.heroGear, 0, HeroGearSlot.MarksmanHead, 'Marksman/Head'),
             [HeroGearSlot.MarksmanBody]: maybeUpgradeEntry(chief.heroGear, 0, HeroGearSlot.MarksmanBody, 'Marksman/Body'),
-            [HeroGearSlot.MarksmanFoot]: maybeUpgradeEntry(chief.heroGear, 0, HeroGearSlot.MarksmanFoot, 'Marksman/Foot'),
+            [HeroGearSlot.MarksmanFoot]: maybeUpgradeEntry(chief.heroGear, 0, HeroGearSlot.MarksmanFoot, 'marksman boots', 'Marksman/Foot'),
             [HeroGearSlot.ScoutHead]: maybeUpgradeEntry(chief.heroGear, 0, HeroGearSlot.ScoutHead, 'Scout/Head'),
             [HeroGearSlot.ScoutBody]: maybeUpgradeEntry(chief.heroGear, 0, HeroGearSlot.ScoutBody, 'Scout/Body'),
             [HeroGearSlot.ScoutFoot]: maybeUpgradeEntry(chief.heroGear, 0, HeroGearSlot.ScoutFoot, 'Scout/Foot')

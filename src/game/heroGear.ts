@@ -14,7 +14,7 @@ export enum HeroGearSlot {
     BrawlerFoot = 'Brawler Boots',
     MarksmanHead = 'Marksman Scope',
     MarksmanBody = 'Marksman Camouflage',
-    MarksmanFoot = 'marksman Boots',
+    MarksmanFoot = 'Marksman Boots',
     ScoutHead = 'Scout Night-vision Goggles',
     ScoutBody = 'Scout Top',
     ScoutFoot = 'Scout Slippers'
