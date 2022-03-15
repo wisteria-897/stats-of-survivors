@@ -48,9 +48,10 @@ function getAllianceBonuses(alliance: Alliance) {
     ];
 }
 
-function getChiefBonuses(chief: Chief, brawlerHero: HeroName | null, marksmanHero: HeroName | null, scoutHero: HeroName | null) {
+function getChiefBonuses(chief: Chief) {
     const vipLevel = getVipLevel(chief.vipLevel);
     const heroBonuses = [];
+    const brawlerHero = chief.statsHeroes[HeroType.Brawler];
     if (brawlerHero) {
         heroBonuses.push(...getBonusesFrom(HeroRanks[brawlerHero], 1, chief.heroRanks[brawlerHero]));
         heroBonuses.push(...aggregateBonuses(chief.heroGear, {
@@ -59,6 +60,7 @@ function getChiefBonuses(chief: Chief, brawlerHero: HeroName | null, marksmanHer
             [HeroGearSlot.BrawlerFoot]: HeroGears[HeroGearSlot.BrawlerFoot]
         }));
     }
+    const marksmanHero = chief.statsHeroes[HeroType.Marksman];
     if (marksmanHero) {
         heroBonuses.push(...getBonusesFrom(HeroRanks[marksmanHero], 1, chief.heroRanks[marksmanHero]));
         heroBonuses.push(...aggregateBonuses(chief.heroGear, {
@@ -67,6 +69,7 @@ function getChiefBonuses(chief: Chief, brawlerHero: HeroName | null, marksmanHer
             [HeroGearSlot.MarksmanFoot]: HeroGears[HeroGearSlot.MarksmanFoot]
         }));
     }
+    const scoutHero = chief.statsHeroes[HeroType.Scout];
     if (scoutHero) {
         heroBonuses.push(...getBonusesFrom(HeroRanks[scoutHero], 1, chief.heroRanks[scoutHero]));
         heroBonuses.push(...aggregateBonuses(chief.heroGear, {
@@ -104,15 +107,18 @@ function subPanelOf<T extends SubComponentProps>(Component: React.ComponentType<
     }
 }
 
-export const ChiefStatsPanel = subPanelOf(({chief, alliance}) => {
-    const [brawlerHero, setBrawlerHero] = useState(null as HeroName | null);
-    const [marksmanHero, setMarksmanHero] = useState(null as HeroName | null);
-    const [scoutHero, setScoutHero] = useState(null as HeroName | null);
-
+export const ChiefStatsPanel = subPanelOf(({chief, alliance, dispatch}) => {
     const allianceBonuses = alliance ? getAllianceBonuses(alliance) : [];
-    const statBonuses = [...getChiefBonuses(chief, brawlerHero, marksmanHero, scoutHero), ...allianceBonuses];
-    const heroFilter = (type: HeroType) =>{
+    const statBonuses = [...getChiefBonuses(chief), ...allianceBonuses];
+    const heroFilter = (type: HeroType) => {
         return (name: HeroName) => HeroRanks[name].type === type && chief.heroRanks[name] > 0;
+    }
+
+    const onSelectHero = (type: HeroType) => {
+        return (name: HeroName | null) => {
+            const update = {statsHeroes: Object.assign({}, chief.statsHeroes, {[type]: name})};
+            dispatch(partialUpdateChief({id: chief.id, value: update}));
+        }
     }
 
     return (
@@ -122,18 +128,21 @@ export const ChiefStatsPanel = subPanelOf(({chief, alliance}) => {
                 <h3>Options</h3>
                 <label>
                     <span>Brawler</span>
-                    <HeroSelector value={brawlerHero} filter={heroFilter(HeroType.Brawler)}
-                        onChange={name => setBrawlerHero(name)}/>
+                    <HeroSelector value={chief.statsHeroes[HeroType.Brawler]}
+                        filter={heroFilter(HeroType.Brawler)}
+                        onChange={onSelectHero(HeroType.Brawler)}/>
                 </label>
                 <label>
                     <span>Marksman</span>
-                    <HeroSelector value={marksmanHero} filter={heroFilter(HeroType.Marksman)}
-                        onChange={setMarksmanHero}/>
+                    <HeroSelector value={chief.statsHeroes[HeroType.Marksman]}
+                        filter={heroFilter(HeroType.Marksman)}
+                        onChange={onSelectHero(HeroType.Marksman)}/>
                 </label>
                 <label>
                     <span>Scout</span>
-                    <HeroSelector value={scoutHero} filter={heroFilter(HeroType.Scout)}
-                        onChange={setScoutHero}/>
+                    <HeroSelector value={chief.statsHeroes[HeroType.Scout]}
+                        filter={heroFilter(HeroType.Scout)}
+                        onChange={onSelectHero(HeroType.Scout)}/>
                 </label>
             </section>
             <StatBonusList bonuses={statBonuses}/>

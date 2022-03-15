@@ -32,12 +32,12 @@ type BadgeLevelData = {bonusValue: number, tier: BadgeTier, tierLevel: number}
 
 const allLevelData: BadgeLevelData[] = [
     {bonusValue: 8850, tier: BadgeTier.Mercenary, tierLevel: 1},
-    {bonusValue: 12390, tier: BadgeTier.Mercenary, tierLevel: 2},
-    {bonusValue: 15930, tier: BadgeTier.Officer, tierLevel: 1},
-    {bonusValue: 21240, tier: BadgeTier.Officer, tierLevel: 2},
-    {bonusValue: 24780, tier: BadgeTier.Commander, tierLevel: 1},
-    {bonusValue: 30090, tier: BadgeTier.Commander, tierLevel: 2},
-    {bonusValue: 35390, tier: BadgeTier.Commander, tierLevel: 3}
+    {bonusValue: 3540, tier: BadgeTier.Mercenary, tierLevel: 2},
+    {bonusValue: 3540, tier: BadgeTier.Officer, tierLevel: 1},
+    {bonusValue: 5310, tier: BadgeTier.Officer, tierLevel: 2},
+    {bonusValue: 3540, tier: BadgeTier.Commander, tierLevel: 1},
+    {bonusValue: 5310, tier: BadgeTier.Commander, tierLevel: 2},
+    {bonusValue: 5300, tier: BadgeTier.Commander, tierLevel: 3}
 ];
 
 export class ChiefBadge {

@@ -9,7 +9,7 @@ import { ResearchTechName, ResearchTechs } from '../../game/research';
 import { TalentName, Talents } from '../../game/talents';
 import { BuildingName, Buildings } from '../../game/buildings';
 import { ChiefBadgeSlot, ChiefBadges } from '../../game/badges';
-import { HeroName, HeroRanks } from '../../game/heroes';
+import { HeroName, HeroRanks, HeroType } from '../../game/heroes';
 const uuid = require('uuid');
 
 console.log(HeroRanks);
@@ -27,6 +27,7 @@ export interface Chief {
     buildings: { [key in BuildingName]: number };
     badges: { [key in ChiefBadgeSlot]: number };
     heroRanks: Record<HeroName, number>;
+    statsHeroes: Record<HeroType, HeroName | null>;
 }
 
 export interface ChiefState {
@@ -52,6 +53,7 @@ const defaultChief: Chief = {
     talents: enumMapOf(Talents, 0),
     buildings: enumMapOf(Buildings, 0),
     heroRanks: enumMapOf(HeroRanks, 0),
+    statsHeroes: enumMapOf(HeroType, null)
 }
 
 const maybeUpgradeEntry = <T>(o: {[key: string]: T} | undefined, defaultValue: T, ...keys: string[]) => {
