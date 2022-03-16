@@ -111,10 +111,6 @@ export class HeroGearLevel {
         return SourceCategory.HeroGear;
     }
 
-    get bonusValues() {
-        return this.bonuses.map(b => b.value);
-    }
-
     get provider() {
         return this.gear;
     }

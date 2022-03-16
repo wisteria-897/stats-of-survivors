@@ -1,5 +1,5 @@
 import { Stat } from './stat';
-import { TypeSafe } from '../util/itertools';
+import { chainable, TypeSafe } from '../util/itertools';
 
 export type Tier = {
     name: TierName;
@@ -100,7 +100,6 @@ export type BonusProviderLevel = SimpleBonusSource & {
     name: string;
     level: number;
     tierLevel: TierLevel | null;
-    bonusValues: number[];
     bonuses: Bonus[];
 }
 
@@ -112,12 +111,19 @@ export function getBonusesFrom(source: LeveledBonusProvider, startLevel: number,
     }
     const resolvedEndLevel = (endLevel === undefined ? startLevel : endLevel);
     const levels = source.levels.slice(startLevel - 1, resolvedEndLevel);
-    return source.stats.map((stat, index) => {
-        const value = levels.reduce((total, level) => {
-            return total + level.bonusValues[index];
-        }, 0);
-        return {stat, value, source: {source, startLevel, endLevel: resolvedEndLevel}};
-    });
+    const leveledSource = {source, startLevel, endLevel: resolvedEndLevel};
+    const statBonuses = levels.flatMap(l => l.bonuses)
+        .reduce((bonusValues, bonus) => {
+            if (!bonusValues.has(bonus.stat)) {
+                bonusValues.set(bonus.stat, 0);
+            }
+            const currentValue = bonusValues.get(bonus.stat) as number;
+            bonusValues.set(bonus.stat, currentValue + bonus.value);
+            return bonusValues;
+        }, new Map<Stat, number>());
+    return chainable(() => statBonuses.entries())
+        .map(([stat, value]) => new Bonus(stat, value, leveledSource))
+        .asArray();
 }
 
 export function aggregateSimpleBonuses<T extends string>(state: Record<T, boolean>, sources: Record<T, SimpleBonusSource>) {

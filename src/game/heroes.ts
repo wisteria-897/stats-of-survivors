@@ -61,7 +61,6 @@ const buildHeroRanks = (name: HeroName, type: HeroType, tier: Tier, stats: Stat[
         let rank: BonusProviderLevel = {
             provider,
             tier,
-            bonusValues,
             level: i + 1,
             tierLevel: {tier: tier, level: 1},
             category: SourceCategory.Heroes,

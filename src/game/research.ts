@@ -251,10 +251,6 @@ export class ResearchTechLevel {
     get tierLevel() {
         return null;
     }
-
-    get bonusValues() {
-        return this.bonuses.map(b => b.value);
-    }
 }
 
 export const ResearchTechs = {

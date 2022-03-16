@@ -185,10 +185,6 @@ export class TalentLevel {
         return this.talent;
     }
 
-    get bonusValues() {
-        return this.bonuses.map(b => b.value);
-    }
-
     get tierLevel() {
         return null;
     }

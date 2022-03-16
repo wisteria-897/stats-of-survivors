@@ -57,10 +57,6 @@ export class ChiefGearLevel {
         return SourceCategory.ChiefGear;
     }
 
-    get bonusValues() {
-        return this.bonuses.map(b => b.value);
-    }
-
     get provider() {
         return this.gear;
     }

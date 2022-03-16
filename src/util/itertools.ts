@@ -122,5 +122,9 @@ export const TypeSafe = {
             keys.push(key);
         }
         return keys;
+    },
+
+    values: <K extends Keyable, V>(obj: Record<K, V>): V[] => {
+        return TypeSafe.keys(obj).map(k => obj[k]);
     }
 }

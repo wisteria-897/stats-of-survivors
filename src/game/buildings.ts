@@ -75,10 +75,6 @@ export class BuildingLevel {
         return Tiers.Common;
     }
 
-    get bonusValues() {
-        return this.bonuses.map(b => b.value);
-    }
-
     get provider() {
         return this.building;
     }

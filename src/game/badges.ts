@@ -91,10 +91,6 @@ export class ChiefBadgeLevel {
         return null;
     }
 
-    get bonusValues() {
-        return this.bonuses.map(b => b.value);
-    }
-
     get provider() {
         return this.badge;
     }
