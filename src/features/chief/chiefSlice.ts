@@ -28,6 +28,9 @@ export interface Chief {
     badges: { [key in ChiefBadgeSlot]: number };
     heroRanks: Record<HeroName, number>;
     statsHeroes: Record<HeroType, HeroName | null>;
+    frameSkins: Record<string, boolean>;
+    hqSkins: Record<string, boolean>;
+    marchSkins: Record<string, boolean>;
 }
 
 export interface ChiefState {
@@ -53,7 +56,10 @@ const defaultChief: Chief = {
     talents: enumMapOf(Talents, 0),
     buildings: enumMapOf(Buildings, 0),
     heroRanks: enumMapOf(HeroRanks, 0),
-    statsHeroes: enumMapOf(HeroType, null)
+    statsHeroes: enumMapOf(HeroType, null),
+    frameSkins: {} as Record<string, boolean>,
+    hqSkins: {} as Record<string, boolean>,
+    marchSkins: {} as Record<string, boolean>
 }
 
 const maybeUpgradeEntry = <T>(o: {[key: string]: T} | undefined, defaultValue: T, ...keys: string[]) => {

@@ -33,7 +33,8 @@ export enum SourceCategory {
     Heroes = 'Heroes',
     ChiefBuffs = 'Chief Buffs',
     StateBuffs = 'State Buffs',
-    AnalysisCenters = 'Analysis Centers'
+    AnalysisCenters = 'Analysis Centers',
+    Skins = 'Skins'
 }
 
 export interface SimpleBonusSource {

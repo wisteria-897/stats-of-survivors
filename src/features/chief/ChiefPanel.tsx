@@ -16,6 +16,7 @@ import { AnalysisCenters } from '../../game/analysisCenters';
 import { BuildingName, Buildings } from '../../game/buildings';
 import { ChiefBadges } from '../../game/badges';
 import { HeroName, HeroRanks, HeroType } from '../../game/heroes';
+import { aggregateSkinBonuses, FrameSkins, HQSkins, MarchSkins } from '../../game/skins';
 import { Alliance, selectAllianceByIdOrTag } from '../alliance/allianceSlice';
 import {
     Chief,
@@ -26,7 +27,7 @@ import {
     selectChief,
     selectChiefs
 } from './chiefSlice';
-import { LeveledBonusProviderList, StatBonusList } from '../bonus/BonusList';
+import { LeveledBonusProviderList, SimpleBonusSourceList, StatBonusList } from '../bonus/BonusList';
 import HeroSelector from '../heroes/HeroSelector';
 import styles from './Chief.module.css';
 
@@ -86,7 +87,8 @@ function getChiefBonuses(chief: Chief) {
         ...aggregateBonuses(chief.research, ResearchTechs),
         ...aggregateBonuses(chief.talents, Talents),
         ...aggregateBonuses(chief.buildings, Buildings),
-        ...aggregateBonuses(chief.badges, ChiefBadges)
+        ...aggregateBonuses(chief.badges, ChiefBadges),
+        ...aggregateSkinBonuses(chief.hqSkins, chief.marchSkins, chief.frameSkins)
     ];
 }
 
@@ -150,6 +152,29 @@ export const ChiefStatsPanel = subPanelOf(({chief, alliance, dispatch}) => {
         </section>
     );
 });
+
+export const SkinsPanel = subPanelOf(({chief, dispatch}) => (
+    <>
+        <section>
+            <h2>HQ Skins</h2>
+            <SimpleBonusSourceList sources={HQSkins} state={chief.hqSkins}
+                onChange={hqSkins => dispatch(partialUpdateChief({id: chief.id, value: {hqSkins}}))}
+            />
+        </section>
+        <section>
+            <h2>March Skins</h2>
+            <SimpleBonusSourceList sources={MarchSkins} state={chief.marchSkins}
+                onChange={marchSkins => dispatch(partialUpdateChief({id: chief.id, value: {marchSkins}}))}
+            />
+        </section>
+        <section>
+            <h2>Frame Skins</h2>
+            <SimpleBonusSourceList sources={FrameSkins} state={chief.frameSkins}
+                onChange={frameSkins => dispatch(partialUpdateChief({id: chief.id, value: {frameSkins}}))}
+            />
+        </section>
+    </>
+));
 
 export const HeroesPanel = subPanelOf(({chief, dispatch}) => (
     <section>
@@ -256,6 +281,7 @@ export const ChiefDisplayPanel = () => {
                     <NavItem to={`/chiefs/${chief.id}/research`}>Research</NavItem>
                     <NavItem to={`/chiefs/${chief.id}/talents`}>Talents</NavItem>
                     <NavItem to={`/chiefs/${chief.id}/buildings`}>Buildings</NavItem>
+                    <NavItem to={`/chiefs/${chief.id}/skins`}>Skins</NavItem>
                 </SubNavigation>
             </header>
             <Outlet/>

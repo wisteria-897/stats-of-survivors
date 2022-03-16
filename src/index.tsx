@@ -5,7 +5,7 @@ import App from './App';
 import { store } from './app/store';
 import { Provider } from 'react-redux';
 import { HashRouter, Routes, Route } from 'react-router-dom';
-import { BuildingsPanel, ChiefBasicsPanel, ChiefDisplayPanel, ChiefGearPanel, ChiefList, ChiefResearchPanel, ChiefStatsPanel, HeroGearPanel, HeroesPanel, TalentsPanel } from './features/chief/ChiefPanel';
+import { BuildingsPanel, ChiefBasicsPanel, ChiefDisplayPanel, ChiefGearPanel, ChiefList, ChiefResearchPanel, ChiefStatsPanel, HeroGearPanel, HeroesPanel, SkinsPanel, TalentsPanel } from './features/chief/ChiefPanel';
 import { AllianceBasicsPanel, AllianceDisplayPanel, AllianceList, AllianceStatsPanel, AllianceTechPanel, AnalysisCentersPanel } from './features/alliance/AlliancePanel';
 import { TroopPanel } from './features/troops/TroopPanel';
 import SpeedUpPanel from './features/speedups/SpeedUpPanel';
@@ -29,6 +29,7 @@ ReactDOM.render(
                                 <Route path="research" element={<ChiefResearchPanel/>}/>
                                 <Route path="talents" element={<TalentsPanel/>}/>
                                 <Route path="buildings" element={<BuildingsPanel/>}/>
+                                <Route path="skins" element={<SkinsPanel/>}/>
                             </Route>
                         </Route>
                         <Route path="alliances">

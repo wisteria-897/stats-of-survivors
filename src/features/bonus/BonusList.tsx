@@ -363,13 +363,13 @@ type SimpleBonusSourceListProps<T extends string, U extends SimpleBonusSource> =
 export function SimpleBonusSourceList<T extends string, U extends SimpleBonusSource>(
     {sources, state, onChange}: SimpleBonusSourceListProps<T, U>
 ) {
-    const checkboxes = Object.keys(state).map(key => {
+    const checkboxes = Object.keys(sources).map(key => {
         const sourceKey = key as T;
         return (
             <li key={sourceKey}>
                 <BonusSourceCheckbox
                     source={sources[sourceKey]}
-                    checked={state[sourceKey]}
+                    checked={sourceKey in state && state[sourceKey]}
                     onChange={(source, checked) => {
                         onChange(Object.assign({}, state, {[sourceKey]: checked}));
                     }}
