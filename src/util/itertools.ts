@@ -101,3 +101,26 @@ export class ChainableIterable<T> implements Iterable<T> {
 export const chainable = <T>(source: IterableProvider<T>): ChainableIterable<T> => {
     return new ChainableIterable(source);
 };
+
+type Entry<K, V> = [K, V];
+type Keyable = string | number | symbol;
+export const TypeSafe = {
+    entries: <K extends Keyable, V>(obj: Partial<Record<K, V>>): Entry<K, V>[] => {
+        const entries: Entry<K, V>[] = [];
+        for (const key in obj) {
+            if (obj[key] !== undefined) {
+                const value = obj[key] as V;
+                entries.push([key, value]);
+            }
+        }
+        return entries;
+    },
+
+    keys: <K extends Keyable, V>(obj: Record<K, V>): K[] => {
+        const keys: K[] = [];
+        for (const key in obj) {
+            keys.push(key);
+        }
+        return keys;
+    }
+}

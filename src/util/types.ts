@@ -1,3 +1,5 @@
+import { TypeSafe } from './itertools';
+
 export type EnumMap<TKey extends string, TValue> = {[key in TKey]: TValue};
 export type PartialEnumMap<TKey extends string, TValue> = {[key in TKey]?: TValue};
 
@@ -14,8 +16,7 @@ export function enumMapOf<
         valueFn = (k: T, v: U): V => value;
     }
 
-    const entries = Object.entries(source).map(entry => {
-        const [k, v] =  entry as [T, U];
+    const entries = TypeSafe.entries<T, U>(source).map(([k, v]) => {
         return [k, valueFn(k, v)];
     });
     return Object.fromEntries(entries) as EnumMap<T, V>;

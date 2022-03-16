@@ -1,4 +1,5 @@
 import { Stat } from './stat';
+import { TypeSafe } from '../util/itertools';
 
 export type Tier = {
     name: TierName;
@@ -120,18 +121,17 @@ export function getBonusesFrom(source: LeveledBonusProvider, startLevel: number,
 }
 
 export function aggregateSimpleBonuses<T extends string>(state: Record<T, boolean>, sources: Record<T, SimpleBonusSource>) {
-    return Object.keys(state)
-        .filter(key => !!state[key as T])
-        .map(key => sources[key as T].bonuses)
+    return TypeSafe.keys(state)
+        .filter(key => !!state[key])
+        .map(key => sources[key].bonuses)
         .reduce((result, bonuses) => {
             return [...result, ...bonuses];
-    }, [] as Bonus[]);
+        }, [] as Bonus[]);
 }
 
-export function aggregateBonuses<T extends string>(levels: Partial<Record<T, number>>, sources: Partial<Record<T, LeveledBonusProvider>>): Bonus[] {
-    return Object.entries(sources)
-            .reduce((result, entry) => {
-                const [key, source] = entry as [T, LeveledBonusProvider];
+export function aggregateBonuses<T extends string>(levels: Record<T, number>, sources: Partial<Record<T, LeveledBonusProvider>>): Bonus[] {
+    return TypeSafe.entries<T, LeveledBonusProvider>(sources)
+            .reduce((result, [key, source]) => {
                 const level = (key in levels ? levels[key] : 0);
                 if (level > 0) {
                     return [...result, ...getBonusesFrom(source, 1, level)];

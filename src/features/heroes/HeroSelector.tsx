@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { TypeSafe } from '../../util/itertools';
 import { HeroName, HeroRanks } from '../../game/heroes';
 
 type HeroSelectorProps = {
@@ -19,7 +20,7 @@ export default function HeroSelector({value, filter, onChange}: HeroSelectorProp
     return (
         <select value={selectedId} onChange={(e) => onSelectChange(e.target.value)}>
             <option value={NONE_VALUE}>&lt;None&gt;</option>
-            {Object.keys(HeroRanks).filter(name => filter(name as HeroName)).map(name => (
+            {TypeSafe.keys(HeroRanks).filter(filter).map(name => (
                 <option key={name} value={name}>{name}</option>
             ))}
         </select>

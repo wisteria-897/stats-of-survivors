@@ -1,3 +1,4 @@
+import { TypeSafe } from '../util/itertools';
 import { enumMapOf } from '../util/types';
 import { Stat, Stats } from './stat';
 import { sortByTier, Bonus, SimpleBonusSource, SourceCategory, Tier, TierName, Tiers } from './bonus';
@@ -78,8 +79,7 @@ const SetBonusValues = [6230,5010,3940,2870,2070]
 export function getSetBonuses(chiefGear: Record<ChiefGearSlot, number>): Bonus[] {
     const bonusLevelCounts = [0,0,0,0,0];
     const tierCounts = enumMapOf(Tiers, 0);
-    Object.entries(chiefGear).forEach(entry => {
-        const [slot, level] = entry as [ChiefGearSlot, number];
+    TypeSafe.entries(chiefGear).forEach(([slot, level]) => {
         if (level > 0) {
             const gear = ChiefGears[slot].levels[level - 1];
             tierCounts[gear.tier.name] += 1;
@@ -110,7 +110,7 @@ export function getSetBonuses(chiefGear: Record<ChiefGearSlot, number>): Bonus[]
 
     const setBonuses = [];
     const threePieceLevel = bonusLevelCounts.findIndex(count => count >= 3);
-    const orderedTierCounts = Object.entries(tierCounts).sort((a, b) => sortByTier(a[0], b[0]));
+    const orderedTierCounts = TypeSafe.entries(tierCounts).sort((a, b) => sortByTier(a[0], b[0]));
     if (threePieceLevel >= 0) {
         const sourceTierEntry = orderedTierCounts.find(entry => entry[1] > 3) as [TierName, number];
         const source: SimpleBonusSource = {

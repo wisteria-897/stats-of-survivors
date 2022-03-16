@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { TypeSafe } from '../../util/itertools';
 import { FunctionButton } from '../../ui/button/Button';
 import { Stat, StatUnit, StatCategorySort } from '../../game/stat';
 import { SimpleBonusSource, LeveledBonusProvider, Tier, groupBonuses, getBonusesFrom, Bonus, BonusSource } from '../../game/bonus';
@@ -363,15 +364,12 @@ type SimpleBonusSourceListProps<T extends string, U extends SimpleBonusSource> =
 export function SimpleBonusSourceList<T extends string, U extends SimpleBonusSource>(
     {sources, state, onChange}: SimpleBonusSourceListProps<T, U>
 ) {
-    const checkboxes = Object.keys(sources).map(key => {
-        const sourceKey = key as T;
+    const checkboxes = TypeSafe.keys(sources).map(key => {
         return (
-            <li key={sourceKey}>
-                <BonusSourceCheckbox
-                    source={sources[sourceKey]}
-                    checked={sourceKey in state && state[sourceKey]}
+            <li key={key}>
+                <BonusSourceCheckbox source={sources[key]} checked={key in state && state[key]}
                     onChange={(source, checked) => {
-                        onChange(Object.assign({}, state, {[sourceKey]: checked}));
+                        onChange(Object.assign({}, state, {[key]: checked}));
                     }}
                 />
             </li>
@@ -389,8 +387,7 @@ type LeveledBonusProviderListProps<T extends string, U extends LeveledBonusProvi
 export function LeveledBonusProviderList<T extends string, U extends LeveledBonusProvider>(
     {providers, levels, onChange}: LeveledBonusProviderListProps<T, U>
 ) {
-    const selectors = Object.keys(levels).map(key => {
-        const slot = key as T;
+    const selectors = TypeSafe.keys(levels).map(slot => {
         return (
             <li key={slot}>
                 <BonusProviderLevelSelector provider={providers[slot]} level={levels[slot]}
