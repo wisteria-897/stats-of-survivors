@@ -1,0 +1,11 @@
+.homePanel {
+    flex-flow: 1 1 0;
+    display: flex;
+    flex-flow: column nowrap;
+}
+
+.subPanel {
+    flex: 1 1 0;
+    flex-basis: 0;
+    overflow: hidden scroll;
+}
