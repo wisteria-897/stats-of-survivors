@@ -125,4 +125,8 @@ export const Stats = {
     TroopInfectedDefense: new Stat('Troop Infected Defense', StatCategory.Military),
     TroopInfectedHealth: new Stat('Troop Infected Health', StatCategory.Military),
     TroopInfectedLethality: new Stat('Troop Infected Lethality', StatCategory.Military),
+    RallyTroopAttack: new Stat('Rally Troop Attack', StatCategory.Military),
+    RallyTroopDefense: new Stat('Rally Troop Defense', StatCategory.Military),
+    RallyTroopHealth: new Stat('Rally Troop Health', StatCategory.Military),
+    RallyTroopLethality: new Stat('Rally Troop Lethality', StatCategory.Military)
 };

@@ -13,12 +13,13 @@ export default function HomePanel() {
                         <ul>
                             <li>Talents</li>
                             <li>Research</li>
-                            <li>Settlement buildings</li>
-                            <li>HQ, march, and frame skins</li>
+                            <li>Settlement buildings up to level 30 (up to P5 for HQ and Hero Precinct)</li>
+                            <li>HQ, march, and frame skins, including bonus caps</li>
                             <li>VIP level</li>
                             <li>Chief gear, including set bonuses</li>
                             <li>Badges</li>
-                            <li>Hero ranks and gear</li>
+                            <li>Hero ranks (note: secondary hero rank bonuses like Rally Troop Attack are mostly missing, since I don't have good data for them)</li>
+                            <li>Hero gear; only applies in stats calculations if you select a hero of the appropriate type</li>
                             <li>Alliance tech</li>
                             <li>Analysis Centers</li>
                         </ul>
