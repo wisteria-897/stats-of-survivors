@@ -78,7 +78,7 @@ const marchSkinData: [string, Stat, number][] = [
 export const MarchSkins: Record<string, Skin> = mapify(marchSkinData.map(args => buildMarchSkin(...args)));
 
 const bonusCaps = {
-    [Stats.TroopAttack.name]: 1500,
+    [Stats.TroopAttack.name]: 150000,
     [Stats.TroopDefense.name]: 150000,
     [Stats.FoodProductionSpeed.name]: 20000,
     [Stats.MarchSpeed.name]: 125000
