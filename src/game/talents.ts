@@ -1,5 +1,11 @@
-import { Bonus, BonusProviderLevel, SourceCategory, Tiers } from './bonus';
+import {
+    SourceCategory,
+    StatBonusProviderLevelImpl,
+    StatLeveledBonusProviderImpl
+} from './bonus';
 import { Stat, Stats } from './stat';
+import { anyOf, hasBonusLevel, noOp } from './requirements';
+import { Chief } from '../features/chief/chiefSlice';
 
 export enum TalentTree {
     War     = 'War',
@@ -112,187 +118,156 @@ export enum TalentName {
     WoodHaulage20      = 'Wood Haulage x20'
 }
 
-export class Talent {
-    readonly name: TalentName;
+const getMaxLevel = (talentName: TalentName) => Talents[talentName].levels.length;
+const getChiefTalents = (chief: Chief) => chief.talents;
+
+type LevelData = {
+    maxLevel: number;
+    stat: Stat;
+    bonusValue: number;
+}
+
+export class Talent extends StatLeveledBonusProviderImpl<Chief, TalentName, TalentLevel> {
     readonly tree: TalentTree;
 
-    constructor(name: TalentName, tree: TalentTree) {
-        this.name = name;
+    constructor(name: TalentName, tree: TalentTree, requirements: TalentName[], levelData?: LevelData) {
+        const bonusValues = (!!levelData
+            ? 'a'.repeat(levelData.maxLevel).split('').map(_ => [levelData.bonusValue])
+            : [[]]
+        );
+        const stats = (!!levelData ? [levelData.stat] : []);
+        const reqs = (requirements.length === 0 
+            ? noOp
+            : anyOf(...requirements.map(talentName => hasBonusLevel(talentName, getMaxLevel, getChiefTalents)))
+        );
+        super(name, stats, bonusValues.map(bv => ({bonusValues: bv})), reqs);
         this.tree = tree;
     }
 
     get category() {
         return SourceCategory.Talents;
     }
-}
 
-export class SkillTalent extends Talent {
-    get stats(): Stat[] {
-        return [];
-    }
-
-    get levels(): BonusProviderLevel[] {
-        return [];
+    get levelClass() {
+        return TalentLevel;
     }
 }
 
 export class StatTalent extends Talent {
-    readonly stat: Stat;
-    readonly levels: TalentLevel[];
-
-    constructor(name: TalentName, tree: TalentTree, stat: Stat, maxLevel: number, bonusValue: number) {
-        super(name, tree);
-        this.stat = stat;
-        this.levels = [];
-        for (let i = 1; i <= maxLevel; i++) {
-            this.levels.push(new TalentLevel(this, i, bonusValue));
-        }
-    }
-
-    get category() {
-        return SourceCategory.Talents;
-    }
-
-    get stats() {
-        return [this.stat];
+    constructor(name: TalentName, tree: TalentTree, stat: Stat, maxLevel: number, bonusValue: number, requirements: TalentName[]) {
+        super(name, tree, requirements, {maxLevel, stat, bonusValue});
     }
 }
 
-export class TalentLevel {
-    readonly talent: StatTalent;
-    readonly level: number;
-    readonly bonuses: Bonus[];
-
-    constructor(talent: StatTalent, level: number, bonusValue: number) {
-        this.talent = talent;
-        this.level = level;
-        this.bonuses = [ new Bonus(talent.stat, bonusValue, this) ];
-    }
-
-    get name() {
-        return this.talent.name + ' ' + String(this.level);
-    }
-
-    get category() {
-        return SourceCategory.Talents;
-    }
-
-    get tier() {
-        return Tiers.Common;
-    }
-
-    get provider() {
-        return this.talent;
-    }
-
-    get tierLevel() {
-        return null;
+export class TalentLevel extends StatBonusProviderLevelImpl<Chief, Talent> {
+    selectLevels(chief: Chief) {
+        return chief.talents;
     }
 }
 
 export const Talents = {
-    [TalentName.BattleDressing3]: new StatTalent(TalentName.BattleDressing3, TalentTree.Economy, Stats.HealingSpeed, 3, 8000),
-    [TalentName.BattleDressing5]: new StatTalent(TalentName.BattleDressing5, TalentTree.Economy, Stats.HealingSpeed, 5, 10000),
-    [TalentName.BattleDressing10]: new StatTalent(TalentName.BattleDressing10, TalentTree.Economy, Stats.HealingSpeed, 10, 12000),
-    [TalentName.BattleDressing20]: new StatTalent(TalentName.BattleDressing20, TalentTree.Economy, Stats.HealingSpeed, 20, 15000),
-    [TalentName.ChargeStrategy3]: new StatTalent(TalentName.ChargeStrategy3, TalentTree.War, Stats.RiderLethality, 3, 400),
-    [TalentName.ChargeStrategy5]: new StatTalent(TalentName.ChargeStrategy5, TalentTree.War, Stats.RiderLethality, 5, 800),
-    [TalentName.ChargeStrategy10]: new StatTalent(TalentName.ChargeStrategy10, TalentTree.War, Stats.RiderLethality, 10, 1200),
-    [TalentName.ChargeStrategy20]: new StatTalent(TalentName.ChargeStrategy20, TalentTree.War, Stats.RiderLethality, 20, 1200),
-    [TalentName.CloseCombat3]: new StatTalent(TalentName.CloseCombat3, TalentTree.War, Stats.InfantryLethality, 3, 300),
-    [TalentName.CloseCombat5]: new StatTalent(TalentName.CloseCombat5, TalentTree.War, Stats.InfantryLethality, 5, 800),
-    [TalentName.CloseCombat10]: new StatTalent(TalentName.CloseCombat10, TalentTree.War, Stats.InfantryLethality, 10, 1000),
-    [TalentName.CloseCombat20]: new StatTalent(TalentName.CloseCombat20, TalentTree.War, Stats.InfantryLethality, 20, 1200),
-    [TalentName.EmergencyDressing]: new SkillTalent(TalentName.EmergencyDressing, TalentTree.War),
-    [TalentName.FertilizerTech3]: new StatTalent(TalentName.FertilizerTech3, TalentTree.Economy, Stats.FoodProductionSpeed, 3, 2000),
-    [TalentName.FertilizerTech5]: new StatTalent(TalentName.FertilizerTech5, TalentTree.Economy, Stats.FoodProductionSpeed, 5, 6000),
-    [TalentName.FertilizerTech10]: new StatTalent(TalentName.FertilizerTech10, TalentTree.Economy, Stats.FoodProductionSpeed, 10, 8000),
-    [TalentName.FertilizerTech20]: new StatTalent(TalentName.FertilizerTech20, TalentTree.Economy, Stats.FoodProductionSpeed, 20, 10000),
-    [TalentName.FoodHaulage3]: new StatTalent(TalentName.FoodHaulage3, TalentTree.Economy, Stats.FoodGatheringSpeed, 3, 1200),
-    [TalentName.FoodHaulage5]: new StatTalent(TalentName.FoodHaulage5, TalentTree.Economy, Stats.FoodGatheringSpeed, 5, 5000),
-    [TalentName.FoodHaulage10]: new StatTalent(TalentName.FoodHaulage10, TalentTree.Economy, Stats.FoodGatheringSpeed, 10, 6000),
-    [TalentName.FoodHaulage20]: new StatTalent(TalentName.FoodHaulage20, TalentTree.Economy, Stats.FoodGatheringSpeed, 20, 8000),
-    [TalentName.GasHaulage10]: new StatTalent(TalentName.GasHaulage10, TalentTree.Economy, Stats.GasGatheringSpeed, 10, 5000),
-    [TalentName.GasHaulage20]: new StatTalent(TalentName.GasHaulage20, TalentTree.Economy, Stats.GasGatheringSpeed, 20, 8000),
-    [TalentName.GunsBlazing3]: new StatTalent(TalentName.GunsBlazing3, TalentTree.War, Stats.InfantryAttack, 3, 300),
-    [TalentName.GunsBlazing5]: new StatTalent(TalentName.GunsBlazing5, TalentTree.War, Stats.InfantryAttack, 5, 600),
-    [TalentName.GunsBlazing10]: new StatTalent(TalentName.GunsBlazing10, TalentTree.War, Stats.InfantryAttack, 10, 1000),
-    [TalentName.GunsBlazing20]: new StatTalent(TalentName.GunsBlazing20, TalentTree.War, Stats.InfantryAttack, 20, 1200),
-    [TalentName.HospitalCapacity3]: new StatTalent(TalentName.HospitalCapacity3, TalentTree.Economy, Stats.HealingCapacity, 3, 50),
-    [TalentName.HospitalCapacity5]: new StatTalent(TalentName.HospitalCapacity5, TalentTree.Economy, Stats.HealingCapacity, 5, 50),
-    [TalentName.HospitalCapacity10]: new StatTalent(TalentName.HospitalCapacity10, TalentTree.Economy, Stats.HealingCapacity, 10, 50),
-    [TalentName.HospitalCapacity20]: new StatTalent(TalentName.HospitalCapacity20, TalentTree.Economy, Stats.HealingCapacity, 20, 50),
-    [TalentName.HunterDefense3]: new StatTalent(TalentName.HunterDefense3, TalentTree.War, Stats.HunterDefense, 3, 500),
-    [TalentName.HunterDefense5]: new StatTalent(TalentName.HunterDefense5, TalentTree.War, Stats.HunterDefense, 5, 600),
-    [TalentName.HunterDefense10]: new StatTalent(TalentName.HunterDefense10, TalentTree.War, Stats.HunterDefense, 10, 1200),
-    [TalentName.HunterDefense20]: new StatTalent(TalentName.HunterDefense20, TalentTree.War, Stats.HunterDefense, 20, 1200),
-    [TalentName.HunterProtection3]: new StatTalent(TalentName.HunterProtection3, TalentTree.War, Stats.HunterHealth, 3, 500),
-    [TalentName.HunterProtection5]: new StatTalent(TalentName.HunterProtection5, TalentTree.War, Stats.HunterHealth, 5, 800),
-    [TalentName.HunterProtection10]: new StatTalent(TalentName.HunterProtection10, TalentTree.War, Stats.HunterHealth, 10, 1200),
-    [TalentName.HunterProtection20]: new StatTalent(TalentName.HunterProtection20, TalentTree.War, Stats.HunterHealth, 20, 1200),
-    [TalentName.InfantryHealth3]: new StatTalent(TalentName.InfantryHealth3, TalentTree.War, Stats.InfantryHealth, 3, 300),
-    [TalentName.InfantryHealth5]: new StatTalent(TalentName.InfantryHealth5, TalentTree.War, Stats.InfantryHealth, 5, 800),
-    [TalentName.InfantryHealth10]: new StatTalent(TalentName.InfantryHealth10, TalentTree.War, Stats.InfantryHealth, 10, 1000),
-    [TalentName.InfantryHealth20]: new StatTalent(TalentName.InfantryHealth20, TalentTree.War, Stats.InfantryHealth, 20, 1200),
-    [TalentName.InstantCollect]: new SkillTalent(TalentName.InstantCollect, TalentTree.Economy),
-    [TalentName.InstantHealing]: new SkillTalent(TalentName.InstantHealing, TalentTree.Economy),
-    [TalentName.LoggingTech3]: new StatTalent(TalentName.LoggingTech3, TalentTree.Economy, Stats.WoodProductionSpeed, 3, 2000),
-    [TalentName.LoggingTech5]: new StatTalent(TalentName.LoggingTech5, TalentTree.Economy, Stats.WoodProductionSpeed, 5, 6000),
-    [TalentName.LoggingTech10]: new StatTalent(TalentName.LoggingTech10, TalentTree.Economy, Stats.WoodProductionSpeed, 10, 8000),
-    [TalentName.LoggingTech20]: new StatTalent(TalentName.LoggingTech20, TalentTree.Economy, Stats.WoodProductionSpeed, 20, 10000),
-    [TalentName.MarchCapacity3]: new StatTalent(TalentName.MarchCapacity3, TalentTree.War, Stats.MarchCapacity, 3, 200),
-    [TalentName.MarchCapacity5]: new StatTalent(TalentName.MarchCapacity5, TalentTree.War, Stats.MarchCapacity, 5, 300),
-    [TalentName.MarchCapacity10]: new StatTalent(TalentName.MarchCapacity10, TalentTree.War, Stats.MarchCapacity, 10, 350),
-    [TalentName.MarchSpeed3]: new StatTalent(TalentName.MarchSpeed3, TalentTree.War, Stats.MarchSpeed, 3, 1000),
-    [TalentName.MassiveMarch]: new SkillTalent(TalentName.MassiveMarch, TalentTree.War),
-    [TalentName.MasterMechanic3]: new StatTalent(TalentName.MasterMechanic3, TalentTree.War, Stats.RiderHealth, 3, 400),
-    [TalentName.MasterMechanic5]: new StatTalent(TalentName.MasterMechanic5, TalentTree.War, Stats.RiderHealth, 5, 800),
-    [TalentName.MasterMechanic10]: new StatTalent(TalentName.MasterMechanic10, TalentTree.War, Stats.RiderHealth, 10, 1200),
-    [TalentName.MasterMechanic20]: new StatTalent(TalentName.MasterMechanic20, TalentTree.War, Stats.RiderHealth, 20, 1200),
-    [TalentName.MeleeDefense3]: new StatTalent(TalentName.MeleeDefense3, TalentTree.War, Stats.InfantryDefense, 3, 300),
-    [TalentName.MeleeDefense5]: new StatTalent(TalentName.MeleeDefense5, TalentTree.War, Stats.InfantryDefense, 5, 600),
-    [TalentName.MeleeDefense10]: new StatTalent(TalentName.MeleeDefense10, TalentTree.War, Stats.InfantryDefense, 10, 1000),
-    [TalentName.MeleeDefense20]: new StatTalent(TalentName.MeleeDefense20, TalentTree.War, Stats.InfantryDefense, 20, 1200),
-    [TalentName.MetalHaulage5]: new StatTalent(TalentName.MetalHaulage5, TalentTree.Economy, Stats.MetalGatheringSpeed, 5, 4000),
-    [TalentName.MetalHaulage10]: new StatTalent(TalentName.MetalHaulage10, TalentTree.Economy, Stats.MetalGatheringSpeed, 10, 8000),
-    [TalentName.MetalHaulage20]: new StatTalent(TalentName.MetalHaulage20, TalentTree.Economy, Stats.MetalGatheringSpeed, 20, 8000),
-    [TalentName.MobileAssault3]: new StatTalent(TalentName.MobileAssault3, TalentTree.War, Stats.RiderAttack, 3, 400),
-    [TalentName.MobileAssault5]: new StatTalent(TalentName.MobileAssault5, TalentTree.War, Stats.RiderAttack, 5, 600),
-    [TalentName.MobileAssault10]: new StatTalent(TalentName.MobileAssault10, TalentTree.War, Stats.RiderAttack, 10, 1200),
-    [TalentName.MobileAssault20]: new StatTalent(TalentName.MobileAssault20, TalentTree.War, Stats.RiderAttack, 20, 1200),
-    [TalentName.OilDrums5]: new StatTalent(TalentName.OilDrums5, TalentTree.Economy, Stats.GasProductionSpeed, 5, 6000),
-    [TalentName.OilDrums20]: new StatTalent(TalentName.OilDrums20, TalentTree.Economy, Stats.GasProductionSpeed, 20, 10000),
-    [TalentName.PrecisionStrike3]: new StatTalent(TalentName.PrecisionStrike3, TalentTree.War, Stats.HunterAttack, 3, 500),
-    [TalentName.PrecisionStrike5]: new StatTalent(TalentName.PrecisionStrike5, TalentTree.War, Stats.HunterAttack, 5, 600),
-    [TalentName.PrecisionStrike10]: new StatTalent(TalentName.PrecisionStrike10, TalentTree.War, Stats.HunterAttack, 10, 1200),
-    [TalentName.PrecisionStrike20]: new StatTalent(TalentName.PrecisionStrike20, TalentTree.War, Stats.HunterAttack, 20, 1200),
-    [TalentName.RapidDevelopment]: new SkillTalent(TalentName.RapidDevelopment, TalentTree.Economy),
-    [TalentName.RiderDefense3]: new StatTalent(TalentName.RiderDefense3, TalentTree.War, Stats.RiderDefense, 3, 400),
-    [TalentName.RiderDefense5]: new StatTalent(TalentName.RiderDefense5, TalentTree.War, Stats.RiderDefense, 5, 600),
-    [TalentName.RiderDefense10]: new StatTalent(TalentName.RiderDefense10, TalentTree.War, Stats.RiderDefense, 10, 1200),
-    [TalentName.RiderDefense20]: new StatTalent(TalentName.RiderDefense20, TalentTree.War, Stats.RiderDefense, 20, 1200),
-    [TalentName.SortingTech3]: new StatTalent(TalentName.SortingTech3, TalentTree.Economy, Stats.MetalProductionSpeed, 3, 4000),
-    [TalentName.SortingTech10]: new StatTalent(TalentName.SortingTech10, TalentTree.Economy, Stats.MetalProductionSpeed, 10, 10000),
-    [TalentName.SortingTech20]: new StatTalent(TalentName.SortingTech20, TalentTree.Economy, Stats.MetalProductionSpeed, 20, 10000),
-    [TalentName.SteadyShot3]: new StatTalent(TalentName.SteadyShot3, TalentTree.War, Stats.HunterLethality, 3, 500),
-    [TalentName.SteadyShot5]: new StatTalent(TalentName.SteadyShot5, TalentTree.War, Stats.HunterLethality, 5, 800),
-    [TalentName.SteadyShot10]: new StatTalent(TalentName.SteadyShot10, TalentTree.War, Stats.HunterLethality, 10, 1200),
-    [TalentName.SteadyShot20]: new StatTalent(TalentName.SteadyShot20, TalentTree.War, Stats.HunterLethality, 20, 1200),
-    [TalentName.TechImprovement3]: new StatTalent(TalentName.TechImprovement3, TalentTree.Economy, Stats.ResearchSpeed, 3, 2000),
-    [TalentName.TechImprovement5]: new StatTalent(TalentName.TechImprovement5, TalentTree.Economy, Stats.ResearchSpeed, 5, 2500),
-    [TalentName.TechImprovement10]: new StatTalent(TalentName.TechImprovement10, TalentTree.Economy, Stats.ResearchSpeed, 10, 3000),
-    [TalentName.TechImprovement20]: new StatTalent(TalentName.TechImprovement20, TalentTree.Economy, Stats.ResearchSpeed, 20, 3500),
-    [TalentName.ToolImprovement3]: new StatTalent(TalentName.ToolImprovement3, TalentTree.Economy, Stats.ConstructionSpeed, 3, 500),
-    [TalentName.ToolImprovement5]: new StatTalent(TalentName.ToolImprovement5, TalentTree.Economy, Stats.ConstructionSpeed, 5, 1500),
-    [TalentName.ToolImprovement10]: new StatTalent(TalentName.ToolImprovement10, TalentTree.Economy, Stats.ConstructionSpeed, 10, 2000),
-    [TalentName.ToolImprovement20]: new StatTalent(TalentName.ToolImprovement20, TalentTree.Economy, Stats.ConstructionSpeed, 20, 2500),
-    [TalentName.TrainingCapacity5]: new StatTalent(TalentName.TrainingCapacity5, TalentTree.War, Stats.TrainingCapacity, 5, 5),
-    [TalentName.TrainingCapacity10]: new StatTalent(TalentName.TrainingCapacity10, TalentTree.War, Stats.TrainingCapacity, 10, 8),
-    [TalentName.TrainingSpeed20]: new StatTalent(TalentName.TrainingSpeed20, TalentTree.War, Stats.TrainingSpeed, 20, 8000),
-    [TalentName.UrgentRecall]: new SkillTalent(TalentName.UrgentRecall, TalentTree.War),
-    [TalentName.WoodHaulage3]: new StatTalent(TalentName.WoodHaulage3, TalentTree.Economy, Stats.WoodGatheringSpeed, 3, 2000),
-    [TalentName.WoodHaulage5]: new StatTalent(TalentName.WoodHaulage5, TalentTree.Economy, Stats.WoodGatheringSpeed, 5, 5000),
-    [TalentName.WoodHaulage10]: new StatTalent(TalentName.WoodHaulage10, TalentTree.Economy, Stats.WoodGatheringSpeed, 10, 6000),
-    [TalentName.WoodHaulage20]: new StatTalent(TalentName.WoodHaulage20, TalentTree.Economy, Stats.WoodGatheringSpeed, 20, 8000),
+    [TalentName.BattleDressing3]: new StatTalent(TalentName.BattleDressing3, TalentTree.Economy, Stats.HealingSpeed, 3, 8000, [TalentName.TechImprovement3]),
+    [TalentName.BattleDressing5]: new StatTalent(TalentName.BattleDressing5, TalentTree.Economy, Stats.HealingSpeed, 5, 10000, [TalentName.OilDrums5]),
+    [TalentName.BattleDressing10]: new StatTalent(TalentName.BattleDressing10, TalentTree.Economy, Stats.HealingSpeed, 10, 12000, [TalentName.RapidDevelopment]),
+    [TalentName.BattleDressing20]: new StatTalent(TalentName.BattleDressing20, TalentTree.Economy, Stats.HealingSpeed, 20, 15000, [TalentName.InstantHealing]),
+    [TalentName.ChargeStrategy3]: new StatTalent(TalentName.ChargeStrategy3, TalentTree.War, Stats.RiderLethality, 3, 400, [TalentName.MarchCapacity3]),
+    [TalentName.ChargeStrategy5]: new StatTalent(TalentName.ChargeStrategy5, TalentTree.War, Stats.RiderLethality, 5, 800, [TalentName.MarchCapacity5]),
+    [TalentName.ChargeStrategy10]: new StatTalent(TalentName.ChargeStrategy10, TalentTree.War, Stats.RiderLethality, 10, 1200, [TalentName.MarchCapacity10]),
+    [TalentName.ChargeStrategy20]: new StatTalent(TalentName.ChargeStrategy20, TalentTree.War, Stats.RiderLethality, 20, 1200, [TalentName.TrainingSpeed20]),
+    [TalentName.CloseCombat3]: new StatTalent(TalentName.CloseCombat3, TalentTree.War, Stats.InfantryLethality, 3, 300, [TalentName.MarchSpeed3]),
+    [TalentName.CloseCombat5]: new StatTalent(TalentName.CloseCombat5, TalentTree.War, Stats.InfantryLethality, 5, 800, [TalentName.MarchCapacity5]),
+    [TalentName.CloseCombat10]: new StatTalent(TalentName.CloseCombat10, TalentTree.War, Stats.InfantryLethality, 10, 1000, [TalentName.MassiveMarch]),
+    [TalentName.CloseCombat20]: new StatTalent(TalentName.CloseCombat20, TalentTree.War, Stats.InfantryLethality, 20, 1200, [TalentName.TrainingSpeed20]),
+    [TalentName.EmergencyDressing]: new Talent(TalentName.EmergencyDressing, TalentTree.War, [TalentName.HunterDefense10,TalentName.HunterProtection10]),
+    [TalentName.FertilizerTech3]: new StatTalent(TalentName.FertilizerTech3, TalentTree.Economy, Stats.FoodProductionSpeed, 3, 2000, [TalentName.ToolImprovement3]),
+    [TalentName.FertilizerTech5]: new StatTalent(TalentName.FertilizerTech5, TalentTree.Economy, Stats.FoodProductionSpeed, 5, 6000, [TalentName.ToolImprovement5]),
+    [TalentName.FertilizerTech10]: new StatTalent(TalentName.FertilizerTech10, TalentTree.Economy, Stats.FoodProductionSpeed, 10, 8000, [TalentName.ToolImprovement10]),
+    [TalentName.FertilizerTech20]: new StatTalent(TalentName.FertilizerTech20, TalentTree.Economy, Stats.FoodProductionSpeed, 20, 10000, [TalentName.ToolImprovement20]),
+    [TalentName.FoodHaulage3]: new StatTalent(TalentName.FoodHaulage3, TalentTree.Economy, Stats.FoodGatheringSpeed, 3, 1200, [TalentName.FertilizerTech3,TalentName.LoggingTech3]),
+    [TalentName.FoodHaulage5]: new StatTalent(TalentName.FoodHaulage5, TalentTree.Economy, Stats.FoodGatheringSpeed, 5, 5000, [TalentName.ToolImprovement5]),
+    [TalentName.FoodHaulage10]: new StatTalent(TalentName.FoodHaulage10, TalentTree.Economy, Stats.FoodGatheringSpeed, 10, 6000, [TalentName.ToolImprovement10]),
+    [TalentName.FoodHaulage20]: new StatTalent(TalentName.FoodHaulage20, TalentTree.Economy, Stats.FoodGatheringSpeed, 20, 8000, [TalentName.FertilizerTech20]),
+    [TalentName.GasHaulage10]: new StatTalent(TalentName.GasHaulage10, TalentTree.Economy, Stats.GasGatheringSpeed, 10, 5000, [TalentName.LoggingTech10,TalentName.WoodHaulage10]),
+    [TalentName.GasHaulage20]: new StatTalent(TalentName.GasHaulage20, TalentTree.Economy, Stats.GasGatheringSpeed, 20, 8000, [TalentName.TechImprovement20]),
+    [TalentName.GunsBlazing3]: new StatTalent(TalentName.GunsBlazing3, TalentTree.War, Stats.InfantryAttack, 3, 300, [TalentName.MarchSpeed3]),
+    [TalentName.GunsBlazing5]: new StatTalent(TalentName.GunsBlazing5, TalentTree.War, Stats.InfantryAttack, 5, 600, [TalentName.TrainingCapacity5]),
+    [TalentName.GunsBlazing10]: new StatTalent(TalentName.GunsBlazing10, TalentTree.War, Stats.InfantryAttack, 10, 1000, [TalentName.MassiveMarch]),
+    [TalentName.GunsBlazing20]: new StatTalent(TalentName.GunsBlazing20, TalentTree.War, Stats.InfantryAttack, 20, 1200, [TalentName.EmergencyDressing]),
+    [TalentName.HospitalCapacity3]: new StatTalent(TalentName.HospitalCapacity3, TalentTree.Economy, Stats.HealingCapacity, 3, 50, [TalentName.TechImprovement3]),
+    [TalentName.HospitalCapacity5]: new StatTalent(TalentName.HospitalCapacity5, TalentTree.Economy, Stats.HealingCapacity, 5, 50, [TalentName.OilDrums5]),
+    [TalentName.HospitalCapacity10]: new StatTalent(TalentName.HospitalCapacity10, TalentTree.Economy, Stats.HealingCapacity, 10, 50, [TalentName.RapidDevelopment]),
+    [TalentName.HospitalCapacity20]: new StatTalent(TalentName.HospitalCapacity20, TalentTree.Economy, Stats.HealingCapacity, 20, 50, [TalentName.InstantHealing]),
+    [TalentName.HunterDefense3]: new StatTalent(TalentName.HunterDefense3, TalentTree.War, Stats.HunterDefense, 3, 500, [TalentName.PrecisionStrike3]),
+    [TalentName.HunterDefense5]: new StatTalent(TalentName.HunterDefense5, TalentTree.War, Stats.HunterDefense, 5, 600, [TalentName.PrecisionStrike5]),
+    [TalentName.HunterDefense10]: new StatTalent(TalentName.HunterDefense10, TalentTree.War, Stats.HunterDefense, 10, 1200, [TalentName.PrecisionStrike10]),
+    [TalentName.HunterDefense20]: new StatTalent(TalentName.HunterDefense20, TalentTree.War, Stats.HunterDefense, 20, 1200, [TalentName.PrecisionStrike20]),
+    [TalentName.HunterProtection3]: new StatTalent(TalentName.HunterProtection3, TalentTree.War, Stats.HunterHealth, 3, 500, [TalentName.SteadyShot3]),
+    [TalentName.HunterProtection5]: new StatTalent(TalentName.HunterProtection5, TalentTree.War, Stats.HunterHealth, 5, 800, [TalentName.SteadyShot5]),
+    [TalentName.HunterProtection10]: new StatTalent(TalentName.HunterProtection10, TalentTree.War, Stats.HunterHealth, 10, 1200, [TalentName.SteadyShot10]),
+    [TalentName.HunterProtection20]: new StatTalent(TalentName.HunterProtection20, TalentTree.War, Stats.HunterHealth, 20, 1200, [TalentName.SteadyShot20]),
+    [TalentName.InfantryHealth3]: new StatTalent(TalentName.InfantryHealth3, TalentTree.War, Stats.InfantryHealth, 3, 300, [TalentName.CloseCombat3]),
+    [TalentName.InfantryHealth5]: new StatTalent(TalentName.InfantryHealth5, TalentTree.War, Stats.InfantryHealth, 5, 800, [TalentName.CloseCombat5]),
+    [TalentName.InfantryHealth10]: new StatTalent(TalentName.InfantryHealth10, TalentTree.War, Stats.InfantryHealth, 10, 1000, [TalentName.CloseCombat10]),
+    [TalentName.InfantryHealth20]: new StatTalent(TalentName.InfantryHealth20, TalentTree.War, Stats.InfantryHealth, 20, 1200, [TalentName.CloseCombat20]),
+    [TalentName.InstantCollect]: new Talent(TalentName.InstantCollect, TalentTree.Economy, [TalentName.HospitalCapacity3,TalentName.BattleDressing3]),
+    [TalentName.InstantHealing]: new Talent(TalentName.InstantHealing, TalentTree.Economy, [TalentName.TechImprovement10]),
+    [TalentName.LoggingTech3]: new StatTalent(TalentName.LoggingTech3, TalentTree.Economy, Stats.WoodProductionSpeed, 3, 2000, [TalentName.ToolImprovement3]),
+    [TalentName.LoggingTech5]: new StatTalent(TalentName.LoggingTech5, TalentTree.Economy, Stats.WoodProductionSpeed, 5, 6000, [TalentName.FertilizerTech5]),
+    [TalentName.LoggingTech10]: new StatTalent(TalentName.LoggingTech10, TalentTree.Economy, Stats.WoodProductionSpeed, 10, 8000, [TalentName.FertilizerTech10]),
+    [TalentName.LoggingTech20]: new StatTalent(TalentName.LoggingTech20, TalentTree.Economy, Stats.WoodProductionSpeed, 20, 10000, [TalentName.ToolImprovement20]),
+    [TalentName.MarchCapacity3]: new StatTalent(TalentName.MarchCapacity3, TalentTree.War, Stats.MarchCapacity, 3, 200, [TalentName.MeleeDefense3,TalentName.InfantryHealth3]),
+    [TalentName.MarchCapacity5]: new StatTalent(TalentName.MarchCapacity5, TalentTree.War, Stats.MarchCapacity, 5, 300, [TalentName.MeleeDefense5,TalentName.RiderDefense5,TalentName.HunterDefense5]),
+    [TalentName.MarchCapacity10]: new StatTalent(TalentName.MarchCapacity10, TalentTree.War, Stats.MarchCapacity, 10, 350, [TalentName.MeleeDefense10,TalentName.InfantryHealth10]),
+    [TalentName.MarchSpeed3]: new StatTalent(TalentName.MarchSpeed3, TalentTree.War, Stats.MarchSpeed, 3, 1000, []),
+    [TalentName.MassiveMarch]: new Talent(TalentName.MassiveMarch, TalentTree.War, [TalentName.InfantryHealth5,TalentName.MasterMechanic5,TalentName.HunterProtection5]),
+    [TalentName.MasterMechanic3]: new StatTalent(TalentName.MasterMechanic3, TalentTree.War, Stats.RiderHealth, 3, 400, [TalentName.ChargeStrategy3]),
+    [TalentName.MasterMechanic5]: new StatTalent(TalentName.MasterMechanic5, TalentTree.War, Stats.RiderHealth, 5, 800, [TalentName.ChargeStrategy5]),
+    [TalentName.MasterMechanic10]: new StatTalent(TalentName.MasterMechanic10, TalentTree.War, Stats.RiderHealth, 10, 1200, [TalentName.ChargeStrategy10]),
+    [TalentName.MasterMechanic20]: new StatTalent(TalentName.MasterMechanic20, TalentTree.War, Stats.RiderHealth, 20, 1200, [TalentName.ChargeStrategy20]),
+    [TalentName.MeleeDefense3]: new StatTalent(TalentName.MeleeDefense3, TalentTree.War, Stats.InfantryDefense, 3, 300, [TalentName.GunsBlazing3]),
+    [TalentName.MeleeDefense5]: new StatTalent(TalentName.MeleeDefense5, TalentTree.War, Stats.InfantryDefense, 5, 600, [TalentName.GunsBlazing5]),
+    [TalentName.MeleeDefense10]: new StatTalent(TalentName.MeleeDefense10, TalentTree.War, Stats.InfantryDefense, 10, 1000, [TalentName.GunsBlazing10]),
+    [TalentName.MeleeDefense20]: new StatTalent(TalentName.MeleeDefense20, TalentTree.War, Stats.InfantryDefense, 20, 1200, [TalentName.GunsBlazing20]),
+    [TalentName.MetalHaulage5]: new StatTalent(TalentName.MetalHaulage5, TalentTree.Economy, Stats.MetalGatheringSpeed, 5, 4000, [TalentName.LoggingTech5,TalentName.WoodHaulage5]),
+    [TalentName.MetalHaulage10]: new StatTalent(TalentName.MetalHaulage10, TalentTree.Economy, Stats.MetalGatheringSpeed, 10, 8000, [TalentName.GasHaulage10]),
+    [TalentName.MetalHaulage20]: new StatTalent(TalentName.MetalHaulage20, TalentTree.Economy, Stats.MetalGatheringSpeed, 20, 8000, [TalentName.SortingTech20]),
+    [TalentName.MobileAssault3]: new StatTalent(TalentName.MobileAssault3, TalentTree.War, Stats.RiderAttack, 3, 400, [TalentName.MarchCapacity3]),
+    [TalentName.MobileAssault5]: new StatTalent(TalentName.MobileAssault5, TalentTree.War, Stats.RiderAttack, 5, 600, [TalentName.TrainingCapacity5]),
+    [TalentName.MobileAssault10]: new StatTalent(TalentName.MobileAssault10, TalentTree.War, Stats.RiderAttack, 10, 1200, [TalentName.MarchCapacity10]),
+    [TalentName.MobileAssault20]: new StatTalent(TalentName.MobileAssault20, TalentTree.War, Stats.RiderAttack, 20, 1200, [TalentName.EmergencyDressing]),
+    [TalentName.OilDrums5]: new StatTalent(TalentName.OilDrums5, TalentTree.Economy, Stats.GasProductionSpeed, 5, 6000, [TalentName.MetalHaulage5]),
+    [TalentName.OilDrums20]: new StatTalent(TalentName.OilDrums20, TalentTree.Economy, Stats.GasProductionSpeed, 20, 10000, [TalentName.TechImprovement20]),
+    [TalentName.PrecisionStrike3]: new StatTalent(TalentName.PrecisionStrike3, TalentTree.War, Stats.HunterAttack, 3, 500, [TalentName.UrgentRecall]),
+    [TalentName.PrecisionStrike5]: new StatTalent(TalentName.PrecisionStrike5, TalentTree.War, Stats.HunterAttack, 5, 600, [TalentName.TrainingCapacity5]),
+    [TalentName.PrecisionStrike10]: new StatTalent(TalentName.PrecisionStrike10, TalentTree.War, Stats.HunterAttack, 10, 1200, [TalentName.TrainingCapacity10]),
+    [TalentName.PrecisionStrike20]: new StatTalent(TalentName.PrecisionStrike20, TalentTree.War, Stats.HunterAttack, 20, 1200, [TalentName.EmergencyDressing]),
+    [TalentName.RapidDevelopment]: new Talent(TalentName.RapidDevelopment, TalentTree.Economy, [TalentName.TechImprovement5]),
+    [TalentName.RiderDefense3]: new StatTalent(TalentName.RiderDefense3, TalentTree.War, Stats.RiderDefense, 3, 400, [TalentName.MobileAssault3]),
+    [TalentName.RiderDefense5]: new StatTalent(TalentName.RiderDefense5, TalentTree.War, Stats.RiderDefense, 5, 600, [TalentName.MobileAssault5]),
+    [TalentName.RiderDefense10]: new StatTalent(TalentName.RiderDefense10, TalentTree.War, Stats.RiderDefense, 10, 1200, [TalentName.MobileAssault10]),
+    [TalentName.RiderDefense20]: new StatTalent(TalentName.RiderDefense20, TalentTree.War, Stats.RiderDefense, 20, 1200, [TalentName.MobileAssault20]),
+    [TalentName.SortingTech3]: new StatTalent(TalentName.SortingTech3, TalentTree.Economy, Stats.MetalProductionSpeed, 3, 4000, [TalentName.InstantCollect]),
+    [TalentName.SortingTech10]: new StatTalent(TalentName.SortingTech10, TalentTree.Economy, Stats.MetalProductionSpeed, 10, 10000, [TalentName.GasHaulage10]),
+    [TalentName.SortingTech20]: new StatTalent(TalentName.SortingTech20, TalentTree.Economy, Stats.MetalProductionSpeed, 20, 10000, [TalentName.ToolImprovement20]),
+    [TalentName.SteadyShot3]: new StatTalent(TalentName.SteadyShot3, TalentTree.War, Stats.HunterLethality, 3, 500, [TalentName.UrgentRecall]),
+    [TalentName.SteadyShot5]: new StatTalent(TalentName.SteadyShot5, TalentTree.War, Stats.HunterLethality, 5, 800, [TalentName.MarchCapacity5]),
+    [TalentName.SteadyShot10]: new StatTalent(TalentName.SteadyShot10, TalentTree.War, Stats.HunterLethality, 10, 1200, [TalentName.TrainingCapacity10]),
+    [TalentName.SteadyShot20]: new StatTalent(TalentName.SteadyShot20, TalentTree.War, Stats.HunterLethality, 20, 1200, [TalentName.TrainingSpeed20]),
+    [TalentName.TechImprovement3]: new StatTalent(TalentName.TechImprovement3, TalentTree.Economy, Stats.ResearchSpeed, 3, 2000, [TalentName.WoodHaulage3]),
+    [TalentName.TechImprovement5]: new StatTalent(TalentName.TechImprovement5, TalentTree.Economy, Stats.ResearchSpeed, 5, 2500, [TalentName.HospitalCapacity5,TalentName.BattleDressing5]),
+    [TalentName.TechImprovement10]: new StatTalent(TalentName.TechImprovement10, TalentTree.Economy, Stats.ResearchSpeed, 10, 3000, [TalentName.SortingTech10,TalentName.MetalHaulage10]),
+    [TalentName.TechImprovement20]: new StatTalent(TalentName.TechImprovement20, TalentTree.Economy, Stats.ResearchSpeed, 20, 3500, [TalentName.FoodHaulage20,TalentName.WoodHaulage20,TalentName.MetalHaulage20]),
+    [TalentName.ToolImprovement3]: new StatTalent(TalentName.ToolImprovement3, TalentTree.Economy, Stats.ConstructionSpeed, 3, 500, []),
+    [TalentName.ToolImprovement5]: new StatTalent(TalentName.ToolImprovement5, TalentTree.Economy, Stats.ConstructionSpeed, 5, 1500, [TalentName.SortingTech3]),
+    [TalentName.ToolImprovement10]: new StatTalent(TalentName.ToolImprovement10, TalentTree.Economy, Stats.ConstructionSpeed, 10, 2000, [TalentName.HospitalCapacity10,TalentName.BattleDressing10]),
+    [TalentName.ToolImprovement20]: new StatTalent(TalentName.ToolImprovement20, TalentTree.Economy, Stats.ConstructionSpeed, 20, 2500, [TalentName.HospitalCapacity20,TalentName.BattleDressing20]),
+    [TalentName.TrainingCapacity5]: new StatTalent(TalentName.TrainingCapacity5, TalentTree.War, Stats.TrainingCapacity, 5, 5, [TalentName.HunterDefense3,TalentName.HunterProtection3]),
+    [TalentName.TrainingCapacity10]: new StatTalent(TalentName.TrainingCapacity10, TalentTree.War, Stats.TrainingCapacity, 10, 8, [TalentName.RiderDefense10,TalentName.MasterMechanic10]),
+    [TalentName.TrainingSpeed20]: new StatTalent(TalentName.TrainingSpeed20, TalentTree.War, Stats.TrainingSpeed, 20, 8000, [TalentName.MeleeDefense20,TalentName.RiderDefense20,TalentName.HunterDefense20]),
+    [TalentName.UrgentRecall]: new Talent(TalentName.UrgentRecall, TalentTree.War, [TalentName.RiderDefense3,TalentName.MasterMechanic3]),
+    [TalentName.WoodHaulage3]: new StatTalent(TalentName.WoodHaulage3, TalentTree.Economy, Stats.WoodGatheringSpeed, 3, 2000, [TalentName.FoodHaulage3]),
+    [TalentName.WoodHaulage5]: new StatTalent(TalentName.WoodHaulage5, TalentTree.Economy, Stats.WoodGatheringSpeed, 5, 5000, [TalentName.FoodHaulage5]),
+    [TalentName.WoodHaulage10]: new StatTalent(TalentName.WoodHaulage10, TalentTree.Economy, Stats.WoodGatheringSpeed, 10, 6000, [TalentName.FoodHaulage10]),
+    [TalentName.WoodHaulage20]: new StatTalent(TalentName.WoodHaulage20, TalentTree.Economy, Stats.WoodGatheringSpeed, 20, 8000, [TalentName.LoggingTech20]),
 };
 

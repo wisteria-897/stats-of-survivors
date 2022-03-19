@@ -53,7 +53,6 @@ const buildHeroRanks = (name: HeroName, type: HeroType, tier: Tier, stats: Stat[
     let provider: HeroRank = {
         name,
         type,
-        stats,
         category: SourceCategory.Heroes,
         levels: []
     };

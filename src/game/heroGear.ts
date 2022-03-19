@@ -1,6 +1,14 @@
-import { Tiers, Bonus } from './bonus';
-import { SourceCategory, Tier } from './bonus';
+import {
+    LevelData,
+    LeveledBonusProviderImpl,
+    SourceCategory,
+    StatBonusProviderLevelImpl,
+    Tier,
+    Tiers
+} from './bonus';
 import { Stat, Stats } from './stat';
+import { Requirement } from './requirements';
+import { Chief } from '../features/chief/chiefSlice';
 
 export enum HeroType {
     Brawler = 'Brawler',
@@ -56,31 +64,32 @@ const tierNames = {
     }
 } as const;
 
-type LevelData = { tier: Tier, tierLevel: number, bonusValues: number[] };
+type HeroGearLevelData = LevelData<Chief> & {
+    tier: Tier,
+    tierLevel: number
+}
 
-export class HeroGear {
-    readonly slot: HeroGearSlot;
-    readonly stats: Stat[];
-    readonly levels: HeroGearLevel[];
+export class HeroGear extends LeveledBonusProviderImpl<
+    Chief,
+    HeroGearSlot,
+    HeroGearLevel,
+    HeroGearLevelData
+> {
+    constructor(slot: HeroGearSlot, stats: Stat[], ...levelData: HeroGearLevelData[]) {
+        super(slot, stats, levelData);
+    }
 
-    constructor(slot: HeroGearSlot, stats: Stat[], ...levelData: LevelData[]) {
-        this.slot = slot;
-        this.stats = stats;
-        this.levels = levelData.map(({tier, tierLevel, bonusValues}, i) => {
-            return new HeroGearLevel(this, i + 1, tier, tierLevel, ...bonusValues);
-        });
+    createLevel(provider: HeroGear, level: number, stats: Stat[], levelData: HeroGearLevelData, requirements?: Requirement<Chief>) {
+        const {tier, tierLevel, bonusValues} = levelData;
+        return new HeroGearLevel(provider, level, tier, tierLevel, stats, bonusValues, requirements);
     }
 
     get heroType() {
-        return slotHeroTypes[this.slot];
+        return slotHeroTypes[this.name];
     }
 
     get key() {
-        return this.slot;
-    }
-
-    get name() {
-        return this.slot;
+        return this.name;
     }
 
     get category() {
@@ -88,31 +97,18 @@ export class HeroGear {
     }
 }
 
-export class HeroGearLevel {
-    readonly gear: HeroGear;
-    readonly tier: Tier;
-    readonly level: number;
-    readonly tierLevel: {tier: Tier, level: number};
-    readonly bonuses: Bonus[];
-
-    constructor(gear: HeroGear, level: number, tier: Tier, tierLevel: number, ...bonusValues: number[]) {
-        this.gear = gear;
-        this.level = level;
-        this.tier = tier;
+export class HeroGearLevel extends StatBonusProviderLevelImpl<Chief, HeroGear> {
+    constructor(gear: HeroGear, level: number, tier: Tier, tierLevel: number, stats: Stat[], bonusValues: number[], requirements?: Requirement<Chief>) {
+        super(gear, level, stats, bonusValues, requirements, tier);
         this.tierLevel = {tier, level: tierLevel};
-        this.bonuses = gear.stats.map((stat, i) => new Bonus(stat, bonusValues[i], this));
     }
 
     get name() {
-        return tierNames[this.gear.heroType][this.tierLevel.tier.name] + ' ' + this.gear.name + ' ' + "⭐️".repeat(this.tierLevel.level);
+        return tierNames[this.provider.heroType][this.tierLevel.tier.name] + ' ' + this.provider.name + ' ' + "⭐️".repeat(this.tierLevel.level);
     }
 
-    get category() {
-        return SourceCategory.HeroGear;
-    }
-
-    get provider() {
-        return this.gear;
+    selectLevels(chief: Chief) {
+        return chief.heroGear;
     }
 }
 

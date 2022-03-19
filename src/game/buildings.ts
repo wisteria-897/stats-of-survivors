@@ -1,5 +1,10 @@
+import {
+    StatBonusProviderLevelImpl,
+    StatLeveledBonusProviderImpl,
+    SourceCategory
+} from './bonus';
 import { Stat, Stats } from './stat';
-import { Bonus, SourceCategory, Tiers } from './bonus';
+import { Chief } from '../features/chief/chiefSlice';
 
 export enum BuildingName {
     Headquarters   = 'Headquarters',
@@ -36,51 +41,27 @@ export enum BuildingName {
     Barricade      = 'Barricade'
 }
 
-export class Building {
-    readonly name: string;
-    readonly stats: Stat[];
-    readonly levels: BuildingLevel[];
-
-    constructor(name: string, stats: Stat[], ...levelData: number[][]) {
-        this.name = name;
-        this.stats = [...stats];
-        this.levels = levelData.map((bonusValues, i) => new BuildingLevel(this, i + 1, ...bonusValues));
+export class Building extends StatLeveledBonusProviderImpl<
+    Chief,
+    BuildingName,
+    BuildingLevel
+> {
+    constructor(name: BuildingName, stats: Stat[], ...levelData: number[][]) {
+        super(name, stats, levelData.map(bonusValues => ({bonusValues})));
     }
 
     get category() {
         return SourceCategory.Buildings;
+    }
+
+    get levelClass() {
+        return BuildingLevel;
     }
 }
 
-export class BuildingLevel {
-    readonly building: Building;
-    readonly level: number;
-    readonly bonuses: Bonus[];
-
-    constructor(building: Building, level: number, ...bonusValues: number[]) {
-        this.building = building;
-        this.level = level;
-        this.bonuses = building.stats.map((stat, i) => new Bonus(stat, bonusValues[i], this));
-    }
-
-    get name() {
-        return this.building.name + ' ' + String(this.level);
-    }
-
-    get category() {
-        return SourceCategory.Buildings;
-    }
-
-    get tier() {
-        return Tiers.Common;
-    }
-
-    get provider() {
-        return this.building;
-    }
-
-    get tierLevel() {
-        return null;
+export class BuildingLevel extends StatBonusProviderLevelImpl<Chief, Building> {
+    selectLevels(chief: Chief) {
+        return chief.buildings;
     }
 }
 

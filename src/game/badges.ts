@@ -1,5 +1,10 @@
 import { Stat, Stats } from './stat';
-import { Bonus, SourceCategory, Tiers } from './bonus';
+import {
+    SourceCategory,
+    StatBonusProviderLevelImpl,
+    StatLeveledBonusProviderImpl
+} from './bonus';
+import { Chief } from '../features/chief/chiefSlice';
 
 export enum ChiefBadgeSlot {
     Infantry1 = 'Infantry #1',
@@ -28,71 +33,51 @@ export enum BadgeTier {
     Commander = 'Commander'
 }
 
-type BadgeLevelData = {bonusValue: number, tier: BadgeTier, tierLevel: number}
+const badgeLevelData = [[8850,8850], [3540,3540], [3540,3540], [5310,5310], [3540,3540], [5310,5310], [5300,5300]];
 
-const allLevelData: BadgeLevelData[] = [
-    {bonusValue: 8850, tier: BadgeTier.Mercenary, tierLevel: 1},
-    {bonusValue: 3540, tier: BadgeTier.Mercenary, tierLevel: 2},
-    {bonusValue: 3540, tier: BadgeTier.Officer, tierLevel: 1},
-    {bonusValue: 5310, tier: BadgeTier.Officer, tierLevel: 2},
-    {bonusValue: 3540, tier: BadgeTier.Commander, tierLevel: 1},
-    {bonusValue: 5310, tier: BadgeTier.Commander, tierLevel: 2},
-    {bonusValue: 5300, tier: BadgeTier.Commander, tierLevel: 3}
-];
-
-export class ChiefBadge {
-    readonly slot: ChiefBadgeSlot;
-    readonly stats: Stat[];
-    readonly levels: ChiefBadgeLevel[];
-
+export class ChiefBadge extends StatLeveledBonusProviderImpl<Chief, ChiefBadgeSlot, ChiefBadgeLevel> {
     constructor(slot: ChiefBadgeSlot, stats: Stat[]) {
-        this.slot = slot;
-        this.stats = stats;
-        this.levels = allLevelData.map((levelData, i) => new ChiefBadgeLevel(this, i + 1, levelData));
+        super(slot, stats, badgeLevelData.map(bonusValues => { return {bonusValues}; }));
     }
 
-    get name() {
-        return this.slot + ' Badge';
+    get slot() {
+        return this.name;
     }
 
     get category() {
         return SourceCategory.ChiefBadges;
+    }
+
+    get levelClass() {
+        return ChiefBadgeLevel;
     }
 }
 
-export class ChiefBadgeLevel {
-    readonly badge: ChiefBadge;
-    readonly level: number;
-    readonly badgeTier: BadgeTier;
-    readonly badgeTierLevel: number;
-    readonly bonuses: Bonus[];
+export class ChiefBadgeLevel extends StatBonusProviderLevelImpl<Chief, ChiefBadge> {
+    selectLevels(chief: Chief) {
+        return chief.badges;
+    }
 
-    constructor(badge: ChiefBadge, level: number, levelData: BadgeLevelData) {
-        this.badge = badge;
-        this.level = level;
-        this.badgeTier = levelData.tier;
-        this.badgeTierLevel = levelData.tierLevel;
-        this.bonuses = badge.stats.map(stat => new Bonus(stat, levelData.bonusValue, this));
+    get badgeTier() {
+        if (this.level > 4) {
+            return BadgeTier.Commander;
+        } else if (this.level > 2) {
+            return BadgeTier.Officer;
+        } else {
+            return BadgeTier.Mercenary;
+        }
+    }
+
+    get badgeTierLevel() {
+        if (this.level === 7) {
+            return 3;
+        } else {
+            return ((this.level - 1) % 2) + 1;
+        }
     }
 
     get name() {
-        return this.badge.slot.split(' ')[0] + ' ' + this.badgeTier + ' Badge ' + 'I'.repeat(this.badgeTierLevel);
-    }
-
-    get category() {
-        return SourceCategory.ChiefBadges;
-    }
-
-    get tier() {
-        return Tiers.Common;
-    }
-
-    get tierLevel() {
-        return null;
-    }
-
-    get provider() {
-        return this.badge;
+        return this.provider.slot.split(' ')[0] + ' ' + this.badgeTier + ' Badge ' + 'I'.repeat(this.badgeTierLevel);
     }
 }
 

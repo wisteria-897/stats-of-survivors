@@ -1,26 +1,49 @@
 import { TypeSafe } from '../util/itertools';
 import { enumMapOf } from '../util/types';
+import {
+    sortByTier,
+    Bonus,
+    LeveledBonusProviderImpl,
+    LevelData,
+    SimpleBonusSource,
+    SourceCategory,
+    StatBonusProviderLevelImpl,
+    Tier,
+    TierName,
+    Tiers
+} from './bonus';
 import { Stat, Stats } from './stat';
-import { sortByTier, Bonus, SimpleBonusSource, SourceCategory, Tier, TierName, Tiers } from './bonus';
+import { Requirement } from './requirements';
+import { Chief } from '../features/chief/chiefSlice';
 
 type TierData = { tier: Tier, levels: number[] }
 
-export class ChiefGear {
-    readonly slot: ChiefGearSlot;
-    readonly stats: Stat[];
-    readonly levels: ChiefGearLevel[];
+type TierLevelData = LevelData<Chief> & {
+    tier: Tier,
+    tierLevel: number
+}
 
+export class ChiefGear extends LeveledBonusProviderImpl<
+    Chief,
+    ChiefGearSlot,
+    ChiefGearLevel,
+    TierLevelData
+> {
     constructor(slot: ChiefGearSlot, stats: Stat[], ...tierData: TierData[]) {
-        this.slot = slot;
-        this.stats = stats;
-        this.levels = tierData.reduce((levels: ChiefGearLevel[], { tier, levels: levelData }) => {
-            const tierLevels = levelData.map((value, j) => new ChiefGearLevel(this, tier, levels.length + j + 1, j + 1, value));
-            return levels.concat(tierLevels);
-        }, []);
+        const levelData: TierLevelData[] = tierData.flatMap(td => {
+            return td.levels.map((bonusValue, i) => {
+                return {
+                    tier: td.tier,
+                    tierLevel: i + 1,
+                    bonusValues: stats.map(_ => bonusValue)
+                };
+            });
+        });
+        super(slot, stats, levelData);
     }
 
-    get name() {
-        return this.slot;
+    createLevel(provider: ChiefGear, level: number, stats: Stat[], levelData: TierLevelData) {
+        return new ChiefGearLevel(this, level, levelData.tier, levelData.tierLevel, stats, levelData.bonusValues, levelData.requirements || undefined);
     }
 
     get category() {
@@ -28,37 +51,24 @@ export class ChiefGear {
     }
 }
 
-export class ChiefGearLevel {
-    private static readonly levelNames: string[] = [
-        'Rookie', 'Riot',
-        'Blast', 'Frontline', 'Sturdy', 'Resistant',
-        'Tactical', 'Assault', 'Intrepid', 'Daredevil',
-        'Strategic', 'Vanguard', 'Unyielding', 'Dominator'
-    ];
-    readonly gear: ChiefGear;
-    readonly tier: Tier;
-    readonly level: number;
-    readonly tierLevel: {tier: Tier, level: number};
-    readonly bonuses: Bonus[];
-
-    constructor(gear: ChiefGear, tier: Tier, level: number, tierLevel: number, bonusValue: number) {
-        this.gear = gear;
-        this.level = level;
-        this.tier = tier;
+const LevelNames: string[] = [
+    'Rookie', 'Riot',
+    'Blast', 'Frontline', 'Sturdy', 'Resistant',
+    'Tactical', 'Assault', 'Intrepid', 'Daredevil',
+    'Strategic', 'Vanguard', 'Unyielding', 'Dominator'
+];
+export class ChiefGearLevel extends StatBonusProviderLevelImpl<Chief, ChiefGear> {
+    constructor(gear: ChiefGear, level: number, tier: Tier, tierLevel: number, stats: Stat[], bonusValues: number[], requirements?: Requirement<Chief>) {
+        super(gear, level, stats, bonusValues, requirements, tier);
         this.tierLevel = {tier, level: tierLevel};
-        this.bonuses = gear.stats.map((stat, i) => new Bonus(stat, bonusValue, this));
+    }
+
+    selectLevels(chief: Chief) {
+        return chief.chiefGear;
     }
 
     get name() {
-        return ChiefGearLevel.levelNames[this.level - 1] + ' ' + this.gear.name;
-    }
-
-    get category() {
-        return SourceCategory.ChiefGear;
-    }
-
-    get provider() {
-        return this.gear;
+        return LevelNames[this.level - 1] + ' ' + this.provider.name;
     }
 }
 
@@ -77,36 +87,31 @@ export function getSetBonuses(chiefGear: Record<ChiefGearSlot, number>): Bonus[]
     const tierCounts = enumMapOf(Tiers, 0);
     TypeSafe.entries(chiefGear).forEach(([slot, level]) => {
         if (level > 0) {
-            const gear = ChiefGears[slot].levels[level - 1];
-            tierCounts[gear.tier.name] += 1;
-            switch (gear.tier) {
-                //@ts-ignore
-                case Tiers.Legendary:
-                    tierCounts[TierName.Legendary] += 1;
-                //@ts-ignore
-                case Tiers.Epic:
-                    bonusLevelCounts[0] += 1;
-                    tierCounts[TierName.Epic] += 1;
-                //@ts-ignore
-                case Tiers.Rare:
-                    tierCounts[TierName.Rare] += 1;
-                    if (gear.tier !== Tiers.Rare || gear.tierLevel.level >= 2) {
-                        bonusLevelCounts[1] += 1;
-                    }
+            tierCounts[Tiers.Uncommon.name] += 1;
+            bonusLevelCounts[4] += 1;
+            if (level > 1) {
+                bonusLevelCounts[3] += 1;
+                if (level > 2) {
+                    tierCounts[Tiers.Rare.name] += 1;
                     bonusLevelCounts[2] += 1;
-                case Tiers.Uncommon:
-                    tierCounts[TierName.Uncommon] += 1;
-                    if (gear.tier !== Tiers.Uncommon || gear.tierLevel.level >= 2) {
-                        bonusLevelCounts[3] += 1;
+                    if (level > 3) {
+                        bonusLevelCounts[1] += 1;
+                        if (level > 6) {
+                            tierCounts[Tiers.Epic.name] += 1;
+                            bonusLevelCounts[0] += 1;
+                            if (level > 10) {
+                                tierCounts[Tiers.Legendary.name] += 1;
+                            }
+                        }
                     }
-                    bonusLevelCounts[4] += 1;
+                }
             }
         }
     });
 
     const setBonuses = [];
     const threePieceLevel = bonusLevelCounts.findIndex(count => count >= 3);
-    const orderedTierCounts = TypeSafe.entries(tierCounts).sort((a, b) => sortByTier(a[0], b[0]));
+    const orderedTierCounts = TypeSafe.entries(tierCounts).sort((a, b) => -sortByTier(a[0], b[0]));
     if (threePieceLevel >= 0) {
         const sourceTierEntry = orderedTierCounts.find(entry => entry[1] > 3) as [TierName, number];
         const source: SimpleBonusSource = {

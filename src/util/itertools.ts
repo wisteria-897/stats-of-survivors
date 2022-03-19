@@ -103,7 +103,7 @@ export const chainable = <T>(source: IterableProvider<T>): ChainableIterable<T> 
 };
 
 type Entry<K, V> = [K, V];
-type Keyable = string | number | symbol;
+export type Keyable = string | number | symbol;
 export const TypeSafe = {
     entries: <K extends Keyable, V>(obj: Partial<Record<K, V>>): Entry<K, V>[] => {
         const entries: Entry<K, V>[] = [];

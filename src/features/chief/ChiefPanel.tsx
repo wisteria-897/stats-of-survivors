@@ -2,6 +2,7 @@ import React from 'react';
 import { Subtract } from 'utility-types';
 import { useNavigate, useParams, Outlet } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../app/hooks';
+import { TypeSafe } from '../../util/itertools';
 import LevelPicker from '../../ui/level/LevelPicker';
 import { ItemAction, ItemList } from '../../ui/list/ItemList';
 import { NavItem, SubNavigation } from '../navigation/Navigation';
@@ -9,7 +10,7 @@ import { aggregateBonuses, aggregateSimpleBonuses, getBonusesFrom } from '../../
 import { getVipLevel } from '../../game/vip';
 import { HeroGearSlot, HeroGears } from '../../game/heroGear';
 import { getSetBonuses, ChiefGears } from '../../game/chiefGear';
-import { ResearchTechs } from '../../game/research';
+import { ResearchTechName, ResearchTechs } from '../../game/research';
 import { Talents } from '../../game/talents';
 import { AllianceTechs } from '../../game/allianceTech';
 import { AnalysisCenters } from '../../game/analysisCenters';
@@ -200,13 +201,21 @@ export const TalentsPanel = subPanelOf(({chief, dispatch}) => (
     </section>
 ));
 
-export const ChiefResearchPanel = subPanelOf(({chief, dispatch}) => (
-    <section>
-        <h2>Research</h2>
-        <LeveledBonusProviderList providers={ResearchTechs} levels={chief.research}
-            onChange={update => dispatch(partialUpdateChief({id: chief.id, value: {research: update}}))}/>
-    </section>
-));
+export const ChiefResearchPanel = subPanelOf(({chief, dispatch}) => {
+    const onChange = (update: Partial<Record<ResearchTechName, number>>) => {
+        TypeSafe.entries(update).filter(([techName, level]) => level > 0).forEach(([techName, level]) => {
+            console.log(techName, level, ResearchTechs[techName].levels[level-1].requirements(chief));
+        });
+        dispatch(partialUpdateChief({id: chief.id, value: {research: update}}));
+    }
+    return (
+        <section>
+            <h2>Research</h2>
+            <LeveledBonusProviderList providers={ResearchTechs} levels={chief.research}
+                onChange={onChange}/>
+        </section>
+    );
+});
 
 export const HeroGearPanel = subPanelOf(({chief, alliance, dispatch}) => (
     <section>
