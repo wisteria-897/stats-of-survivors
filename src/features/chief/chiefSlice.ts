@@ -95,7 +95,13 @@ export const chiefStatePersister = createPersister('chief', initialState, undefi
             chief.allianceId = chief.allianceTag;
             delete chief.allianceTag;
         }
-        return Object.assign({}, defaultChief, chief);
+        return Object.assign({}, defaultChief, chief, {
+            buildings: Object.assign({}, defaultChief.buildings, chief.buildings),
+            heroRanks: Object.assign({}, defaultChief.heroRanks, chief.heroRanks),
+            frameSkins: Object.assign({}, defaultChief.frameSkins, chief.frameSkins),
+            hqSkins: Object.assign({}, defaultChief.hqSkins, chief.hqSkins),
+            marchSkins: Object.assign({}, defaultChief.marchSkins, chief.marchSkins)
+        });
     });
     return state;
 });

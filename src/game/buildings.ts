@@ -38,7 +38,8 @@ export enum BuildingName {
     AssemblyPoint  = 'Assembly Point',
     CommandStation = 'Command Station',
     TradingPost    = 'Trading Post',
-    Barricade      = 'Barricade'
+    Barricade      = 'Barricade',
+    Nanami         = 'Nanami Statue'
 }
 
 export class Building extends StatLeveledBonusProviderImpl<
@@ -74,9 +75,9 @@ export const Buildings = {
     [BuildingName.TrainingCamp4]: new Building(BuildingName.TrainingCamp4, [Stats.TrainingCapacity,Stats.TrainingSpeed], [2,200],[1,200],[1,200],[1,200],[1,200],[1,200],[1,200],[1,200],[1,200],[1,200],[1,200],[1,200],[1,200],[1,200],[1,200],[1,200],[1,200],[1,200],[1,200],[1,200],[1,200],[1,200],[1,200],[1,200],[1,200],[1,200],[1,200],[1,200],[1,200],[1,200]),
     [BuildingName.AssemblyPoint]: new Building(BuildingName.AssemblyPoint, [Stats.ReinforcementCapacity,Stats.TimerHelpDuration,Stats.TimerHelpCapacity], [1600,7,1],[1900,3,1],[2200,3,1],[2600,3,1],[3000,3,1],[3500,3,1],[4100,3,1],[4800,3,1],[5600,3,1],[6500,3,1],[7500,3,1],[8700,3,1],[10100,3,1],[11700,3,1],[13500,3,1],[15600,3,1],[18000,3,1],[20700,3,1],[23900,3,1],[27500,3,1],[31700,3,1],[36500,3,1],[42000,3,1],[48300,3,1],[55600,3,1],[64000,3,1],[73600,3,1],[84700,3,1],[97500,3,1],[112200,3,1]),
     [BuildingName.Hospital]: new Building(BuildingName.Hospital, [Stats.HealingCapacity], [250],[50],[100],[100],[100],[150],[150],[200],[250],[300],[350],[400],[500],[600],[700],[850],[1050],[1250],[1500],[1800],[2150],[2600],[3100],[3700],[4450],[5350],[6400],[7700],[9250],[11100]),
-    [BuildingName.Barracks]: new Building(BuildingName.Barracks, [Stats.TrainingCapacity], [5],[2],[2],[2],[2],[2],[2],[2],[2],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7]),
-    [BuildingName.Range]: new Building(BuildingName.Range, [Stats.TrainingCapacity], [5],[2],[2],[2],[2],[2],[2],[2],[2],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7]),
-    [BuildingName.Garage]: new Building(BuildingName.Garage, [Stats.TrainingCapacity], [5],[2],[2],[2],[2],[2],[2],[2],[2],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7]),
+    [BuildingName.Barracks]: new Building(BuildingName.Barracks, [Stats.TrainingCapacity], [5],[2],[2],[2],[2],[2],[2],[2],[2],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[4],[5],[5],[5],[5],[5],[5],[5],[5],[5],[5],[5],[5],[5],[5]),
+    [BuildingName.Range]: new Building(BuildingName.Range, [Stats.TrainingCapacity], [5],[2],[2],[2],[2],[2],[2],[2],[2],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[4],[5],[5],[5],[5],[5],[5],[5],[5],[5],[5],[5],[5],[5],[5]),
+    [BuildingName.Garage]: new Building(BuildingName.Garage, [Stats.TrainingCapacity], [5],[2],[2],[2],[2],[2],[2],[2],[2],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[7],[4],[5],[5],[5],[5],[5],[5],[5],[5],[5],[5],[5],[5],[5],[5]),
     [BuildingName.Farm1]: new Building(BuildingName.Farm1, [Stats.FoodProductionSpeed], [500],[167],[166],[167],[167],[166],[167],[167],[166],[167],[167],[166],[167],[167],[166],[167],[167],[166],[167],[167],[166],[167],[167],[166],[167],[167],[166],[167],[167],[166]),
     [BuildingName.Farm2]: new Building(BuildingName.Farm2, [Stats.FoodProductionSpeed], [500],[167],[166],[167],[167],[166],[167],[167],[166],[167],[167],[166],[167],[167],[166],[167],[167],[166],[167],[167],[166],[167],[167],[166],[167],[167],[166],[167],[167],[166]),
     [BuildingName.Farm3]: new Building(BuildingName.Farm3, [Stats.FoodProductionSpeed], [500],[167],[166],[167],[167],[166],[167],[167],[166],[167],[167],[166],[167],[167],[166],[167],[167],[166],[167],[167],[166],[167],[167],[166],[167],[167],[166],[167],[167],[166]),
@@ -97,5 +98,6 @@ export const Buildings = {
     [BuildingName.ResearchLab]: new Building(BuildingName.ResearchLab, [], [],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]),
     [BuildingName.Barricade]: new Building(BuildingName.Barricade, [], [],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]),
     [BuildingName.CommandStation]: new Building(BuildingName.CommandStation, [], [],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]),
-    [BuildingName.TradingPost]: new Building(BuildingName.TradingPost, [], [],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[])
+    [BuildingName.TradingPost]: new Building(BuildingName.TradingPost, [], [],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]),
+    [BuildingName.Nanami]: new Building(BuildingName.Nanami, [Stats.MarchCapacity,Stats.TroopLethality,Stats.TroopHealth], [250,0,0],[250,0,0],[250,0,0],[250,0,0],[250,0,0],[250,0,0],[0,1000,1000],[250,0,0],[250,0,0],[0,1000,1000])
 } as const;

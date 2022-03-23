@@ -46,10 +46,11 @@ const frameSkinData: [string, Stat, number][] = [
     ['Heartbeat Stage', Stats.TroopDefense, 2000],
     ['Light of Survivors', Stats.MarchCapacity, 1000],
     ['Lunar New Year Frame', Stats.TroopDefense, 2000],
+    ['March Festival', Stats.TroopDefense, 2000],
     ['Screaming Pumpkin Head', Stats.TroopDefense, 2000],
     ['Springtime Wishes', Stats.TroopDefense, 2000],
     ['Spirit of Competition', Stats.TroopDefense, 1500],
-    ['Spirit of Competition (Advanced)', Stats.TroopDefense, 2000],
+    ['Spirit of Competition (Advanced)', Stats.TroopDefense, 2000]
 ];
 export const FrameSkins: Record<string, Skin> = mapify(frameSkinData.map(args => buildFrameSkin(...args)));
 
@@ -59,16 +60,20 @@ const hqSkinData: [string, Stat, number][] = [
     ['Dragon City (Happiness)', Stats.TroopAttack, 2500],
     ['Dragon City (Luck)', Stats.TroopAttack, 2000],
     ['Fire Fury', Stats.FoodProductionSpeed, 5000],
+    ['Golden Pavilion', Stats.TroopAttack, 2500],
     ['Haunted HQ', Stats.TroopAttack, 2000],
     ['Lunar New Year Dragon HQ', Stats.TroopAttack, 2000],
     ['Party Stage', Stats.TroopAttack, 2000],
+    ['Sakura Garden', Stats.TroopAttack, 2000],
     ['Thanksgiving HQ', Stats.TroopAttack, 2000],
-    ['Valentine\'s HQ', Stats.TroopAttack, 2000]
+    ['Valentine\'s HQ', Stats.TroopAttack, 2000],
+    ['Vibrant New Year', Stats.TroopAttack, 2000]
 ];
 export const HQSkins: Record<string, Skin> = mapify(hqSkinData.map(args => buildHQSkin(...args)));
 
 const marchSkinData: [string, Stat, number][] = [
     ['Crazy Carnival March', Stats.MarchSpeed, 5000],
+    ['General Shiba Inu', Stats.MarchSpeed, 5000],
     ['Haunted March', Stats.MarchSpeed, 5000],
     ['Lunar New Year Lion March', Stats.MarchSpeed, 5000],
     ['Nanami-themed Car', Stats.MarchSpeed, 5000],
